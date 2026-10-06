@@ -1,0 +1,96 @@
+[
+  {
+    "id": "00000000-0000-4000-8000-300000000001",
+    "roomId": "00000000-0000-4000-8000-100000000001",
+    "userId": "00000000-0000-4000-8000-200000000001",
+    "startAt": "2026-10-12T09:00:00Z",
+    "endAt": "2026-10-12T12:00:00Z",
+    "status": "CONFIRMED",
+    "numberOfParticipants": 8,
+    "totalAmount": 135.0,
+    "createdAt": "2026-09-20T10:00:00Z",
+    "comment": "Atelier UX"
+  },
+  {
+    "id": "00000000-0000-4000-8000-300000000002",
+    "roomId": "00000000-0000-4000-8000-100000000002",
+    "userId": "00000000-0000-4000-8000-200000000001",
+    "startAt": "2026-10-20T14:00:00Z",
+    "endAt": "2026-10-20T18:00:00Z",
+    "status": "PENDING",
+    "numberOfParticipants": 90,
+    "totalAmount": 1000.0,
+    "createdAt": "2026-09-20T10:00:00Z",
+    "comment": "Conférence annuelle"
+  },
+  {
+    "id": "00000000-0000-4000-8000-300000000003",
+    "roomId": "00000000-0000-4000-8000-100000000004",
+    "userId": "00000000-0000-4000-8000-200000000002",
+    "startAt": "2026-10-14T09:00:00Z",
+    "endAt": "2026-10-14T17:00:00Z",
+    "status": "CONFIRMED",
+    "numberOfParticipants": 18,
+    "totalAmount": 480.0,
+    "createdAt": "2026-09-20T10:00:00Z"
+  },
+  {
+    "id": "00000000-0000-4000-8000-300000000004",
+    "roomId": "00000000-0000-4000-8000-100000000006",
+    "userId": "00000000-0000-4000-8000-200000000002",
+    "startAt": "2026-11-05T18:00:00Z",
+    "endAt": "2026-11-05T22:00:00Z",
+    "status": "PENDING",
+    "numberOfParticipants": 45,
+    "totalAmount": 720.0,
+    "createdAt": "2026-09-20T10:00:00Z",
+    "comment": "Afterwork équipe, traiteur prévu"
+  },
+  {
+    "id": "00000000-0000-4000-8000-300000000005",
+    "roomId": "00000000-0000-4000-8000-100000000007",
+    "userId": "00000000-0000-4000-8000-200000000003",
+    "startAt": "2026-09-15T10:00:00Z",
+    "endAt": "2026-09-15T12:00:00Z",
+    "status": "COMPLETED",
+    "numberOfParticipants": 6,
+    "totalAmount": 80.0,
+    "createdAt": "2026-09-20T10:00:00Z"
+  },
+  {
+    "id": "00000000-0000-4000-8000-300000000006",
+    "roomId": "00000000-0000-4000-8000-100000000010",
+    "userId": "00000000-0000-4000-8000-200000000003",
+    "startAt": "2026-10-02T09:00:00Z",
+    "endAt": "2026-10-02T12:00:00Z",
+    "status": "CANCELLED",
+    "numberOfParticipants": 50,
+    "totalAmount": 480.0,
+    "createdAt": "2026-09-20T10:00:00Z",
+    "comment": "Annulé suite report"
+  },
+  {
+    "id": "00000000-0000-4000-8000-300000000007",
+    "roomId": "00000000-0000-4000-8000-100000000013",
+    "userId": "00000000-0000-4000-8000-200000000001",
+    "startAt": "2026-10-08T08:00:00Z",
+    "endAt": "2026-10-08T10:00:00Z",
+    "status": "REJECTED",
+    "numberOfParticipants": 12,
+    "totalAmount": 140.0,
+    "createdAt": "2026-09-20T10:00:00Z",
+    "comment": "Comité de direction"
+  },
+  {
+    "id": "00000000-0000-4000-8000-300000000008",
+    "roomId": "00000000-0000-4000-8000-100000000003",
+    "userId": "00000000-0000-4000-8000-200000000003",
+    "startAt": "2026-10-09T15:00:00Z",
+    "endAt": "2026-10-09T16:00:00Z",
+    "status": "CONFIRMED",
+    "numberOfParticipants": 2,
+    "totalAmount": 20.0,
+    "createdAt": "2026-09-20T10:00:00Z",
+    "comment": "Entretien de recrutement"
+  }
+]

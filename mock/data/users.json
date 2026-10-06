@@ -1,0 +1,83 @@
+[
+  {
+    "key": "client-1",
+    "id": "00000000-0000-4000-8000-200000000001",
+    "firstName": "Léa",
+    "lastName": "Martin",
+    "email": "client1@salles.example",
+    "role": "CLIENT",
+    "createdAt": "2026-02-11T09:00:00Z"
+  },
+  {
+    "key": "client-2",
+    "id": "00000000-0000-4000-8000-200000000002",
+    "firstName": "Hugo",
+    "lastName": "Bernard",
+    "email": "client2@salles.example",
+    "role": "CLIENT",
+    "createdAt": "2026-03-12T09:00:00Z"
+  },
+  {
+    "key": "client-3",
+    "id": "00000000-0000-4000-8000-200000000003",
+    "firstName": "Chloé",
+    "lastName": "Dubois",
+    "email": "client3@salles.example",
+    "role": "CLIENT",
+    "createdAt": "2026-04-13T09:00:00Z"
+  },
+  {
+    "key": "gestionnaire-1",
+    "id": "00000000-0000-4000-8000-200000000004",
+    "firstName": "Nadia",
+    "lastName": "Benali",
+    "email": "gestionnaire1@salles.example",
+    "role": "GESTIONNAIRE",
+    "createdAt": "2026-05-11T09:00:00Z"
+  },
+  {
+    "key": "gestionnaire-2",
+    "id": "00000000-0000-4000-8000-200000000005",
+    "firstName": "Thomas",
+    "lastName": "Roux",
+    "email": "gestionnaire2@salles.example",
+    "role": "GESTIONNAIRE",
+    "createdAt": "2026-06-12T09:00:00Z"
+  },
+  {
+    "key": "gestionnaire-3",
+    "id": "00000000-0000-4000-8000-200000000006",
+    "firstName": "Inès",
+    "lastName": "Moreau",
+    "email": "gestionnaire3@salles.example",
+    "role": "GESTIONNAIRE",
+    "createdAt": "2026-07-13T09:00:00Z"
+  },
+  {
+    "key": "admin-1",
+    "id": "00000000-0000-4000-8000-200000000007",
+    "firstName": "Karim",
+    "lastName": "Haddad",
+    "email": "admin1@salles.example",
+    "role": "ADMINISTRATEUR",
+    "createdAt": "2026-08-11T09:00:00Z"
+  },
+  {
+    "key": "admin-2",
+    "id": "00000000-0000-4000-8000-200000000008",
+    "firstName": "Julie",
+    "lastName": "Lefèvre",
+    "email": "admin2@salles.example",
+    "role": "ADMINISTRATEUR",
+    "createdAt": "2026-09-12T09:00:00Z"
+  },
+  {
+    "key": "admin-3",
+    "id": "00000000-0000-4000-8000-200000000009",
+    "firstName": "Paul",
+    "lastName": "Garnier",
+    "email": "admin3@salles.example",
+    "role": "ADMINISTRATEUR",
+    "createdAt": "2026-01-13T09:00:00Z"
+  }
+]

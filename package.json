@@ -1,0 +1,30 @@
+{
+  "name": "room-booking",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.6.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "core:sync": "node scripts/sync-core.js https://github.com/MDS-M1-advanced-front-end/core.git",
+    "mock": "node mock/build-spec.js && prism mock mock/.generated/openapi.yml --host 0.0.0.0 --port 4010",
+    "dev": "pnpm --filter \"./apps/*\" dev",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint . && pnpm -r lint",
+    "test": "pnpm -r test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@stoplight/prism-cli": "5.16.0",
+    "eslint": "10.11.0",
+    "globals": "17.12.0",
+    "prettier": "3.9.9",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.70.1",
+    "yaml": "2.9.1"
+  }
+}

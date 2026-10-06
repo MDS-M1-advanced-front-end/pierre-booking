@@ -1,0 +1,61 @@
+# Travailler sans installer Node : seul Docker est nécessaire. Depuis ce dossier :
+#   docker compose run --rm node pnpm core:sync  # une commande au choix
+#   docker compose run --rm node                 # toutes les vérifications (pnpm check)
+#   docker compose up mock                       # API mock sur http://localhost:4010
+#   docker compose up dev                        # mock + serveur de dev de l'application
+# Les dépendances sont installées automatiquement à chaque lancement.
+
+# Configuration commune aux trois services
+x-node: &node
+  build: .
+  environment:
+    # Cache pnpm dans son volume (sinon pnpm le crée dans le dossier du projet)
+    pnpm_config_store_dir: /home/node/.local/share/pnpm/store
+    # Détection des modifications faites depuis Windows ou macOS
+    CHOKIDAR_USEPOLLING: 'true'
+    WATCHPACK_POLLING: 'true'
+    VITEST_POLLING: '1'
+  entrypoint:
+    - sh
+    - -c
+    - pnpm install --reporter=silent && exec "$$@"
+    - --
+  volumes:
+    - .:/app
+    - pnpm-store:/home/node/.local/share/pnpm
+    - cache:/home/node/.cache
+
+services:
+  node:
+    <<: *node
+    command: [pnpm, check]
+
+  mock:
+    <<: *node
+    command: [pnpm, mock]
+    # Les ports du serveur de dev sont publiés ici, car `dev` partage le réseau de `mock`
+    ports:
+      - '4010:4010' # mock Prism
+      - '3000:3000' # Next.js, Nuxt
+      - '4200:4200' # Angular
+      - '5173:5173' # Vite (Vue, Svelte, SolidStart…)
+    # Prêt quand Prism écoute (donc après le pnpm install)
+    healthcheck:
+      test: nc -z 127.0.0.1 4010
+      interval: 2s
+      retries: 60
+
+  dev:
+    <<: *node
+    # Pas de pnpm install ici : le service mock vient de le faire
+    entrypoint: []
+    command: [pnpm, dev]
+    # Même réseau que le mock : http://localhost:4010 fonctionne aussi côté serveur (SSR)
+    network_mode: service:mock
+    depends_on:
+      mock:
+        condition: service_healthy
+
+volumes:
+  pnpm-store:
+  cache:

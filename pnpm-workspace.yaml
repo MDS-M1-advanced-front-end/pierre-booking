@@ -1,0 +1,7 @@
+packages:
+  - packages/*
+  - apps/*
+
+# Scripts d'installation : @scarf/scarf (télémétrie tirée par Prism) est refusé
+allowBuilds:
+  '@scarf/scarf': false
