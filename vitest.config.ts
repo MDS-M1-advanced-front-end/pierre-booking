@@ -27,6 +27,8 @@ export default defineConfig({
         },
       },
       {
+        // Plugin Svelte : session.svelte.ts utilise les runes ($state)
+        plugins: [svelte({ configFile: false, preprocess: vitePreprocess() })],
         test: {
           name: 'front:data',
           root: front,

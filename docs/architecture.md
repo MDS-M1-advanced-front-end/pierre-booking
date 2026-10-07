@@ -116,7 +116,7 @@ On reprend les règles du README de la maquette (WCAG 2.2 AA) : focus visible, c
 
 ## Conventions de code
 
-- **Nommage** : composants et partials en PascalCase (`RoomCard.astro`), utilitaires en camelCase (`formatPrice.ts`), données en `<domaine>.<rôle>.ts`.
+- **Nommage** : composants et partials en PascalCase (`RoomCard.svelte`, `RoomList.astro`), utilitaires en camelCase (`formatPrice.ts`), données en `<domaine>.<rôle>.ts`.
 - **Format** : Prettier du dépôt (`singleQuote`, `printWidth: 100`, points-virgules). Attention : le portfolio est sans points-virgules, ce projet en met.
 - **Langue** : code (noms de variables, fonctions) en anglais ; textes affichés, commentaires et commits en français.
 - **Commits** : gitmoji, en français, un commit par étape logique (`:sparkles:`, `:lipstick:`, `:heavy_plus_sign:`, `:memo:`…). Pas de mention de Claude.
