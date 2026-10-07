@@ -1,0 +1,38 @@
+---
+// Écran 06 Mes réservations (cadrage.md § 4) : coquille statique, la liste dépend de la session
+// et vit dans l'îlot `MyReservations` (navigateur seulement).
+import Button from '../../components/Button.svelte';
+import Icon from '../../components/Icon.svelte';
+import Skeleton from '../../components/Skeleton.svelte';
+import Layout from '../../layouts/Layout.astro';
+import MyReservations from '../../partials/reservations/MyReservations.svelte';
+---
+
+<Layout
+  title="Mes réservations"
+  description="Suivez vos demandes et modifiez-les tant qu'elles ne sont pas passées."
+>
+  <div class="mb-(--space-5) flex flex-wrap items-end justify-between gap-(--space-4)">
+    <div>
+      <h1>Mes réservations</h1>
+      <p class="mt-(--space-1) text-text-muted">
+        Suivez vos demandes et modifiez-les tant qu'elles ne sont pas passées.
+      </p>
+    </div>
+    <Button href="/">
+      <Icon name="plus" />
+      Réserver une salle
+    </Button>
+  </div>
+
+  <MyReservations client:only="svelte">
+    <div slot="fallback" class="flex flex-col gap-(--space-3)" aria-busy="true">
+      <p class="visually-hidden" role="status">
+        Chargement…
+      </p>
+      <Skeleton class="h-10 w-full rounded-md" />
+      <Skeleton class="mt-(--space-4) h-24 w-full rounded-lg" />
+      <Skeleton class="h-24 w-full rounded-lg" />
+    </div>
+  </MyReservations>
+</Layout>
