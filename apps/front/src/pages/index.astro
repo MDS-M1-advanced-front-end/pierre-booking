@@ -37,13 +37,11 @@ const mockRooms: Room[] = [
   </head>
   <body class="p-(--space-5)">
     <ul class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-(--space-4)">
-      {
-        mockRooms.map((room) => (
-          <li>
-            <RoomCard room={room} />
-          </li>
-        ))
-      }
+      {mockRooms.map((room) => (
+        <li>
+          <RoomCard room={room} />
+        </li>
+      ))}
     </ul>
   </body>
 </html>

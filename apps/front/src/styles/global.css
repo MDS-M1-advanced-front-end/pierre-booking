@@ -1,6 +1,6 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 /* Copie telle quelle de maquettes/tokens.css : ne pas modifier ici. */
-@import "./tokens.css";
+@import './tokens.css';
 
 /*
  * Branche les tokens Quorum sur Tailwind. Les palettes par défaut de Tailwind

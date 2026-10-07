@@ -20,11 +20,11 @@ Toutes les décisions ont été validées le 2026-10-07 (voir la fin de [`plan.m
 
 ### 2.1 Rendu
 
-| Type de page | Écrans | Rendu | Pourquoi |
-|---|---|---|---|
-| Publique, indexable | 01 Catalogue, 02 Fiche salle | **SSR + cache de route** (équivalent ISR) | Filtres en paramètres d'URL, recherche partageable, référencement |
-| Authentification | 03 Connexion, 04 Inscription | **Statique** (page pré-rendue) + îlot Svelte | Aucune donnée serveur ; le formulaire vit dans le navigateur |
-| Espace connecté | 05 à 11 | **Coquille rendue serveur** + îlot Svelte `client:only` | Le jeton est dans le `localStorage`, donc seul le navigateur peut appeler l'API |
+| Type de page        | Écrans                       | Rendu                                                   | Pourquoi                                                                        |
+| ------------------- | ---------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Publique, indexable | 01 Catalogue, 02 Fiche salle | **SSR + cache de route** (équivalent ISR)               | Filtres en paramètres d'URL, recherche partageable, référencement               |
+| Authentification    | 03 Connexion, 04 Inscription | **Statique** (page pré-rendue) + îlot Svelte            | Aucune donnée serveur ; le formulaire vit dans le navigateur                    |
+| Espace connecté     | 05 à 11                      | **Coquille rendue serveur** + îlot Svelte `client:only` | Le jeton est dans le `localStorage`, donc seul le navigateur peut appeler l'API |
 
 - Adaptateur : `@astrojs/node` en mode `standalone`, `output: 'static'` par défaut, et `export const prerender = false` sur les pages SSR (01, 02, routes dynamiques 07, 09, 10).
 - **« ISR » avec Astro 7** : Astro 7 fournit un cache de route (`cache.provider: memoryCache()` + `routeRules` avec `maxAge` / `swr`), vérifié dans les types de `astro@7.3.6`. Règles retenues :
@@ -82,14 +82,15 @@ Toutes les décisions ont été validées le 2026-10-07 (voir la fin de [`plan.m
 - `pnpm check` (typecheck, lint, format, tests) doit passer à la fin de chaque lot. **Il échoue aujourd'hui** : Prettier analyse `apps/front/.astro/`, `dist/`, la copie de `tokens.css`, et ne sait pas formater `.astro` ni `.svelte`. Correction au lot 0.
 - **Tests unitaires : Vitest, centralisé à la racine, avec des projets nommés.** Un seul `vitest.config.ts` à la racine déclare des projets (`test.projects`, chacun avec un `name`, ses fichiers et son environnement) :
 
-  | Projet | Fichiers | Environnement | Contenu |
-  |---|---|---|---|
-  | `core` | `packages/core/src/**/*.test.ts` | `node` | tests de `core` (s'il en ajoute) |
-  | `front:utils` | `apps/front/src/utils/**/*.test.ts` | `node` | formatage, fuseaux, découpage horaire, messages de validation |
-  | `front:data` | `apps/front/src/data/**/*.test.ts` | `jsdom` | session (`localStorage`), normalisation des erreurs des `queries`, `mockPersona` |
+  | Projet             | Fichiers                                 | Environnement           | Contenu                                                                              |
+  | ------------------ | ---------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------ |
+  | `core`             | `packages/core/src/**/*.test.ts`         | `node`                  | tests de `core` (s'il en ajoute)                                                     |
+  | `front:utils`      | `apps/front/src/utils/**/*.test.ts`      | `node`                  | formatage, fuseaux, découpage horaire, messages de validation                        |
+  | `front:data`       | `apps/front/src/data/**/*.test.ts`       | `jsdom`                 | session (`localStorage`), normalisation des erreurs des `queries`, `mockPersona`     |
   | `front:components` | `apps/front/src/components/**/*.test.ts` | `jsdom` + plugin Svelte | logique et rendu des composants (SlotPicker, Field…), avec `@testing-library/svelte` |
 
   `pnpm test` lance tous les projets ; `pnpm test --project front:utils` (ou `--project 'front:*'`) n'en lance qu'une partie. Un nouveau dossier testé = un nouveau projet `front:<dossier>`.
+
 - **Tests de bout en bout : Playwright** (`@playwright/test` 1.63). C'est l'outil qui pilote un vrai navigateur (Chromium, Firefox, WebKit) et rejoue les parcours comme un utilisateur. Dossier `apps/front/e2e/`. Le serveur de dev et le mock Prism sont lancés par la config Playwright (`webServer`). Script `pnpm test:e2e`, séparé de `pnpm check` (il faut les navigateurs installés et le mock).
 - Parcours de bout en bout visés : visiteur (catalogue → filtres → fiche → « Se connecter pour réserver ») ; client (connexion → réservation → mes réservations → annulation) ; gestionnaire (connexion → mes salles → modification → disponibilités → demandes). Prism étant sans état, les tests vérifient **la requête envoyée** (`page.waitForRequest`, corps attendu) et l'affichage de la réponse, pas la persistance.
 - Vérification manuelle de chaque écran contre la maquette, en mobile et en desktop, avec les profils `client-1` et `gestionnaire-1`.
@@ -102,25 +103,26 @@ Toutes les décisions ont été validées le 2026-10-07 (voir la fin de [`plan.m
 
 ## 3. Routes
 
-| # | Écran | Route | Rendu | Accès |
-|---|---|---|---|---|
-| 01 | Catalogue | `/` | SSR + cache | Public |
-| 02 | Fiche salle | `/salles/[id]` | SSR + cache | Public (réserver : connecté) |
-| 03 | Connexion | `/connexion` | Statique | Visiteur |
-| 04 | Inscription | `/inscription` | Statique | Visiteur |
-| 05 | Profil | `/profil` | Statique + îlot | Connecté |
-| 06 | Mes réservations | `/reservations` | Statique + îlot | Connecté |
-| 07 | Modifier une réservation | `/reservations/[id]/modifier` | SSR (coquille) + îlot | Connecté |
-| 08 | Mes salles | `/gestion/salles` | Statique + îlot | `GESTIONNAIRE` |
-| 09 | Ajouter / modifier une salle | `/gestion/salles/nouvelle`, `/gestion/salles/[id]/modifier` | Statique / SSR (coquille) + îlot | `GESTIONNAIRE` |
-| 10 | Disponibilités | `/gestion/salles/[id]/disponibilites` | SSR (coquille) + îlot | `GESTIONNAIRE` |
-| 11 | Demandes | `/gestion/demandes` | Statique + îlot | `GESTIONNAIRE` |
-| — | Accès refusé | `/acces-refuse` | Statique | — |
-| — | Page introuvable | `404.astro` | Statique | — |
+| #   | Écran                        | Route                                                       | Rendu                            | Accès                        |
+| --- | ---------------------------- | ----------------------------------------------------------- | -------------------------------- | ---------------------------- |
+| 01  | Catalogue                    | `/`                                                         | SSR + cache                      | Public                       |
+| 02  | Fiche salle                  | `/salles/[id]`                                              | SSR + cache                      | Public (réserver : connecté) |
+| 03  | Connexion                    | `/connexion`                                                | Statique                         | Visiteur                     |
+| 04  | Inscription                  | `/inscription`                                              | Statique                         | Visiteur                     |
+| 05  | Profil                       | `/profil`                                                   | Statique + îlot                  | Connecté                     |
+| 06  | Mes réservations             | `/reservations`                                             | Statique + îlot                  | Connecté                     |
+| 07  | Modifier une réservation     | `/reservations/[id]/modifier`                               | SSR (coquille) + îlot            | Connecté                     |
+| 08  | Mes salles                   | `/gestion/salles`                                           | Statique + îlot                  | `GESTIONNAIRE`               |
+| 09  | Ajouter / modifier une salle | `/gestion/salles/nouvelle`, `/gestion/salles/[id]/modifier` | Statique / SSR (coquille) + îlot | `GESTIONNAIRE`               |
+| 10  | Disponibilités               | `/gestion/salles/[id]/disponibilites`                       | SSR (coquille) + îlot            | `GESTIONNAIRE`               |
+| 11  | Demandes                     | `/gestion/demandes`                                         | Statique + îlot                  | `GESTIONNAIRE`               |
+| —   | Accès refusé                 | `/acces-refuse`                                             | Statique                         | —                            |
+| —   | Page introuvable             | `404.astro`                                                 | Statique                         | —                            |
 
 Les filtres passent par les paramètres d'URL : `/?location=…&capacityMin=10&date=…&page=2`, `/reservations?status=PENDING`, `/salles/[id]?date=2026-11-16`.
 
 **Navigation de l'en-tête** (îlot, selon la session) :
+
 - visiteur : Catalogue · Se connecter · Créer un compte ;
 - client : Catalogue · Mes réservations · prénom (→ profil) · Se déconnecter ;
 - gestionnaire : Catalogue · Mes salles · Demandes (nombre en attente) · prénom (→ profil) · Se déconnecter.
@@ -214,22 +216,22 @@ Pour chaque écran : données, composants, états, anomalies du contrat et crit�
 
 Source : `maquettes/composants.html`. En Svelte (§ 2.2) dans `src/components/`, sauf mention.
 
-| Composant | Variantes / remarques |
-|---|---|
-| `Button` | `primary`, `secondary`, `ghost`, `danger` ; tailles `md` (44 px), `sm` ; `icon` ; `block` ; rendu `<a>` si `href` |
-| `Field` + `Input`, `Select`, `Textarea`, `Checkbox` | libellé, `*` obligatoire, aide, erreur (`aria-describedby`, `aria-invalid`), suffixe |
-| `Badge` / `StatusBadge` | `pending`, `confirmed`, `rejected`, `cancelled`, `completed`, `neutral` ; pastille de forme différente selon le statut |
-| `Alert` | `danger` (`role="alert"`), `success` (`role="status"`), `info` ; titre, liste |
-| `Modal` | `<dialog>` natif + `showModal()`, en-tête, corps, pied de page |
-| `RoomCard` | migrée d'Astro vers Svelte ; lien sur le titre, toute la carte cliquable, survol, focus |
-| `SlotPicker` | grille de créneaux `aria-pressed` / `aria-disabled`, légende, statut de la sélection |
-| `DatePager` | jour précédent / suivant + champ date |
-| `Pagination`, `SegmentedNav` | `aria-current="page"` |
-| `ReservationItem` | bloc de date, titre, badge, prix, commentaire, actions |
-| `Table` | s'empile en mobile |
-| `EmptyState`, `Skeleton`, `ErrorState` | états vide, chargement, erreur |
-| `Icon` | migré en Svelte, mêmes tracés que la maquette |
-| `SiteHeader`, `SiteFooter` | en-tête = îlot (session) ; pied de page = Astro |
+| Composant                                           | Variantes / remarques                                                                                                  |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `Button`                                            | `primary`, `secondary`, `ghost`, `danger` ; tailles `md` (44 px), `sm` ; `icon` ; `block` ; rendu `<a>` si `href`      |
+| `Field` + `Input`, `Select`, `Textarea`, `Checkbox` | libellé, `*` obligatoire, aide, erreur (`aria-describedby`, `aria-invalid`), suffixe                                   |
+| `Badge` / `StatusBadge`                             | `pending`, `confirmed`, `rejected`, `cancelled`, `completed`, `neutral` ; pastille de forme différente selon le statut |
+| `Alert`                                             | `danger` (`role="alert"`), `success` (`role="status"`), `info` ; titre, liste                                          |
+| `Modal`                                             | `<dialog>` natif + `showModal()`, en-tête, corps, pied de page                                                         |
+| `RoomCard`                                          | migrée d'Astro vers Svelte ; lien sur le titre, toute la carte cliquable, survol, focus                                |
+| `SlotPicker`                                        | grille de créneaux `aria-pressed` / `aria-disabled`, légende, statut de la sélection                                   |
+| `DatePager`                                         | jour précédent / suivant + champ date                                                                                  |
+| `Pagination`, `SegmentedNav`                        | `aria-current="page"`                                                                                                  |
+| `ReservationItem`                                   | bloc de date, titre, badge, prix, commentaire, actions                                                                 |
+| `Table`                                             | s'empile en mobile                                                                                                     |
+| `EmptyState`, `Skeleton`, `ErrorState`              | états vide, chargement, erreur                                                                                         |
+| `Icon`                                              | migré en Svelte, mêmes tracés que la maquette                                                                          |
+| `SiteHeader`, `SiteFooter`                          | en-tête = îlot (session) ; pied de page = Astro                                                                        |
 
 ## 6. Accessibilité (WCAG 2.2 AA)
 
@@ -237,28 +239,28 @@ On reprend les règles du README de la maquette : focus visible (3 px + 2 px de 
 
 ## 7. Anomalies du contrat et contournements
 
-| # | Anomalie | Écrans | Contournement retenu |
-|---|---|---|---|
-| 1 | Pas de prix avant réservation | 02, 07 | Pas d'estimation : tarif horaire et durée ; `totalAmount` affiché après création |
-| 2 | `RoomUpdateRequest` = champs requis de la création | 09 | `PATCH` avec l'objet complet |
-| 3 | `roomId` absent du `PUT` de disponibilités | 10 | Déjà contourné dans `core` |
-| 4 | Pas de liste des réservations des salles d'un gestionnaire | 11 | Hypothèse : `GET /reservations` les renvoie pour un `GESTIONNAIRE` |
-| 5 | Pas de filtre `ownerId` sur `GET /rooms` | 08 | Filtre côté client, toutes les pages parcourues |
-| 6 | `status` absent des requêtes de salle | 08, 09 | Statut en lecture seule |
-| 7 | `UserUpdateRequest` accepte `role` | 05 | Le front n'envoie jamais `role` |
-| 8 | `Reservation` ne contient que `roomId` / `userId` | 06, 11 | `getRoom` / `getUser` par identifiant distinct, mis en cache |
-| 9 | Créneaux de la réservation modifiée peut-être indisponibles | 07 | Rendus sélectionnables côté client |
-| 10 | Pas de mot de passe oublié | 03 | Aucun lien. Le changement de mot de passe, lui, existe et est ajouté à l'écran 05 |
-| 11 | *Nouveau* : fuseau des créneaux non précisé | 02, 07, 10 | Hypothèse heure de Paris |
-| 12 | *Nouveau* : pas de route de rafraîchissement du jeton | tous | Reconnexion après expiration |
-| 13 | *Nouveau* : pas de liste des lieux | 01 | Liste déduite des salles |
+| #   | Anomalie                                                    | Écrans     | Contournement retenu                                                              |
+| --- | ----------------------------------------------------------- | ---------- | --------------------------------------------------------------------------------- |
+| 1   | Pas de prix avant réservation                               | 02, 07     | Pas d'estimation : tarif horaire et durée ; `totalAmount` affiché après création  |
+| 2   | `RoomUpdateRequest` = champs requis de la création          | 09         | `PATCH` avec l'objet complet                                                      |
+| 3   | `roomId` absent du `PUT` de disponibilités                  | 10         | Déjà contourné dans `core`                                                        |
+| 4   | Pas de liste des réservations des salles d'un gestionnaire  | 11         | Hypothèse : `GET /reservations` les renvoie pour un `GESTIONNAIRE`                |
+| 5   | Pas de filtre `ownerId` sur `GET /rooms`                    | 08         | Filtre côté client, toutes les pages parcourues                                   |
+| 6   | `status` absent des requêtes de salle                       | 08, 09     | Statut en lecture seule                                                           |
+| 7   | `UserUpdateRequest` accepte `role`                          | 05         | Le front n'envoie jamais `role`                                                   |
+| 8   | `Reservation` ne contient que `roomId` / `userId`           | 06, 11     | `getRoom` / `getUser` par identifiant distinct, mis en cache                      |
+| 9   | Créneaux de la réservation modifiée peut-être indisponibles | 07         | Rendus sélectionnables côté client                                                |
+| 10  | Pas de mot de passe oublié                                  | 03         | Aucun lien. Le changement de mot de passe, lui, existe et est ajouté à l'écran 05 |
+| 11  | _Nouveau_ : fuseau des créneaux non précisé                 | 02, 07, 10 | Hypothèse heure de Paris                                                          |
+| 12  | _Nouveau_ : pas de route de rafraîchissement du jeton       | tous       | Reconnexion après expiration                                                      |
+| 13  | _Nouveau_ : pas de liste des lieux                          | 01         | Liste déduite des salles                                                          |
 
 ## 8. Risques
 
-| Risque | Impact | Parade |
-|---|---|---|
-| Cache de route d'Astro 7 incompatible avec l'adaptateur Node | Pas d'« ISR » | Essai en début de lot 3, repli sur `Cache-Control` |
-| `pnpm core:sync` modifie l'API de `core` | Casse des `queries` | Toute utilisation de `core` passe par `data/` : un seul endroit à corriger |
-| Mock sans état | Les parcours d'écriture ne se vérifient pas de bout en bout | Vérifier la requête envoyée (onglet Réseau) et la réponse ; Prism valide la requête contre le contrat (`400` sinon) |
-| Jeton dans le `localStorage` | Exposé en cas de XSS | Jamais de HTML brut venant de l'API |
-| Hypothèses du contrat (§ 7) | Comportement différent avec la vraie API | Hypothèses isolées dans `data/`, listées ici, à remonter au module Back-end |
+| Risque                                                       | Impact                                                      | Parade                                                                                                              |
+| ------------------------------------------------------------ | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Cache de route d'Astro 7 incompatible avec l'adaptateur Node | Pas d'« ISR »                                               | Essai en début de lot 3, repli sur `Cache-Control`                                                                  |
+| `pnpm core:sync` modifie l'API de `core`                     | Casse des `queries`                                         | Toute utilisation de `core` passe par `data/` : un seul endroit à corriger                                          |
+| Mock sans état                                               | Les parcours d'écriture ne se vérifient pas de bout en bout | Vérifier la requête envoyée (onglet Réseau) et la réponse ; Prism valide la requête contre le contrat (`400` sinon) |
+| Jeton dans le `localStorage`                                 | Exposé en cas de XSS                                        | Jamais de HTML brut venant de l'API                                                                                 |
+| Hypothèses du contrat (§ 7)                                  | Comportement différent avec la vraie API                    | Hypothèses isolées dans `data/`, listées ici, à remonter au module Back-end                                         |

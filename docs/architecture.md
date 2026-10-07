@@ -72,10 +72,10 @@ apps/front/
 
 Un dossier par domaine de l'API : `rooms`, `reservations`, `auth`, `users`. Fichiers nommés `<domaine>.<rôle>.ts` :
 
-| Fichier | Rôle |
-|---|---|
+| Fichier                | Rôle                                                                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `<domaine>.queries.ts` | Fonctions `async` appelées par les partials. Elles enveloppent les fonctions de `core` (`searchRooms`, `getRoom`…) et décident quoi faire d'un `Result` en erreur. |
-| `<domaine>.mock.ts` | Données fictives typées avec les types de `core`, utilisées par `queries` tant que l'API n'est pas branchée. Commentaire en tête : donnée temporaire. |
+| `<domaine>.mock.ts`    | Données fictives typées avec les types de `core`, utilisées par `queries` tant que l'API n'est pas branchée. Commentaire en tête : donnée temporaire.              |
 
 État partagé du navigateur (session) : `data/auth/session.svelte.ts`.
 
