@@ -26,6 +26,83 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-10-07 — Retour en arrière sur la mise en conformité et décisions de cadrage (séance 3)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal
+- **Objectif** : retirer le code de mise en conformité (il sera refait pendant l'implémentation) en gardant les documents, et intégrer mes décisions sur les 9 points du plan.
+- **Demande** : « Fais un reset soft : la partie Head commun et le reste, tu le feras en implémentation. Garde juste le changement d'architecture dans le fichier. » Puis mes réponses aux 9 points : cache OK ; `mockPersona` OK ; **pas de Zod dans le front, on utilise `core` tel quel** ; tests unitaires (Vitest centralisé) + de bout en bout ; `dev` sur 5173 OK ; liste des lieux évolutive ; connexion automatique après inscription ; changement de mot de passe ; créneaux de la réservation modifiée sélectionnables.
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** :
+  - sauvegarde de l'ancien état sur la branche `backup/ecarts-implementes`, `git reset --soft` jusqu'à `dc680ff`, code du front remis à cet état ; `architecture.md`, `cadrage.md`, `plan.md` et le journal restent dans le répertoire de travail, non committés ;
+  - les commits `e79288b`, `a0b8f95`, `29bc978` et `6a3cd50`, cités dans les entrées ci-dessous, n'existent plus que sur la branche de sauvegarde ;
+  - décisions reportées dans `cadrage.md` (plus aucun « à valider ») et `plan.md` (réécrit : mise en conformité et `API_BASE_URL` déplacées aux étapes 0.3 et 0.4, Vitest à la racine avec `test.projects` en 0.9, Playwright en 0.10, un parcours de bout en bout par lot, messages de validation à partir du `ValidityState` du navigateur au lieu de Zod) ; `architecture.md` : plus de `schemas.ts`, emplacement des tests ;
+  - « l'autre » outil de test : **Playwright**, qui pilote un vrai navigateur pour rejouer les parcours.
+- **Erreurs de l'IA relevées** :
+  - **commit mélangé** : le commit « docs : ajoute le document d'architecture » (`e79288b`) contenait aussi le renommage `src/styles` → `src/theme`, déjà indexé par un `git mv` au moment du `git add docs/…`. Résultat : ce commit **cassait le build** (`index.astro` importait encore `../styles/global.css`). Repéré seulement maintenant, au `pnpm build` qui a suivi le reset. Le reset est donc allé un commit plus loin que prévu (`dc680ff` au lieu de `e79288b`). Leçon : relire `git diff --cached --stat` avant chaque commit ;
+  - `astro check` (0 erreur) **ne détecte pas** un import CSS introuvable. Seul `pnpm build` le voit. Le plan impose désormais les deux à chaque étape.
+- **Point qui restait à confirmer** : `estimatePrice` était encore prévue dans le front (`core` n'a pas cette fonction). Ma réponse : **on supprime l'estimation de prix**. Le récapitulatif montre la durée et le tarif horaire ; le `totalAmount` du serveur s'affiche après création. Documents mis à jour.
+- **Précision sur Vitest** : organisation en **projets nommés** (`test.projects`, option confirmée dans les types de `vitest@5.0.2`) : `core`, `front:utils`, `front:data`, `front:components`, chacun avec ses fichiers et son environnement (`node` ou `jsdom`). On peut en lancer un seul avec `--project`.
+- **Vérification** : `pnpm build` et `pnpm typecheck` OK sur `dc680ff` ; plus aucun « [à valider] » dans `cadrage.md` ; `grep` des mentions de Zod dans les trois documents.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-07 — Cadrage complet : `cadrage.md` et `plan.md` (séance 3)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal
+- **Objectif** : cadrer tout le site (11 écrans) sans coder : décisions techniques, routes, écrans, composants, anomalies, risques et plan d'action ordonné, pour que l'IA déroule ensuite tout le site d'un coup.
+- **Demande** : « On fait le cadrage complet sans que tu codes : juste doc, plan d'action et autres. » Mes réponses aux questions de l'IA : Socle + Standard ; ISR si possible ; jeton dans le `localStorage` avec appels depuis le navigateur ; fichiers dans `docs/`.
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** :
+  - lecture des 11 écrans, de `composants.html` et des notes de maquette ; lecture du contrat et du client de `core` ;
+  - `docs/cadrage.md` : rendu par type de page (SSR + cache de route pour les pages publiques, statique pour l'authentification, coquille + îlot Svelte pour l'espace connecté), session dans le `localStorage`, accès API, profils de test du mock, validation, fuseaux et prix, qualité, routes, fiche par écran, composants, accessibilité, 13 anomalies, risques ;
+  - `docs/plan.md` : 7 lots (fondations → interface → données/session → écrans publics → client → gestionnaire → finitions), chacun avec une définition de fini, plus la liste des 9 décisions à trancher ;
+  - `architecture.md` aligné : composants en Svelte, `schemas.ts` autorisés temporairement, `session.svelte.ts`.
+- **Vérifications faites par l'IA avant d'affirmer** :
+  - **ISR** : Astro n'a pas d'ISR au sens de Next.js, mais Astro 7 a un cache de route (`cache.provider`, `routeRules` avec `maxAge` / `swr`), trouvé dans les types de `astro@7.3.6`. Pas encore testé en conditions réelles, d'où l'étape 3.1 du plan ;
+  - **mock** : CORS accepté depuis `localhost:4321` (requête `OPTIONS`) ; `POST /auth/login` renvoie **toujours** le client Léa Martin, quel que soit l'e-mail, et le gestionnaire seulement avec `Prefer: example=gestionnaire-1`. Sans cette vérification, l'espace gestionnaire aurait été impossible à tester ;
+  - **`core`** : pas de schémas Zod ni de fonction de prix, malgré son README et la maquette ; `changePassword` existe, alors que la maquette affirme le contraire (anomalie 10 en partie fausse) ; pas de route de rafraîchissement du jeton ;
+  - **`pnpm check` échoue aujourd'hui** (Prettier sur `.astro/`, `dist/`, fichiers non formatés) : je ne l'avais pas lancé avant de dire « committé et vérifié » aux étapes précédentes ; seul `pnpm typecheck` l'était ;
+  - versions et dépendances `peer` de `@astrojs/svelte`, `@astrojs/node`, des plugins Prettier et de Vitest, compatibles avec Astro 7 et TypeScript 6.
+- **Erreurs de l'IA relevées** :
+  - aux étapes précédentes, « vérifié » ne voulait dire que `pnpm typecheck`. Le contrôle complet du dépôt (`pnpm check`) n'avait jamais été lancé et il échoue. Corrigé dans le plan (étape 0.1, et `pnpm check` à chaque fin de lot) ;
+  - en écrivant le cadrage, l'IA a contredit `architecture.md` (Svelte, `schemas.ts`), document qu'elle venait elle-même d'écrire. Elle l'a vu à la relecture et a mis l'architecture à jour.
+- **Points à trancher** : voir la fin de `docs/plan.md` (9 décisions).
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-07 — Mise en conformité avec `architecture.md` et variable `API_BASE_URL` (séance 3)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal
+- **Objectif** : corriger les écarts listés dans `architecture.md` et trancher les points ouverts.
+- **Demande** : « Applique les écarts et committe. » Mes décisions : CSR plus tard avec Svelte (`@astrojs/svelte`) ; ajouter la variable d'environnement avec une URL par défaut ; trouver l'URL du mock dans le `compose.yaml` ; créer `src/layouts` ; n'exporter `Props` que si c'est utile.
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** :
+  - `src/styles/` → `src/theme/` ; `components/Head.astro` (importe `global.css`) ; `layouts/Layout.astro` ; `data/rooms/rooms.{mock,queries}.ts` ; `partials/catalogue/RoomList.astro` ; `utils/formatPrice.ts` ; `index.astro` ne fait plus qu'assembler ;
+  - `Props` sans `export` dans `RoomCard` et `Icon` ;
+  - `API_BASE_URL` : `astro.config.mjs` charge le `.env` avec `process.loadEnvFile()`, parce qu'Astro ne place pas le `.env` dans `process.env`, que lit pourtant le client de `core`. Valeur par défaut `http://localhost:4010`, plus un `.env.example` ;
+  - URL du mock vérifiée en interrogeant le conteneur qui tournait : `/rooms` → 200, `/api/rooms` → 404. Le mock n'utilise donc pas le préfixe `/api` du contrat ;
+  - `architecture.md` mis à jour avec ces décisions, et de nouveaux points ouverts : port de `docker compose up dev`, SSR, `process.env` côté navigateur.
+- **Erreurs de l'IA relevées** :
+  - le commentaire de `formatPrice` annonçait « 35,5 → 35,50 € », alors que le code renvoyait « 35,5 € ». Repéré en testant la fonction ; code corrigé (centimes affichés quand le montant n'est pas rond) ;
+  - le script Python de remplacement supposait l'ancienne mise en forme de `RoomCard.astro`, alors que le fichier avait été reformaté entre-temps. Une partie du remplacement n'a pas pris (`{price}` est resté, pas défini), ce qu'a révélé la relecture. Corrigé avant le contrôle de types ;
+  - après ce reformatage, l'espace entre le prix et « / heure » avait disparu (« 45 €<small> »), parce qu'Astro supprime le retour à la ligne entre une expression et une balise. Ajout d'un `{' '}`.
+- **Vérification** : `pnpm typecheck` 0 erreur ; `pnpm build` ; page temporaire qui affichait `process.env.API_BASE_URL` : valeur par défaut, puis surcharge par un `.env` de test (page et `.env` supprimés ensuite) ; `curl` de la page de dev (titre « Trouver une salle · Quorum », cartes, prix).
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-07 — Document d'architecture `docs/architecture.md` (séance 3)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal
+- **Objectif** : écrire un document d'architecture du front pour se coordonner, en s'appuyant sur mon portfolio (`portfolio/apps/landing`, en cours de refonte).
+- **Demande** : « Inspecte l'archi de mon portfolio et fais le fichier `architecture.md`. »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** :
+  - l'IA a lu tout `src/` du portfolio et en a tiré ses conventions : `pages/` qui compose, `partials/<page>/` qui va chercher ses données, `components/` réutilisables avec script client à côté (`Background.ts`), `data/<domaine>/<domaine>.{queries,mock,schemas}.ts`, `theme/`, `utils/`, et `Head.astro` qui importe le CSS global ;
+  - adaptations à ce projet, écrites comme des écarts assumés : pas de `schemas.ts` (les types viennent de `core`) ; Tailwind et tokens au lieu d'un CSS par composant ; pas d'i18n ; Prettier avec points-virgules (le portfolio n'en met pas) ;
+  - une liste « Écarts actuels » (le code déjà écrit ne respecte pas encore le document : `styles/` au lieu de `theme/`, données fictives dans `index.astro`…) et une liste « Points ouverts ».
+- **Erreurs de l'IA relevées** :
+  - première version : affirmation non vérifiée que le mock se vise avec `API_BASE_URL=http://localhost:4010`. Or le contrat déclare `/api` dans l'URL du serveur ; l'IA ne sait pas si Prism attend ce préfixe. Reformulé en « à vérifier » ;
+  - convention choisie par l'IA sans me la demander : `export interface Props` (comme dans mon squelette de `RoomCard`) plutôt que `interface Props` (comme dans le portfolio). À confirmer.
+- **Vérification** : points de rupture `md`/`lg` de Tailwind comparés à ceux de la maquette dans `tailwindcss/theme.css` (48rem / 64rem, identiques) ; utilisation de `process.env.API_BASE_URL` dans `core/src/api/client.ts` vérifiée (problème réel côté navigateur) ; `.prettierrc.json` relu.
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-10-07 — Retour à `@room-booking/*` et commits gitmoji propres (séance 3)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal
