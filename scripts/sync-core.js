@@ -1,13 +1,13 @@
 // Vendore le dépôt core partagé : copie son contenu dans packages/core.
-// Usage : pnpm core:sync (l'URL du dépôt est dans le script "core:sync" de package.json)
+// Usage : pnpm core:sync (l'URL du dépôt et la branche optionnelle sont dans le script "core:sync" de package.json)
 import { execFileSync } from 'node:child_process';
 import { cpSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 
-const repoUrl = process.argv[2];
+const [repoUrl, branch] = process.argv.slice(2);
 if (!repoUrl) {
-  console.error('Usage : node scripts/sync-core.js <url-du-depot-core>');
+  console.error('Usage : node scripts/sync-core.js <url-du-depot-core> [branche]');
   process.exit(1);
 }
 
@@ -16,7 +16,8 @@ const excluded = new Set(['.git', '.github', 'node_modules', 'pnpm-lock.yaml']);
 const tmp = mkdtempSync(join(tmpdir(), 'core-'));
 
 try {
-  execFileSync('git', ['clone', '--depth', '1', repoUrl, tmp], { stdio: 'inherit' });
+  const branchArgs = branch ? ['--branch', branch] : [];
+  execFileSync('git', ['clone', '--depth', '1', ...branchArgs, repoUrl, tmp], { stdio: 'inherit' });
   const commit = execFileSync('git', ['-C', tmp, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
 
   rmSync(target, { recursive: true, force: true });
@@ -26,7 +27,10 @@ try {
     filter: (src) => !excluded.has(basename(src)),
   });
   // Trace de la version copiée, pour savoir quel commit du core est embarqué
-  writeFileSync(join(target, 'CORE_VERSION'), `${repoUrl}\n${commit}\n`);
+  writeFileSync(
+    join(target, 'CORE_VERSION'),
+    `${repoUrl}${branch ? `#${branch}` : ''}\n${commit}\n`,
+  );
 
   console.log(`packages/core synchronisé sur ${commit}. Lancez pnpm install.`);
 } finally {
