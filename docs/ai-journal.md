@@ -26,6 +26,39 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-10-07 — Implémentation, lot 2 : données, session, logique (séance 3)
+
+- **Outil** : Claude Code (Claude Opus 5.5), qui a réparti le travail entre 3 sous-agents en parallèle (data, logic, session-header), puis a relu, intégré et committé.
+- **Objectif** : étapes 2.1 à 2.7 : accès à l'API, dates et créneaux, session, garde des pages, en-tête selon le rôle, profils de test du mock.
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : `data/client.ts` (seul point d'accès aux fonctions de `core`), requêtes par domaine, `errors.ts`, `mockPersona` (dev seulement), `session.svelte.ts`, `RequireAuth`, `SiteHeader` (3 variantes), `utils/dates.ts` (heure de Paris, changements d'heure), `splitIntoHourlySlots`, `slotSelection`, `redirect` (refus des redirections ouvertes).
+- **Vérifications remarquables** :
+  - le client de `core` (openapi-fetch) **capture `fetch` à sa création** (vérifié dans le code d'openapi-fetch avant de lancer les agents). L'enveloppe du mock doit donc être installée avant le chargement de `core`, d'où `client.ts`, qui importe `mockPersona` en premier. Prouvé par un test d'intégration contre le mock : la connexion avec `gestionnaire1@…` renvoie bien Nadia Benali ;
+  - **le mock ignore la pagination** (`?page=2&pageSize=5` renvoie toujours les 15 salles) et refuse `pageSize > 100` (découvert par l'agent data) : les lectures de toutes les pages ont un garde-fou ;
+  - tests des dates rejoués avec `TZ=America/New_York` et `TZ=Asia/Tokyo` : le résultat ne dépend pas du fuseau de la machine ;
+  - `mockPersona` absent du build de production (recherche dans `dist/`).
+- **Erreurs relevées (agents ou intégration)** :
+  - plusieurs agents ont supposé `noUncheckedIndexedAccess` activé (`!`, gardes inutiles), et ESLint strict l'a signalé (33 erreurs chez l'un d'eux), corrigé ;
+  - `withSession` vidait la session sur un 401 sans rediriger vers la connexion, contrairement au cadrage § 2.3 : corrigé à l'intégration (`expireSession`), tests adaptés ;
+  - le projet Vitest `front:data` n'avait pas le plugin Svelte : les runes de `session.svelte.ts` n'étaient pas compilées (un agent avait contourné en remplaçant `$state`). Plugin ajouté ;
+  - l'en-tête affiche « LM Léa Martin » et « Se déconnecter » visible, comme la maquette, alors que la consigne donnée à l'agent disait « prénom » et libellé masqué : l'agent a suivi la maquette et l'a signalé.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-07 — Implémentation, lot 1 : interface de base (séance 3)
+
+- **Outil** : Claude Code (Claude Opus 5.5), qui a réparti le travail entre 4 sous-agents en parallèle (ui-base, forms, feedback-nav, layout-card) avec des consignes communes, des fichiers attribués à chacun et des contrats d'API entre eux, puis a relu, intégré et committé.
+- **Objectif** : étapes 1.1 à 1.11 : styles de base, Button, champs de formulaire, Badge, Alert, Modal, états vide / chargement / erreur, Pagination, SegmentedNav, DatePager, RoomCard en Svelte, layout, pages 404 et accès refusé.
+- **Résultat** : _à compléter_
+- **Vérifications** : `svelte-check`, ESLint, 251 tests (`pnpm check` OK), captures d'écran sur le serveur buildé en 1280 px et 375 px, navigation au clavier (anneau de focus visible).
+- **Erreurs relevées** :
+  - **icône réduite à un point** dans l'image de remplacement de `RoomCard` (et sur les pages 404 / accès refusé), vue **seulement sur les captures**, alors que tous les tests passaient : `size-[1.25em]` (taille par défaut d'`Icon`) était généré après `size-10` dans la feuille de Tailwind et l'emportait. Corrigé (taille par défaut seulement si l'appelant n'en donne pas) et test ajouté ;
+  - mélange de `sr-only` et `visually-hidden` entre agents : harmonisé ;
+  - commentaire inexact dans `global.css` sur la règle de mouvement réduit, signalé par l'agent lui-même, puis corrigé ;
+  - les pages répondaient en 500 sur le serveur de dev : il avait été lancé avant l'ajout de Svelte. Redémarré par l'IA (`astro dev stop` puis `pnpm dev`) ;
+  - en arrêtant le serveur de test, un `pkill -f` de l'IA a tué son propre shell : le motif apparaissait dans sa propre ligne de commande.
+- **Limites connues** : jsdom n'implémente pas `<dialog>.showModal()` : le piège du focus de la `Modal` reste à tester avec Playwright (écran 06).
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-10-07 — Implémentation, lot 0 : fondations (séance 3)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal
