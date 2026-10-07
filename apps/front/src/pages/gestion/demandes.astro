@@ -1,0 +1,28 @@
+---
+// Écran 11 Demandes (cadrage.md § 4) : coquille statique, la liste dépend de la session
+// (gestionnaire) et vit dans l'îlot `RequestsPage` (navigateur seulement).
+import Skeleton from '../../components/Skeleton.svelte';
+import Layout from '../../layouts/Layout.astro';
+import RequestsPage from '../../partials/demandes/RequestsPage.svelte';
+---
+
+<Layout
+  title="Demandes de réservation"
+  description="Confirmez ou refusez les demandes sur vos salles."
+>
+  <div class="mb-(--space-5)">
+    <h1>Demandes de réservation</h1>
+    <p class="mt-(--space-1) text-text-muted">Confirmez ou refusez les demandes sur vos salles.</p>
+  </div>
+
+  <RequestsPage client:only="svelte">
+    <div slot="fallback" class="flex flex-col gap-(--space-3)" aria-busy="true">
+      <p class="visually-hidden" role="status">
+        Chargement…
+      </p>
+      <Skeleton class="h-7 w-1/4" />
+      <Skeleton class="h-24 w-full rounded-lg" />
+      <Skeleton class="h-24 w-full rounded-lg" />
+    </div>
+  </RequestsPage>
+</Layout>

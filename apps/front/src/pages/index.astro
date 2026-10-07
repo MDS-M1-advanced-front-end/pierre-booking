@@ -1,0 +1,41 @@
+---
+// Écran 01 Catalogue : rendu serveur + cache de route (`routeRules['/']`, astro.config.mjs).
+import Layout from '../layouts/Layout.astro';
+import Filters from '../partials/catalogue/Filters.astro';
+import RoomList from '../partials/catalogue/RoomList.astro';
+import { parseFilters, parsePage, toSearchQuery } from '../partials/catalogue/catalogueParams';
+import { listLocations, searchRooms } from '../data/rooms/rooms.queries';
+
+export const prerender = false;
+
+const filters = parseFilters(Astro.url.searchParams);
+const page = parsePage(Astro.url.searchParams);
+
+// Exception à « une section va chercher ses données » (architecture.md) : la décision de mise en
+// cache doit être prise dans le frontmatter de la page, avant l'envoi des en-têtes. Une réponse
+// d'erreur ne doit pas rester en cache pendant 60 s.
+const [rooms, locations] = await Promise.all([
+  searchRooms(toSearchQuery(filters, page)),
+  listLocations(),
+]);
+if (!rooms.ok || !locations.ok) Astro.cache.set(false);
+---
+
+<Layout
+  title="Trouver une salle"
+  description="Des salles de réunion, de formation et d'événement, réservables à l'heure."
+>
+  <div class="mb-(--space-5) flex flex-wrap items-end justify-between gap-(--space-4)">
+    <div>
+      <h1>Trouver une salle</h1>
+      <p class="mt-(--space-1) text-text-muted">
+        Des salles de réunion, de formation et d'événement, réservables à l'heure.
+      </p>
+    </div>
+  </div>
+
+  <div class="grid gap-(--space-5) lg:grid-cols-[17rem_minmax(0,1fr)] lg:items-start">
+    <Filters filters={filters} locations={locations.ok ? locations.data : []} />
+    <RoomList filters={filters} page={page} result={rooms.ok ? rooms.data : null} />
+  </div>
+</Layout>

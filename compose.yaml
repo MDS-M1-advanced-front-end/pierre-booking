@@ -39,6 +39,7 @@ services:
       - '3000:3000' # Next.js, Nuxt
       - '4200:4200' # Angular
       - '5173:5173' # Vite (Vue, Svelte, SolidStart…)
+      - '4321:4321' # Astro
     # Prêt quand Prism écoute (donc après le pnpm install)
     healthcheck:
       test: nc -z 127.0.0.1 4010

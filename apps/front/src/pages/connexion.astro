@@ -1,0 +1,28 @@
+---
+// Écran 03 Connexion (cadrage.md § 4 « 03 ») : page statique, formulaire dans un îlot navigateur
+// (la session vit dans le localStorage).
+import Skeleton from '../components/Skeleton.svelte';
+import Layout from '../layouts/Layout.astro';
+import AuthCard from '../partials/connexion/AuthCard.svelte';
+import LoginForm from '../partials/connexion/LoginForm.svelte';
+---
+
+<Layout
+  title="Connexion"
+  description="Connectez-vous pour retrouver vos réservations et réserver une salle."
+>
+  <LoginForm client:only="svelte">
+    <div slot="fallback" aria-busy="true">
+      <AuthCard title="Connexion">
+        <Fragment slot="intro">Retrouvez vos réservations et réservez en quelques clics.</Fragment>
+        <p class="visually-hidden" role="status">
+          Chargement…
+        </p>
+        <Skeleton class="w-2/5" />
+        <Skeleton class="h-(--size-control)! w-full" />
+        <Skeleton class="w-2/5" />
+        <Skeleton class="h-(--size-control)! w-full" />
+      </AuthCard>
+    </div>
+  </LoginForm>
+</Layout>

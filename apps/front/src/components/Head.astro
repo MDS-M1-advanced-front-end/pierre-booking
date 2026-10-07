@@ -1,0 +1,23 @@
+---
+import '../theme/global.css';
+
+interface Props {
+  /** Titre de la page, suffixé par « · Quorum » dans l'onglet. */
+  title: string;
+  /** Description de la page pour les moteurs de recherche. */
+  description?: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="generator" content={Astro.generator} />
+  <title>{`${title} · Quorum`}</title>
+  {description && <meta name="description" content={description} />}
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" href="/favicon.ico" />
+  <slot />
+</head>

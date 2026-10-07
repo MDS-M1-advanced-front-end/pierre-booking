@@ -1,0 +1,12 @@
+---
+// Écran 09 « Ajouter une salle » : coquille statique, formulaire dans l'îlot.
+import Layout from '../../../layouts/Layout.astro';
+import RoomFormFallback from '../../../partials/gestion-salles/RoomFormFallback.astro';
+import RoomFormPage from '../../../partials/gestion-salles/RoomFormPage.svelte';
+---
+
+<Layout title="Ajouter une salle" description="Ajouter une salle au catalogue.">
+  <RoomFormPage client:only="svelte">
+    <RoomFormFallback slot="fallback" />
+  </RoomFormPage>
+</Layout>

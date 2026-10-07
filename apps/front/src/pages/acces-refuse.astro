@@ -1,0 +1,17 @@
+---
+import Button from '../components/Button.svelte';
+import Icon from '../components/Icon.svelte';
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Accès refusé" description="Vous n'avez pas les droits pour afficher cette page.">
+  <div class="flex flex-col items-center gap-(--space-3) rounded-lg border border-dashed border-border-strong bg-surface px-(--space-4) py-(--space-8) text-center">
+    <Icon name="alert" class="size-12 stroke-[1.5] text-text-muted" />
+    <h1 class="text-2xl">Accès refusé</h1>
+    <p class="max-w-md text-text-muted">
+      Vous n'avez pas les droits pour afficher cette page. Si vous pensez qu'il s'agit d'une erreur,
+      connectez-vous avec un autre compte.
+    </p>
+    <Button href="/">Voir le catalogue</Button>
+  </div>
+</Layout>

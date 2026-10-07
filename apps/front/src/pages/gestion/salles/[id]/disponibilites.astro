@@ -1,0 +1,36 @@
+---
+// Écran 10 Disponibilités (cadrage.md § 4) : coquille rendue à la demande, l'édition dépend de la
+// session (gestionnaire propriétaire) et vit dans l'îlot `AvailabilityPage` (navigateur seulement).
+import Icon from '../../../../components/Icon.svelte';
+import Skeleton from '../../../../components/Skeleton.svelte';
+import Layout from '../../../../layouts/Layout.astro';
+import AvailabilityPage from '../../../../partials/disponibilites/AvailabilityPage.svelte';
+
+export const prerender = false;
+
+const { id = '' } = Astro.params;
+---
+
+<Layout
+  title="Disponibilités"
+  description="Définissez les créneaux réservables d'une salle, journée par journée."
+>
+  <a
+    class="mb-(--space-3) inline-flex min-h-(--size-target-min) items-center gap-(--space-1) text-sm"
+    href="/gestion/salles"
+  >
+    <Icon name="left" />
+    Mes salles
+  </a>
+  <h1>Disponibilités</h1>
+
+  <AvailabilityPage client:only="svelte" roomId={id}>
+    <div slot="fallback" class="flex flex-col gap-(--space-3)" aria-busy="true">
+      <p class="visually-hidden" role="status">
+        Chargement…
+      </p>
+      <Skeleton class="mt-(--space-1) mb-(--space-5) w-1/4" />
+      <Skeleton class="h-96 w-full rounded-lg" />
+    </div>
+  </AvailabilityPage>
+</Layout>

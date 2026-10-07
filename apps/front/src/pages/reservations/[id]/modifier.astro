@@ -1,0 +1,36 @@
+---
+// Écran 07 Modifier une réservation (cadrage.md § 4) : coquille rendue à la demande, le contenu
+// dépend de la session et vit dans l'îlot `EditReservation` (navigateur seulement).
+import Icon from '../../../components/Icon.svelte';
+import Skeleton from '../../../components/Skeleton.svelte';
+import Layout from '../../../layouts/Layout.astro';
+import EditReservation from '../../../partials/modifier-reservation/EditReservation.svelte';
+
+export const prerender = false;
+
+const { id = '' } = Astro.params;
+---
+
+<Layout
+  title="Modifier ma réservation"
+  description="Changez le créneau, le nombre de participants ou le commentaire de votre réservation."
+>
+  <a
+    class="mb-(--space-3) inline-flex min-h-(--size-target-min) items-center gap-(--space-1) text-sm"
+    href="/reservations"
+  >
+    <Icon name="left" />
+    Mes réservations
+  </a>
+
+  <EditReservation client:only="svelte" reservationId={id}>
+    <div slot="fallback" class="flex flex-col gap-(--space-3)" aria-busy="true">
+      <p class="visually-hidden" role="status">
+        Chargement…
+      </p>
+      <Skeleton class="h-7 w-2/5" />
+      <Skeleton class="w-3/5" />
+      <Skeleton variant="image" class="mt-(--space-4) rounded-lg" />
+    </div>
+  </EditReservation>
+</Layout>

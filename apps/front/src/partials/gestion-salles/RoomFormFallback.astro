@@ -1,0 +1,12 @@
+---
+// Contenu de repli de l'écran 09, affiché le temps que l'îlot du formulaire se charge.
+import Skeleton from '../../components/Skeleton.svelte';
+---
+
+<div class="flex flex-col gap-(--space-3)" aria-busy="true">
+  <p class="visually-hidden">Chargement…</p>
+  <Skeleton class="w-24" />
+  <Skeleton class="h-8 w-1/2" />
+  <Skeleton class="w-2/5" />
+  <Skeleton variant="image" class="max-h-72 rounded-lg" />
+</div>

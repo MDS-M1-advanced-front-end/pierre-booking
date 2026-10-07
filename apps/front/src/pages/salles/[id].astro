@@ -1,0 +1,69 @@
+---
+// Écran 02 Fiche salle : rendu serveur + cache de route (`routeRules['/salles/[id]']`,
+// astro.config.mjs). La page n'est jamais personnalisée : tout ce qui dépend de la session est
+// dans l'îlot `BookingPanel`.
+import Button from '../../components/Button.svelte';
+import ErrorState from '../../components/ErrorState.svelte';
+import Icon from '../../components/Icon.svelte';
+import { getRoom } from '../../data/rooms/rooms.queries';
+import Layout from '../../layouts/Layout.astro';
+import BookingPanel from '../../partials/salle/BookingPanel.svelte';
+import RoomEquipment from '../../partials/salle/RoomEquipment.astro';
+import RoomHero from '../../partials/salle/RoomHero.astro';
+import { formatPrice } from '../../utils/formatPrice';
+
+export const prerender = false;
+
+const result = await getRoom(Astro.params.id ?? '');
+
+// Salle inconnue, ou identifiant qui n'est pas un UUID (l'API répond 400 ou 422) : une réponse
+// 404 sans corps fait rendre la page 404.astro par Astro, avec le statut 404.
+if (!result.ok && [400, 404, 422].includes(result.error.status)) {
+  Astro.cache.set(false);
+  return new Response(null, { status: 404, statusText: 'Not Found' });
+}
+
+// Autre erreur (API injoignable…) : page d'erreur, jamais mise en cache.
+if (!result.ok) {
+  Astro.cache.set(false);
+  Astro.response.status = 503;
+}
+
+const room = result.ok ? result.data : null;
+const description = room
+  ? [
+      `${room.location} · ${room.capacity} personnes max · ${formatPrice(room.pricePerHour)} / heure.`,
+      room.description,
+    ]
+      .filter(Boolean)
+      .join(' ')
+  : undefined;
+---
+
+<Layout title={room?.name ?? 'Salle indisponible'} description={description}>
+  <a
+    class="mb-(--space-3) inline-flex min-h-(--size-target-min) items-center gap-(--space-1) text-sm"
+    href="/"
+  >
+    <Icon name="left" />
+    Retour aux résultats
+  </a>
+
+  {room ? (
+    <BookingPanel client:load room={room} dateParam={Astro.url.searchParams.get('date')}>
+      <RoomHero room={room} />
+      <RoomEquipment equipment={room.equipment} />
+    </BookingPanel>
+  ) : (
+    <div class="flex flex-col items-center gap-(--space-4)">
+      <h1 class="visually-hidden">Salle indisponible</h1>
+      <ErrorState
+        class="w-full"
+        headingLevel={2}
+        title="La salle n'a pas pu être chargée"
+        message="Le serveur ne répond pas. Vérifiez votre connexion puis réessayez."
+      />
+      <Button href={Astro.url.pathname + Astro.url.search}>Réessayer</Button>
+    </div>
+  )}
+</Layout>
