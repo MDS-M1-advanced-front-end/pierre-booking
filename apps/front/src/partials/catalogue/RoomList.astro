@@ -1,14 +1,77 @@
 ---
+// Résultats du catalogue : grille de cartes et pagination, ou état vide / erreur.
+import type { PaginatedRooms } from '@room-booking/core';
+import Button from '../../components/Button.svelte';
+import EmptyState from '../../components/EmptyState.svelte';
+import Pagination from '../../components/Pagination.svelte';
 import RoomCard from '../../components/RoomCard.svelte';
-import { getRooms } from '../../data/rooms/rooms.queries';
+import ResultsBar from './ResultsBar.astro';
+import { catalogueHref, PAGE_SIZE, type CatalogueFilters } from './catalogueParams';
 
-const rooms = await getRooms();
+interface Props {
+  filters: CatalogueFilters;
+  /** Page demandée. */
+  page: number;
+  /** Réponse de `searchRooms`, ou `null` si l'appel a échoué. */
+  result: PaginatedRooms | null;
+}
+
+const { filters, page, result } = Astro.props;
+
+// On affiche ce que l'API renvoie : le mock Prism ignore `page` et `pageSize` (15 salles,
+// `page: 1, pageSize: 20`), la pagination se cale donc sur la réponse, pas sur la demande.
+const rooms = result?.items ?? [];
+const total = result?.total ?? rooms.length;
+const currentPage = result?.page ?? page;
+const pageSize = result?.pageSize ?? PAGE_SIZE;
+const retryHref = Astro.url.pathname + Astro.url.search;
 ---
 
-<ul class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-(--space-4)">
-  {rooms.map((room) => (
-    <li>
-      <RoomCard room={room} />
-    </li>
-  ))}
-</ul>
+<section aria-labelledby="results-title">
+  <h2 id="results-title" class="visually-hidden">
+    Résultats
+  </h2>
+  {result === null ? (
+    <EmptyState
+      title="Les salles n'ont pas pu être chargées"
+      text="Le serveur ne répond pas. Vérifiez votre connexion puis réessayez."
+      icon="alert"
+      role="alert"
+    >
+      <Fragment slot="action">
+        <Button href={retryHref}>Réessayer</Button>
+      </Fragment>
+    </EmptyState>
+  ) : rooms.length === 0 ? (
+    <>
+      <ResultsBar filters={filters} total={0} />
+      <EmptyState
+        title="Aucune salle ne correspond"
+        text="Élargissez la capacité ou choisissez une autre date."
+      >
+        <Fragment slot="action">
+          <Button variant="secondary" href="/">
+            Réinitialiser les filtres
+          </Button>
+        </Fragment>
+      </EmptyState>
+    </>
+  ) : (
+    <>
+      <ResultsBar filters={filters} total={total} />
+      <ul class="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-(--space-4) p-0">
+        {rooms.map((room) => (
+          <li>
+            <RoomCard room={room} />
+          </li>
+        ))}
+      </ul>
+      <Pagination
+        page={currentPage}
+        pageSize={pageSize}
+        total={total}
+        hrefFor={(target: number) => catalogueHref(filters, target)}
+      />
+    </>
+  )}
+</section>

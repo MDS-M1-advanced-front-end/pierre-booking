@@ -11,12 +11,6 @@ import type {
 } from '@room-booking/core';
 import * as api from '../client';
 import { withSession } from '../errors';
-import { mockRooms } from './rooms.mock';
-
-// TODO: brancher sur searchRooms() de core (retiré au lot 3)
-export const getRooms = async (): Promise<Room[]> => {
-  return Promise.resolve(mockRooms);
-};
 
 /** Taille de page maximale acceptée par l'API (`pageSize` > 100 → 400). */
 const PAGE_SIZE = 100;

@@ -1,0 +1,24 @@
+---
+// Barre de résultats : « 11 salles pour 10 personnes ou plus, le lundi 16 novembre 2026 ».
+import { describeFilters, type CatalogueFilters } from './catalogueParams';
+
+interface Props {
+  filters: CatalogueFilters;
+  /** Nombre total de salles trouvées. */
+  total: number;
+}
+
+const { filters, total } = Astro.props;
+
+const count = total === 0 ? 'Aucune salle' : `${total} ${total > 1 ? 'salles' : 'salle'}`;
+const available = filters.available ? (total > 1 ? ' disponibles' : ' disponible') : '';
+const details = describeFilters(filters);
+---
+
+<div class="mb-(--space-4) flex flex-wrap items-center justify-between gap-(--space-2)">
+  <p role="status">
+    <strong>{count}</strong>
+    {available}
+    {details && ` ${details}`}
+  </p>
+</div>

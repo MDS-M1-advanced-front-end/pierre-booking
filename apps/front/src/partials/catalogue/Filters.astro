@@ -1,0 +1,18 @@
+---
+// Filtres du catalogue : formulaire GET rendu côté serveur (FiltersForm.svelte, sans îlot).
+import FiltersForm from './FiltersForm.svelte';
+import { countActiveFilters, type CatalogueFilters } from './catalogueParams';
+
+interface Props {
+  filters: CatalogueFilters;
+  locations: string[];
+}
+
+const { filters, locations } = Astro.props;
+---
+
+<FiltersForm filters={filters} locations={locations} activeCount={countActiveFilters(filters)} />
+
+<script>
+  import './filters';
+</script>
