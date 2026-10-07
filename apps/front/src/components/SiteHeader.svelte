@@ -3,17 +3,25 @@
   import { onMount } from 'svelte';
   import { logout } from '../data/auth/auth.queries';
   import { restoreSession, session } from '../data/auth/session.svelte';
+  import { listMyReservations } from '../data/reservations/reservations.queries';
   import Button from './Button.svelte';
   import Icon from './Icon.svelte';
 
   interface Props {
     /** Chemin de la page courante, pour `aria-current="page"`. */
     currentPath: string;
-    /** Nombre de demandes en attente (gestionnaire). Branché à l'étape 5.5. */
+    /**
+     * Nombre de demandes en attente (gestionnaire), s'il est déjà connu. Sinon l'en-tête le charge
+     * lui-même pour un gestionnaire ou un administrateur (aucune requête pour un visiteur ou un client).
+     */
     pendingCount?: number;
   }
 
   let { currentPath, pendingCount }: Props = $props();
+
+  /** Nombre chargé par l'en-tête ; `undefined` tant qu'il n'est pas connu ou en cas d'échec. */
+  let loadedCount = $state<number | undefined>(undefined);
+  const shownCount = $derived(pendingCount ?? loadedCount);
 
   interface NavLink {
     href: string;
@@ -26,6 +34,24 @@
 
   const user = $derived(session.user);
   const isManager = $derived(user?.role === 'GESTIONNAIRE' || user?.role === 'ADMINISTRATEUR');
+
+  /**
+   * Demandes en attente du gestionnaire (`GET /reservations?status=PENDING`, anomalie 4 : on suppose
+   * que la route renvoie les réservations de ses salles). On compte les réservations `PENDING`
+   * reçues, au cas où le filtre serait ignoré (c'est le cas du mock Prism) ; si toutes le sont, on
+   * prend le `total`, qui couvre les pages suivantes. Échec silencieux : pas de compteur.
+   */
+  async function loadPendingCount(): Promise<void> {
+    const result = await listMyReservations({ status: 'PENDING', pageSize: 100 });
+    if (!result.ok) return;
+    const items = result.data.items ?? [];
+    const pending = items.filter((reservation) => reservation.status === 'PENDING').length;
+    loadedCount = pending === items.length ? Math.max(result.data.total ?? 0, pending) : pending;
+  }
+
+  $effect(() => {
+    if (isManager && pendingCount === undefined) void loadPendingCount();
+  });
 
   const links = $derived.by<NavLink[]>(() => {
     const catalogue = { href: '/', label: 'Catalogue' };
@@ -79,12 +105,12 @@
           aria-current={isCurrent(link.href) ? 'page' : undefined}
         >
           {link.label}
-          {#if link.href === '/gestion/demandes' && pendingCount}
+          {#if link.href === '/gestion/demandes' && shownCount}
             <span
               class="inline-grid h-[1.375rem] min-w-[1.375rem] place-items-center rounded-full bg-accent px-(--space-1) text-xs font-bold text-on-accent"
-              aria-hidden="true">{pendingCount}</span
+              aria-hidden="true">{shownCount}</span
             >
-            <span class="visually-hidden">({pendingCount} en attente)</span>
+            <span class="visually-hidden">({shownCount} en attente)</span>
           {/if}
         </a>
       </li>

@@ -1,11 +1,34 @@
-import type { User } from '@room-booking/core';
+import type { Reservation, User } from '@room-booking/core';
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { logout } from '../data/auth/auth.queries';
+import { listMyReservations } from '../data/reservations/reservations.queries';
 import SiteHeader from './SiteHeader.svelte';
 
 vi.mock('../data/client', () => ({ setAccessToken: vi.fn() }));
 vi.mock('../data/auth/auth.queries', () => ({ logout: vi.fn() }));
+vi.mock('../data/reservations/reservations.queries', () => ({ listMyReservations: vi.fn() }));
+
+/** Réponse de `GET /reservations` : une réservation par statut donné, et le `total` annoncé. */
+function reservationsPage(statuses: Reservation['status'][], total = statuses.length) {
+  return {
+    ok: true as const,
+    data: {
+      items: statuses.map((status, index) => ({
+        id: `r-${index}`,
+        roomId: 'room-1',
+        userId: 'u-1',
+        startAt: '2026-10-20T14:00:00Z',
+        endAt: '2026-10-20T18:00:00Z',
+        status,
+        totalAmount: 100,
+      })),
+      page: 1,
+      pageSize: 100,
+      total,
+    },
+  };
+}
 
 const lea: User = {
   id: 'u-1',
@@ -43,6 +66,8 @@ function linkTexts(nav: HTMLElement): string[] {
 
 beforeEach(() => {
   localStorage.clear();
+  vi.mocked(listMyReservations).mockReset();
+  vi.mocked(listMyReservations).mockResolvedValue(reservationsPage([]));
 });
 
 afterEach(() => {
@@ -108,6 +133,54 @@ describe('SiteHeader', () => {
     expect(
       await within(desktopNav()).findByRole('link', { name: 'Demandes (3 en attente)' }),
     ).toBeInTheDocument();
+  });
+
+  it('charge le nombre de demandes en attente pour un gestionnaire', async () => {
+    vi.mocked(listMyReservations).mockResolvedValue(reservationsPage(['PENDING', 'PENDING'], 3));
+    storeSession(nadia);
+    render(SiteHeader, { currentPath: '/gestion/salles' });
+
+    expect(
+      await within(desktopNav()).findByRole('link', { name: 'Demandes (3 en attente)' }),
+    ).toBeInTheDocument();
+    expect(listMyReservations).toHaveBeenCalledWith({ status: 'PENDING', pageSize: 100 });
+  });
+
+  it('ne compte que les demandes en attente si le filtre est ignoré', async () => {
+    vi.mocked(listMyReservations).mockResolvedValue(
+      reservationsPage(['PENDING', 'CONFIRMED', 'PENDING', 'REJECTED']),
+    );
+    storeSession(nadia);
+    render(SiteHeader, { currentPath: '/' });
+
+    expect(
+      await within(desktopNav()).findByRole('link', { name: 'Demandes (2 en attente)' }),
+    ).toBeInTheDocument();
+  });
+
+  it("n'affiche pas de compteur si le chargement échoue", async () => {
+    vi.mocked(listMyReservations).mockResolvedValue({
+      ok: false,
+      error: { status: 500, code: 'INTERNAL', message: 'x' },
+    });
+    storeSession(nadia);
+    render(SiteHeader, { currentPath: '/' });
+    const nav = desktopNav();
+
+    await within(nav).findByRole('link', { name: 'Nadia Benali' });
+    await vi.waitFor(() => {
+      expect(listMyReservations).toHaveBeenCalled();
+    });
+    expect(within(nav).getByRole('link', { name: 'Demandes' })).toBeInTheDocument();
+  });
+
+  it("n'appelle pas l'API pour un visiteur ou un client", async () => {
+    render(SiteHeader, { currentPath: '/' });
+    storeSession(lea);
+    render(SiteHeader, { currentPath: '/' });
+    await screen.findAllByRole('link', { name: 'Léa Martin' });
+
+    expect(listMyReservations).not.toHaveBeenCalled();
   });
 
   it.each([
