@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import { defineConfig } from 'eslint/config';
 import astro from 'eslint-plugin-astro';
+import svelte from 'eslint-plugin-svelte';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -23,9 +24,14 @@ export default defineConfig(
     },
   },
   astro.configs['flat/recommended'],
+  svelte.configs.recommended,
+  {
+    files: ['**/*.svelte', '**/*.svelte.ts'],
+    languageOptions: { parserOptions: { parser: tseslint.parser } },
+  },
   {
     // Les règles typées ne savent pas lire les fichiers .astro et les fichiers de config JS
-    files: ['**/*.astro', '**/*.js', '**/*.mjs'],
+    files: ['**/*.astro', '**/*.svelte', '**/*.js', '**/*.mjs'],
     extends: [tseslint.configs.disableTypeChecked],
   },
 );
