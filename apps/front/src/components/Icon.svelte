@@ -37,10 +37,14 @@
   }
 
   let { name, class: className }: Props = $props();
+
+  // Taille par défaut seulement si l'appelant n'en donne pas : dans la feuille générée par
+  // Tailwind, `size-[1.25em]` arrive après `size-10` et l'emporterait sinon.
+  const hasSize = $derived(/(^|\s)size-/.test(className ?? ''));
 </script>
 
 <svg
-  class={['size-[1.25em] flex-none', className]}
+  class={[!hasSize && 'size-[1.25em]', 'flex-none', className]}
   viewBox="0 0 24 24"
   fill="none"
   stroke="currentColor"
