@@ -1,0 +1,51 @@
+---
+// En-tête de la fiche salle (écran 02) : photo ou fond de remplacement grand format, nom, lieu,
+// capacité, tarif horaire et description. Rendu serveur uniquement.
+import type { Room } from '@room-booking/core';
+import Icon from '../../components/Icon.svelte';
+import { formatPrice } from '../../utils/formatPrice';
+
+interface Props {
+  room: Room;
+}
+
+const { room } = Astro.props;
+---
+
+{room.imageUrl ? (
+  <img
+    class="aspect-video w-full rounded-lg object-cover lg:aspect-[21/9]"
+    src={room.imageUrl}
+    alt=""
+    fetchpriority="high"
+  />
+) : (
+  <div
+    class:list={[
+      'grid aspect-video place-items-center rounded-lg bg-action-subtle text-action lg:aspect-[21/9]',
+      'bg-[linear-gradient(135deg,transparent_48%,var(--palette-teal-100)_48%,var(--palette-teal-100)_52%,transparent_52%)]',
+    ]}
+    aria-hidden="true"
+  >
+    <Icon name="building" class="size-10 rounded-full bg-surface p-(--space-2) stroke-[1.5]" />
+  </div>
+)}
+
+<div class="flex flex-col gap-(--space-2)">
+  <h1>{room.name}</h1>
+  <p class="flex flex-wrap gap-x-(--space-4) gap-y-(--space-1) text-sm text-text-muted">
+    <span class="inline-flex items-center gap-(--space-1)">
+      <Icon name="pin" />
+      {room.location}
+    </span>
+    <span class="inline-flex items-center gap-(--space-1)">
+      <Icon name="users" />
+      {`${room.capacity} ${room.capacity >= 2 ? 'personnes' : 'personne'} max`}
+    </span>
+    <span class="inline-flex items-center gap-(--space-1)">
+      <Icon name="euro" />
+      {formatPrice(room.pricePerHour)} / heure
+    </span>
+  </p>
+  {room.description && <p>{room.description}</p>}
+</div>
