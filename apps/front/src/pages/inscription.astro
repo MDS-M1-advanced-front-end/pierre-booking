@@ -1,0 +1,28 @@
+---
+// Écran 04 Inscription (cadrage.md § 4 « 04 ») : page statique, formulaire dans un îlot navigateur.
+import Skeleton from '../components/Skeleton.svelte';
+import Layout from '../layouts/Layout.astro';
+import AuthCard from '../partials/connexion/AuthCard.svelte';
+import RegisterForm from '../partials/inscription/RegisterForm.svelte';
+---
+
+<Layout
+  title="Créer un compte"
+  description="Créez votre compte Quorum pour réserver une salle de réunion."
+>
+  <RegisterForm client:only="svelte">
+    <div slot="fallback" aria-busy="true">
+      <AuthCard title="Créer un compte">
+        <p class="visually-hidden" role="status">
+          Chargement…
+        </p>
+        <Skeleton class="w-2/5" />
+        <Skeleton class="h-(--size-control)! w-full" />
+        <Skeleton class="w-2/5" />
+        <Skeleton class="h-(--size-control)! w-full" />
+        <Skeleton class="w-2/5" />
+        <Skeleton class="h-(--size-control)! w-full" />
+      </AuthCard>
+    </div>
+  </RegisterForm>
+</Layout>
