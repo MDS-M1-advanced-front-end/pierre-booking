@@ -54,7 +54,7 @@
       }}
     >
       <Icon name="left" />
-      <span class="sr-only">Jour précédent</span>
+      <span class="visually-hidden">Jour précédent</span>
     </Button>
     <input
       {id}
@@ -77,7 +77,7 @@
       }}
     >
       <Icon name="right" />
-      <span class="sr-only">Jour suivant</span>
+      <span class="visually-hidden">Jour suivant</span>
     </Button>
   </div>
 </div>

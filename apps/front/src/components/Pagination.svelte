@@ -54,7 +54,7 @@
         {#if model.previous !== null}
           <li>
             <a class={linkClass} href={hrefFor(model.previous)}>
-              Précédente<span class="sr-only"> page</span>
+              Précédente<span class="visually-hidden"> page</span>
             </a>
           </li>
         {/if}
@@ -64,11 +64,11 @@
               <span class={[itemClass, 'text-text-muted']} aria-hidden="true">…</span>
             {:else if item === model.page}
               <span class={[itemClass, 'bg-action text-on-action']} aria-current="page">
-                <span class="sr-only">Page </span>{item}
+                <span class="visually-hidden">Page </span>{item}
               </span>
             {:else}
               <a class={linkClass} href={hrefFor(item)}>
-                <span class="sr-only">Page </span>{item}
+                <span class="visually-hidden">Page </span>{item}
               </a>
             {/if}
           </li>
@@ -76,7 +76,7 @@
         {#if model.next !== null}
           <li>
             <a class={linkClass} href={hrefFor(model.next)}>
-              Suivante<span class="sr-only"> page</span>
+              Suivante<span class="visually-hidden"> page</span>
             </a>
           </li>
         {/if}

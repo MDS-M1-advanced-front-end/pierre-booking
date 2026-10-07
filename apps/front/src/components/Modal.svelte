@@ -66,7 +66,7 @@
     <h2 id={titleId} class="text-lg">{title}</h2>
     <Button variant="ghost" size="sm" iconOnly onclick={() => (open = false)}>
       <Icon name="x" />
-      <span class="sr-only">Fermer</span>
+      <span class="visually-hidden">Fermer</span>
     </Button>
   </div>
   <div class="flex flex-col gap-(--space-3) px-(--space-5) py-(--space-4)">
