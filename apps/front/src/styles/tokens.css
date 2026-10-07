@@ -1,0 +1,168 @@
+/*
+ * Quorum — design tokens
+ *
+ * Seul fichier à importer dans votre application.
+ * Utilisez toujours les tokens sémantiques (--color-text, --color-action…)
+ * plutôt que la palette brute (--palette-*), réservée à la définition des tokens.
+ *
+ * Points de rupture (une variable CSS ne fonctionne pas dans une @media,
+ * recopiez ces valeurs) :
+ *   - mobile  : < 48rem (768px), mise en page par défaut (mobile first)
+ *   - tablette: @media (min-width: 48rem)
+ *   - desktop : @media (min-width: 64rem)  (1024px)
+ *
+ * Contrastes vérifiés (WCAG 2.2 AA) : voir README.md.
+ */
+
+:root {
+  /* ---------- Palette brute ---------- */
+  --palette-teal-50: #e8f3f2;
+  --palette-teal-100: #cde6e3;
+  --palette-teal-500: #2a8a84;
+  --palette-teal-700: #0f5e5a;
+  --palette-teal-800: #0b4744;
+  --palette-teal-900: #083634;
+
+  --palette-amber-100: #fdf1dc;
+  --palette-amber-400: #e8a33d;
+  --palette-amber-800: #7a4a00;
+
+  --palette-neutral-0: #ffffff;
+  --palette-neutral-50: #f8f7f5;
+  --palette-neutral-100: #efede9;
+  --palette-neutral-200: #e0ddd7;
+  --palette-neutral-400: #8d877d;
+  --palette-neutral-600: #625d55;
+  --palette-neutral-700: #4a463f;
+  --palette-neutral-900: #1f1d1a;
+
+  --palette-green-50: #e6f4ea;
+  --palette-green-700: #1e6e38;
+  --palette-red-50: #fdecea;
+  --palette-red-700: #b42318;
+  --palette-red-800: #8f1c13;
+  --palette-blue-50: #e7f0fa;
+  --palette-blue-700: #1d5fa8;
+
+  /* ---------- Couleurs sémantiques ---------- */
+  /* Surfaces */
+  --color-bg: var(--palette-neutral-50);
+  --color-surface: var(--palette-neutral-0);
+  --color-surface-muted: var(--palette-neutral-100);
+  --color-overlay: rgb(31 29 26 / 0.55);
+
+  /* Texte */
+  --color-text: var(--palette-neutral-900);
+  --color-text-muted: var(--palette-neutral-600);
+  --color-text-inverse: var(--palette-neutral-0);
+
+  /* Bordures : --color-border pour la décoration, --color-border-strong
+     pour les contours de champs (contraste 3:1, critère 1.4.11) */
+  --color-border: var(--palette-neutral-200);
+  --color-border-strong: var(--palette-neutral-400);
+
+  /* Actions */
+  --color-action: var(--palette-teal-700);
+  --color-action-hover: var(--palette-teal-800);
+  --color-action-active: var(--palette-teal-900);
+  --color-action-subtle: var(--palette-teal-50);
+  --color-action-subtle-hover: var(--palette-teal-100);
+  --color-on-action: var(--palette-neutral-0);
+
+  /* Accent : mise en avant ponctuelle, toujours avec du texte foncé */
+  --color-accent: var(--palette-amber-400);
+  --color-on-accent: var(--palette-neutral-900);
+
+  /* Focus */
+  --color-focus: var(--palette-teal-500);
+
+  /* États : *-text sur *-bg ou sur --color-surface */
+  --color-success-text: var(--palette-green-700);
+  --color-success-bg: var(--palette-green-50);
+  --color-warning-text: var(--palette-amber-800);
+  --color-warning-bg: var(--palette-amber-100);
+  --color-danger-text: var(--palette-red-700);
+  --color-danger-bg: var(--palette-red-50);
+  --color-danger: var(--palette-red-700);
+  --color-danger-hover: var(--palette-red-800);
+  --color-info-text: var(--palette-blue-700);
+  --color-info-bg: var(--palette-blue-50);
+
+  /* Statuts de réservation (ReservationStatus) */
+  --color-status-pending-text: var(--color-warning-text);
+  --color-status-pending-bg: var(--color-warning-bg);
+  --color-status-confirmed-text: var(--color-success-text);
+  --color-status-confirmed-bg: var(--color-success-bg);
+  --color-status-rejected-text: var(--color-danger-text);
+  --color-status-rejected-bg: var(--color-danger-bg);
+  --color-status-cancelled-text: var(--palette-neutral-700);
+  --color-status-cancelled-bg: var(--palette-neutral-100);
+  --color-status-completed-text: var(--color-info-text);
+  --color-status-completed-bg: var(--color-info-bg);
+
+  /* ---------- Typographie ---------- */
+  --font-family-base: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-family-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --font-size-xs: 0.8125rem; /* 13px */
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-md: 1rem; /* 16px, corps de texte */
+  --font-size-lg: 1.25rem; /* 20px */
+  --font-size-xl: 1.5rem; /* 24px */
+  --font-size-2xl: 2rem; /* 32px */
+
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-base: 1.5;
+
+  /* ---------- Espacements (base 4px) ---------- */
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.5rem; /* 24px */
+  --space-6: 2rem; /* 32px */
+  --space-8: 3rem; /* 48px */
+  --space-10: 4rem; /* 64px */
+
+  /* ---------- Formes ---------- */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 999px;
+
+  --border-width: 1px;
+
+  --shadow-sm: 0 1px 2px rgb(31 29 26 / 0.08);
+  --shadow-md: 0 4px 12px rgb(31 29 26 / 0.1);
+  --shadow-lg: 0 12px 32px rgb(31 29 26 / 0.18);
+
+  /* ---------- Focus ---------- */
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+
+  /* ---------- Tailles ---------- */
+  /* Hauteur des boutons et champs : 44px (le critère 2.5.8 exige 24px minimum) */
+  --size-control: 2.75rem;
+  --size-control-sm: 2rem;
+  --size-target-min: 1.5rem; /* 24px, plancher WCAG 2.5.8 */
+  --size-container: 72rem; /* 1152px */
+  --size-container-narrow: 30rem; /* formulaires d'authentification */
+
+  /* ---------- Superposition ---------- */
+  --z-header: 10;
+  --z-modal: 100;
+
+  /* ---------- Animation ---------- */
+  --duration-fast: 150ms;
+  --easing-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+  }
+}
