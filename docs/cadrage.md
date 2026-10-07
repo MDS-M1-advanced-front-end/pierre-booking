@@ -97,7 +97,7 @@ Toutes les décisions ont été validées le 2026-10-07 (voir la fin de [`plan.m
 
 ### 2.9 Docker
 
-`docker compose up dev` publie 3000, 4200 et 5173, mais Astro écoute sur 4321 et uniquement sur `localhost`. Script `dev` retenu : `astro dev --host 0.0.0.0 --port 5173`, pour que le même port fonctionne avec ou sans Docker.
+`docker compose up dev` publiait 3000, 4200 et 5173, mais Astro écoute sur 4321, et seulement sur `localhost` par défaut. Première décision : `astro dev --port 5173`. **Abandonnée à l'implémentation** : quand le mock tourne dans Docker, le port 5173 de la machine est déjà pris par le conteneur, et Astro 7 refuse un second serveur de dev dans le même projet. **Retenu** : `astro dev --host 0.0.0.0` (port 4321) et `4321:4321` ajouté aux ports publiés dans `compose.yaml`. Le même port fonctionne avec ou sans Docker, et Playwright réutilise le serveur déjà lancé.
 
 ---
 
