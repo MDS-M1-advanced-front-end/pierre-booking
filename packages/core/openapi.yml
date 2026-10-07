@@ -86,6 +86,25 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /auth/password:
+    patch:
+      tags: [Authentification]
+      summary: Modifier son mot de passe
+      description: Change le mot de passe de l'utilisateur connecté. L'ancien mot de passe est exigé.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '204':
+          description: Mot de passe modifié
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
   /users:
     get:
       tags: [Utilisateurs]
@@ -169,20 +188,24 @@ paths:
           description: Recherche par nom ou description
           schema:
             type: string
+            maxLength: 255
         - name: location
           in: query
           schema:
             type: string
+            maxLength: 255
         - name: capacityMin
           in: query
           schema:
             type: integer
             minimum: 1
+            maximum: 10000
         - name: capacityMax
           in: query
           schema:
             type: integer
             minimum: 1
+            maximum: 10000
         - name: date
           in: query
           description: Date recherchée au format YYYY-MM-DD
@@ -212,6 +235,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedRooms'
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
     post:
       tags: [Salles]
@@ -232,6 +257,8 @@ paths:
                 $ref: '#/components/schemas/Room'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
 
@@ -255,6 +282,9 @@ paths:
     patch:
       tags: [Salles]
       summary: Modifier une salle
+      description: |
+        Réservé au gestionnaire propriétaire de la salle et aux administrateurs.
+        Modification partielle : seuls les champs envoyés sont modifiés.
       parameters:
         - $ref: '#/components/parameters/RoomId'
       requestBody:
@@ -270,6 +300,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Room'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
@@ -278,23 +312,29 @@ paths:
     delete:
       tags: [Salles]
       summary: Supprimer une salle
+      description: Réservé au gestionnaire propriétaire de la salle et aux administrateurs.
       parameters:
         - $ref: '#/components/parameters/RoomId'
       responses:
         '204':
           description: Salle supprimée
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
   /rooms/{roomId}/availability:
+    parameters:
+      - $ref: '#/components/parameters/RoomId'
     get:
       tags: [Disponibilités]
       summary: Consulter les disponibilités d'une salle
       security: []
       parameters:
-        - $ref: '#/components/parameters/RoomId'
         - name: date
           in: query
           required: true
@@ -318,6 +358,7 @@ paths:
             application/json:
               schema:
                 type: array
+                maxItems: 1000
                 items:
                   $ref: '#/components/schemas/AvailabilitySlot'
         '404':
@@ -326,6 +367,9 @@ paths:
     put:
       tags: [Disponibilités]
       summary: Définir les disponibilités d'une salle
+      description: |
+        Réservé au gestionnaire propriétaire de la salle et aux administrateurs.
+        Remplace l'ensemble des créneaux de la date indiquée.
       requestBody:
         required: true
         content:
@@ -335,13 +379,29 @@ paths:
       responses:
         '200':
           description: Disponibilités mises à jour
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AvailabilitySlot'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /reservations:
     get:
       tags: [Réservations]
       summary: Consulter ses réservations
+      description: |
+        Renvoie uniquement les réservations de l'utilisateur connecté, y compris
+        celles au statut CANCELLED. Les filtres `from` et `to` portent sur la date
+        de début (`startAt`) et sont inclusifs.
       parameters:
         - name: status
           in: query
@@ -349,11 +409,13 @@ paths:
             $ref: '#/components/schemas/ReservationStatus'
         - name: from
           in: query
+          description: Réservations dont `startAt` est à partir de cette date (incluse)
           schema:
             type: string
             format: date
         - name: to
           in: query
+          description: Réservations dont `startAt` est jusqu'à cette date (incluse)
           schema:
             type: string
             format: date
@@ -366,11 +428,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedReservations'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
     post:
       tags: [Réservations]
       summary: Réserver une salle
-      description: Vérifie la disponibilité avant de créer la réservation.
+      description: |
+        Vérifie la disponibilité avant de créer la réservation.
+        La réservation est créée au statut PENDING, puis passe à CONFIRMED ou
+        REJECTED via `/confirm` ou `/reject`. `startAt` doit être strictement
+        antérieur à `endAt`, et `numberOfParticipants` ne doit pas dépasser la
+        capacité de la salle (sinon 400).
       requestBody:
         required: true
         content:
@@ -386,8 +457,12 @@ paths:
                 $ref: '#/components/schemas/Reservation'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '409':
-          description: Créneau indisponible
+          $ref: '#/components/responses/Conflict'
 
   /reservations/{reservationId}:
     get:
@@ -402,6 +477,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Reservation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
@@ -410,6 +487,9 @@ paths:
     patch:
       tags: [Réservations]
       summary: Modifier une réservation
+      description: |
+        Seules les réservations PENDING ou CONFIRMED peuvent être modifiées (sinon 409).
+        Une modification du créneau d'une réservation CONFIRMED la repasse à PENDING.
       parameters:
         - $ref: '#/components/parameters/ReservationId'
       requestBody:
@@ -425,27 +505,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Reservation'
-        '409':
-          description: Nouveau créneau indisponible
-
-    delete:
-      tags: [Réservations]
-      summary: Annuler une réservation
-      parameters:
-        - $ref: '#/components/parameters/ReservationId'
-      responses:
-        '204':
-          description: Réservation annulée
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          description: Nouveau créneau indisponible ou réservation non modifiable dans son statut actuel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags: [Réservations]
+      summary: Annuler une réservation
+      description: |
+        Annulation logique : la réservation n'est pas supprimée, elle passe au
+        statut CANCELLED et reste consultable. Seules les réservations PENDING ou
+        CONFIRMED peuvent être annulées (sinon 409).
+      parameters:
+        - $ref: '#/components/parameters/ReservationId'
+      responses:
+        '204':
+          description: Réservation annulée (statut CANCELLED)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
   /reservations/{reservationId}/confirm:
     post:
       tags: [Réservations]
       summary: Confirmer une réservation
-      description: Utilisé par un gestionnaire ou un administrateur lorsque la validation est requise.
+      description: |
+        Utilisé par le gestionnaire de la salle ou un administrateur lorsque la validation est requise.
+        Seule une réservation au statut PENDING peut être confirmée (sinon 409).
       parameters:
         - $ref: '#/components/parameters/ReservationId'
       responses:
@@ -455,15 +557,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Reservation'
+              example:
+                id: 00000000-0000-4000-8000-300000000001
+                roomId: 00000000-0000-4000-8000-100000000001
+                userId: 00000000-0000-4000-8000-200000000001
+                startAt: '2026-10-12T09:00:00Z'
+                endAt: '2026-10-12T12:00:00Z'
+                status: CONFIRMED
+                totalAmount: 135.0
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
   /reservations/{reservationId}/reject:
     post:
       tags: [Réservations]
       summary: Refuser une réservation
+      description: |
+        Utilisé par le gestionnaire de la salle ou un administrateur.
+        Seule une réservation au statut PENDING peut être refusée (sinon 409).
       parameters:
         - $ref: '#/components/parameters/ReservationId'
       requestBody:
@@ -471,10 +588,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                reason:
-                  type: string
+              $ref: '#/components/schemas/ReservationRejectRequest'
       responses:
         '200':
           description: Réservation refusée
@@ -482,13 +596,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Reservation'
+              example:
+                id: 00000000-0000-4000-8000-300000000001
+                roomId: 00000000-0000-4000-8000-100000000001
+                userId: 00000000-0000-4000-8000-200000000001
+                startAt: '2026-10-12T09:00:00Z'
+                endAt: '2026-10-12T12:00:00Z'
+                status: REJECTED
+                totalAmount: 135.0
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
   /payments:
     post:
       tags: [Paiement]
       summary: Initier le paiement d'une réservation
+      description: Réservé au client auteur de la réservation.
       requestBody:
         required: true
         content:
@@ -504,6 +633,14 @@ paths:
                 $ref: '#/components/schemas/Payment'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
   /payments/{paymentId}:
     get:
@@ -518,6 +655,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Payment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -666,6 +807,13 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
 
+    Conflict:
+      description: Conflit avec l'état actuel de la ressource (créneau indisponible, statut incompatible)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
   schemas:
 
     UserRole:
@@ -735,6 +883,18 @@ components:
           example: 3600
         user:
           $ref: '#/components/schemas/User'
+
+    ChangePasswordRequest:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+          format: password
+        newPassword:
+          type: string
+          format: password
+          minLength: 8
 
     UserUpdateRequest:
       type: object
@@ -817,8 +977,32 @@ components:
           format: uri
 
     RoomUpdateRequest:
-      allOf:
-        - $ref: '#/components/schemas/RoomCreateRequest'
+      type: object
+      minProperties: 1
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        capacity:
+          type: integer
+          minimum: 1
+        location:
+          type: string
+        equipment:
+          type: array
+          items:
+            type: string
+        pricePerHour:
+          type: number
+          format: double
+          minimum: 0
+        imageUrl:
+          type: string
+          format: uri
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE]
 
     AvailabilitySlot:
       type: object
@@ -847,6 +1031,10 @@ components:
 
     ReservationStatus:
       type: string
+      description: |
+        Cycle de vie : PENDING à la création, puis CONFIRMED ou REJECTED (gestionnaire/admin).
+        PENDING ou CONFIRMED peut passer à CANCELLED (annulation).
+        CONFIRMED passe à COMPLETED automatiquement une fois `endAt` dépassé.
       enum:
         - PENDING
         - CONFIRMED
@@ -890,6 +1078,10 @@ components:
         totalAmount:
           type: number
           format: double
+          minimum: 0
+        currency:
+          type: string
+          example: EUR
         createdAt:
           type: string
           format: date-time
@@ -915,6 +1107,7 @@ components:
 
     ReservationUpdateRequest:
       type: object
+      minProperties: 1
       properties:
         startAt:
           type: string
@@ -926,6 +1119,12 @@ components:
           type: integer
           minimum: 1
         comment:
+          type: string
+
+    ReservationRejectRequest:
+      type: object
+      properties:
+        reason:
           type: string
 
     Payment:
@@ -1012,6 +1211,7 @@ components:
 
     PaginatedReservations:
       type: object
+      required: [items, page, pageSize, total]
       properties:
         items:
           type: array
