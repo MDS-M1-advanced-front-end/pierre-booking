@@ -1,0 +1,27 @@
+---
+// Écran 05 Mon profil (cadrage.md § 4 « 05 ») : coquille statique, contenu dans un îlot navigateur
+// protégé par `RequireAuth` (tout utilisateur connecté).
+import Skeleton from '../components/Skeleton.svelte';
+import Layout from '../layouts/Layout.astro';
+import ProfileIsland from '../partials/profil/ProfileIsland.svelte';
+---
+
+<Layout title="Mon profil" description="Vos informations personnelles et votre mot de passe.">
+  <div class="mb-(--space-5) flex flex-wrap items-end justify-between gap-(--space-4)">
+    <div>
+      <h1>Mon profil</h1>
+      <p class="mt-(--space-1) text-text-muted">Vos informations personnelles.</p>
+    </div>
+  </div>
+
+  <ProfileIsland client:only="svelte">
+    <div slot="fallback" class="flex flex-col gap-(--space-3)" aria-busy="true">
+      <p class="visually-hidden" role="status">
+        Chargement…
+      </p>
+      <Skeleton class="w-2/5" />
+      <Skeleton class="w-3/5" />
+      <Skeleton class="w-1/2" />
+    </div>
+  </ProfileIsland>
+</Layout>
