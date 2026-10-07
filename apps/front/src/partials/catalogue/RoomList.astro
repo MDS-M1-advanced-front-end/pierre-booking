@@ -1,0 +1,14 @@
+---
+import RoomCard from '../../components/RoomCard.astro';
+import { getRooms } from '../../data/rooms/rooms.queries';
+
+const rooms = await getRooms();
+---
+
+<ul class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-(--space-4)">
+  {rooms.map((room) => (
+    <li>
+      <RoomCard room={room} />
+    </li>
+  ))}
+</ul>

@@ -1,47 +1,8 @@
 ---
-import type { Room } from '@room-booking/core';
-import RoomCard from '../components/RoomCard.astro';
-import '../styles/global.css';
-
-// Données fictives reprises de la maquette (écran 01), en attendant l'API.
-const mockRooms: Room[] = [
-  {
-    id: '3f2b8c1e-7a4d-4e9b-9c1a-2d5e6f7a8b9c',
-    name: 'Salle Voltaire',
-    capacity: 12,
-    location: 'Paris 11e',
-    equipment: ['Écran 65"', 'Tableau blanc', 'Wi-Fi'],
-    pricePerHour: 45,
-    status: 'ACTIVE',
-  },
-  {
-    id: '8a1d4e2f-5b6c-4d7e-8f9a-0b1c2d3e4f5a',
-    name: 'Studio Médoc',
-    capacity: 4,
-    location: 'Bordeaux Chartrons',
-    equipment: ['Micros', 'Table de mixage', 'Casques'],
-    pricePerHour: 35,
-    status: 'INACTIVE',
-  },
-];
+import Layout from '../layouts/Layout.astro';
+import RoomList from '../partials/catalogue/RoomList.astro';
 ---
 
-<html lang="fr">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="generator" content={Astro.generator} />
-    <title>Astro</title>
-  </head>
-  <body class="p-(--space-5)">
-    <ul class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-(--space-4)">
-      {mockRooms.map((room) => (
-        <li>
-          <RoomCard room={room} />
-        </li>
-      ))}
-    </ul>
-  </body>
-</html>
+<Layout title="Trouver une salle">
+  <RoomList />
+</Layout>

@@ -1,22 +1,16 @@
 ---
 import type { Room } from '@room-booking/core';
+import { formatPrice } from '../utils/formatPrice';
 import Icon from './Icon.astro';
 
-export interface Props {
+interface Props {
   room: Room;
 }
 
 const { room } = Astro.props;
 
-const price = new Intl.NumberFormat('fr-FR', {
-  style: 'currency',
-  currency: 'EUR',
-  minimumFractionDigits: 0,
-}).format(room.pricePerHour);
-
 const isActive = room.status === 'ACTIVE';
 const equipment = room.equipment ?? [];
-// L'image est décorative (alt="") : le nom de la salle suit (note de maquette, écran 01).
 ---
 
 <article class="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
@@ -71,7 +65,8 @@ const equipment = room.equipment ?? [];
         </span>
       )}
       <p class="ml-auto text-lg font-bold">
-        {price} <small class="text-sm font-regular text-text-muted">/ heure</small>
+        {formatPrice(room.pricePerHour)}{' '}
+        <small class="text-sm font-regular text-text-muted">/ heure</small>
       </p>
     </div>
   </div>

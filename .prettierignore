@@ -8,4 +8,4 @@ apps/*/dist/
 apps/*/test-results/
 apps/*/playwright-report/
 # Copie telle quelle de maquettes/tokens.css
-apps/front/src/styles/tokens.css
+apps/front/src/theme/tokens.css
