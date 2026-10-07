@@ -1,0 +1,17 @@
+---
+import Button from '../components/Button.svelte';
+import Icon from '../components/Icon.svelte';
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Page introuvable" description="La page demandée n'existe pas ou a été déplacée.">
+  <div class="flex flex-col items-center gap-(--space-3) rounded-lg border border-dashed border-border-strong bg-surface px-(--space-4) py-(--space-8) text-center">
+    <Icon name="search" class="size-12 stroke-[1.5] text-text-muted" />
+    <h1 class="text-2xl">Page introuvable</h1>
+    <p class="max-w-md text-text-muted">
+      La page que vous cherchez n'existe pas ou a été déplacée. Vérifiez l'adresse, ou repartez du
+      catalogue des salles.
+    </p>
+    <Button href="/">Voir le catalogue</Button>
+  </div>
+</Layout>
