@@ -26,6 +26,26 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-10-07 — Implémentation, lot 0 : fondations (séance 3)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal
+- **Objectif** : dérouler le lot 0 du plan (outillage, configuration, mise en conformité avec l'architecture) sur la branche `feat/front`.
+- **Demande** : « Tu peux reprendre, tu as le droit de lancer jusqu'à 7 sous-agents simultanés. » Mes décisions juste avant : branche dédiée + push + PR, tout le plan d'une traite, Playwright sur Chromium seul, une entrée de journal par lot.
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (11 commits, de `bd6ed0e` à `676bf62`) : `pnpm check` réparé (plugins Prettier Astro et Svelte, fichiers générés ignorés) ; ESLint pour le front (`.ts`, `.astro`, `.svelte`) ; mise en conformité avec `architecture.md` (theme, Head, Layout, data, partials, utils) ; `API_BASE_URL` ; Svelte, adaptateur Node, `vite.define` ; Vitest centralisé en projets nommés (`core`, `front:utils`, `front:data`, `front:components`) ; Playwright ; composant `Icon` en Svelte (21 icônes de la maquette).
+- **Erreurs de l'IA relevées** :
+  - **avoir commencé à coder sans mon feu vert** : j'avais répondu « ok. d'autres questions ? » et l'IA l'a pris pour un départ ; j'ai dû l'arrêter et remettre à zéro les fichiers non committés. Consigne enregistrée dans sa mémoire : attendre un « go » explicite ;
+  - Prettier lancé depuis `apps/front` a **reformaté `tokens.css`**, qui doit rester une copie exacte de la maquette : le `.prettierignore` de la racine n'est pas lu quand on lance Prettier depuis un sous-dossier. Repéré dans le `--stat` du commit, fichier recopié depuis `maquettes/` (vérifié avec `cmp`) et commit corrigé ;
+  - **décision 5 (dev sur 5173) intenable**, découverte en lançant Playwright : le conteneur Docker du mock occupe déjà le port 5173 de la machine, et Astro 7 refuse un second serveur de dev dans le même projet. Corrigé : dev sur 4321 avec `--host 0.0.0.0`, `4321` publié dans `compose.yaml`, docs mises à jour ;
+  - `tseslint.config()` est déprécié (signalé par `astro check`) : remplacé par `defineConfig` d'ESLint ;
+  - premier composant Svelte de test : `svelte-check` a refusé `result.data.total`, qui est optionnel dans `PaginatedRooms` (bonne détection, corrigé).
+- **Vérification** :
+  - îlot Svelte testé dans **Chromium sur le serveur buildé** : 15 salles reçues du mock depuis le navigateur, clic OK, rendu statique correct ;
+  - le lint détecte bien une erreur volontaire dans un `.astro` puis dans un `.svelte` ;
+  - Vitest : un test de composant Svelte avec un vrai clic passe ; `--project front:utils` et `--project 'front:*'` fonctionnent ;
+  - Playwright : premier test de bout en bout OK ; `pnpm check` OK.
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-10-07 — Retour en arrière sur la mise en conformité et décisions de cadrage (séance 3)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal
