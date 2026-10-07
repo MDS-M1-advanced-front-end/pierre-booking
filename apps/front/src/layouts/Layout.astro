@@ -1,20 +1,61 @@
 ---
 import Head from '../components/Head.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import SiteHeader from '../components/SiteHeader.svelte';
 
 interface Props {
+  /** Titre de la page, suffixé par « · Quorum » dans l'onglet. */
   title: string;
+  /** Description de la page (balise meta). */
+  description?: string;
 }
 
-const { title } = Astro.props;
+const { title, description } = Astro.props;
 ---
 
 <html lang="fr">
-  <Head>
-    <title>{`${title} · Quorum`}</title>
-  </Head>
-  <body>
-    <main class="mx-auto max-w-(--size-container) p-(--space-5)">
+  <Head title={title} description={description} />
+  <body class="flex min-h-dvh flex-col">
+    <a class="skip-link" href="#main">
+      Aller au contenu
+    </a>
+
+    <!-- L'en-tête dépend de la session (navigateur) : rendu côté client uniquement. -->
+    <SiteHeader client:only="svelte" currentPath={Astro.url.pathname}>
+      <!-- Repli de même hauteur que l'en-tête, pour éviter un décalage de mise en page. -->
+      <div slot="fallback" class="sticky top-0 z-(--z-header) border-b border-border bg-surface">
+        <div class="mx-auto flex min-h-16 w-full max-w-(--size-container) items-center px-(--space-4) md:px-(--space-6)">
+          <span class="inline-flex items-center gap-(--space-2) text-lg font-bold text-text">
+            <svg class="size-8" viewBox="0 0 32 32" aria-hidden="true">
+              <rect width="32" height="32" rx="8" fill="var(--color-action)"></rect>
+              <circle
+                cx="15"
+                cy="15"
+                r="7"
+                fill="none"
+                stroke="var(--color-on-action)"
+                stroke-width="3"
+              ></circle>
+              <path
+                d="m19.5 19.5 5 5"
+                stroke="var(--color-accent)"
+                stroke-width="3.5"
+                stroke-linecap="round"
+              ></path>
+            </svg>
+            Quorum
+          </span>
+        </div>
+      </div>
+    </SiteHeader>
+
+    <main
+      id="main"
+      class="mx-auto w-full max-w-(--size-container) flex-1 px-(--space-4) pt-(--space-5) pb-(--space-10) md:px-(--space-6)"
+    >
       <slot />
     </main>
+
+    <SiteFooter />
   </body>
 </html>
