@@ -1,0 +1,17 @@
+---
+// Écran 09 « Modifier une salle » : coquille rendue à la demande, l'identifiant de la salle est
+// passé à l'îlot, qui charge la salle avec la session du navigateur.
+import Layout from '../../../../layouts/Layout.astro';
+import RoomFormFallback from '../../../../partials/gestion-salles/RoomFormFallback.astro';
+import RoomFormPage from '../../../../partials/gestion-salles/RoomFormPage.svelte';
+
+export const prerender = false;
+
+const { id } = Astro.params;
+---
+
+<Layout title="Modifier une salle" description="Modifier les informations d'une salle.">
+  <RoomFormPage client:only="svelte" roomId={id}>
+    <RoomFormFallback slot="fallback" />
+  </RoomFormPage>
+</Layout>
