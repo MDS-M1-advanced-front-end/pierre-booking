@@ -44,7 +44,12 @@ export async function getMe(): Promise<Result<User>> {
   return result;
 }
 
-/** Change le mot de passe de l'utilisateur connecté (204). */
+/**
+ * Change le mot de passe de l'utilisateur connecté (204).
+ * Pas de `withSession` : sur cette route, un `401` signifie le plus probablement « mot de passe
+ * actuel incorrect » (le contrat ne le précise pas) ; l'écran l'affiche au lieu de déconnecter.
+ * Une session réellement expirée sera rattrapée par la requête suivante.
+ */
 export function changePassword(body: ChangePasswordRequest): Promise<Result<void>> {
-  return withSession(api.changePassword(body));
+  return api.changePassword(body);
 }
