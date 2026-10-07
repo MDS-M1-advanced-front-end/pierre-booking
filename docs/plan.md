@@ -2,6 +2,8 @@
 
 Ordre de réalisation du site décrit dans [`cadrage.md`](./cadrage.md), en respectant [`architecture.md`](./architecture.md). Le site est déroulé d'un seul tenant, lot par lot. Un lot n'est commencé que lorsque le précédent remplit sa **définition de fini**.
 
+**État au 2026-10-07** : lots 0 à 5 réalisés, lot 6 réalisé sauf 6.5 (synthèse du journal, à rédiger par l'apprenant). Vérification manuelle au lecteur d'écran (6.1) non faite : seul l'audit automatique axe-core l'a été.
+
 ## Règles pour tout le plan
 
 - **Un commit gitmoji par étape** (numérotée ci-dessous), en français, sans mention de Claude. Exemples : `:heavy_plus_sign:` dépendance, `:wrench:` configuration, `:truck:` déplacement, `:sparkles:` fonctionnalité, `:lipstick:` style, `:white_check_mark:` tests, `:recycle:` refactor, `:memo:` documentation.

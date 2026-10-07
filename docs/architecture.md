@@ -34,7 +34,7 @@ apps/front/
     ├── data/                   accès aux données, un dossier par domaine
     │   └── rooms/
     │       ├── rooms.queries.ts   fonctions async qui appellent core
-    │       └── rooms.mock.ts      données fictives pendant la conception
+    │       └── roomNames.ts       cache des salles par identifiant (anomalie 8)
     ├── theme/
     │   ├── global.css          Tailwind + branchement des tokens + styles de base
     │   └── tokens.css          copie telle quelle de maquettes/tokens.css
@@ -46,6 +46,8 @@ apps/front/
 - Une route = un fichier. Une route dynamique utilise les crochets : `rooms/[id].astro`.
 - Contenu : un `<Layout title="…">` qui entoure les partials de la page.
 - Pas d'appel à `src/data/` ici, sauf pour lire un paramètre nécessaire à toute la page (ex. `getRoom(id)` pour décider d'une 404).
+- **Exception des pages publiques mises en cache** (01, 02) : leurs données sont lues dans la page, car la décision de cache (`Astro.cache.set(false)` sur une erreur) doit être prise dans le frontmatter de la page, avant la création de la réponse. Les données sont ensuite passées aux partials en props.
+- Page connectée : coquille Astro + îlot `client:only="svelte"` de `partials/<page>/`, avec des `Skeleton` en contenu de repli (`slot="fallback"`) et `RequireAuth` dans l'îlot.
 
 ### `layouts/`
 
@@ -81,7 +83,7 @@ Un dossier par domaine de l'API : `rooms`, `reservations`, `auth`, `users`. Fich
 
 Pas de schémas de validation dans le front : les fonctions de `core` sont utilisées telles quelles, et les schémas Zod viendront de `core`. En attendant, les formulaires s'appuient sur les contraintes HTML (voir `cadrage.md` § 2.6).
 
-Les partials passent toujours par `queries`, jamais directement par `mock` ni par `core`. Passer du mock à l'API ne touche donc qu'un fichier.
+Les partials passent toujours par `queries`, jamais directement par `core`. Les fonctions de `core` ne sont importées que par `data/client.ts`, qui charge d'abord `auth/mockPersona` : openapi-fetch capture `fetch` à la création du client, l'enveloppe du mock doit donc exister avant.
 
 ### `theme/`
 
@@ -120,7 +122,7 @@ On reprend les règles du README de la maquette (WCAG 2.2 AA) : focus visible, c
 - **Format** : Prettier du dépôt (`singleQuote`, `printWidth: 100`, points-virgules). Attention : le portfolio est sans points-virgules, ce projet en met.
 - **Langue** : code (noms de variables, fonctions) en anglais ; textes affichés, commentaires et commits en français.
 - **Commits** : gitmoji, en français, un commit par étape logique (`:sparkles:`, `:lipstick:`, `:heavy_plus_sign:`, `:memo:`…). Pas de mention de Claude.
-- **Tests** : un test unitaire Vitest à côté du fichier testé (`formatPrice.test.ts` à côté de `formatPrice.ts`), lancé par le `vitest.config.ts` de la racine, qui regroupe tous les paquets en **projets nommés** : `core`, `front:utils`, `front:data`, `front:components` (`pnpm test`, ou `pnpm test --project front:utils`). Un dossier de `src/` qui reçoit des tests = un projet `front:<dossier>`. Tests de bout en bout Playwright dans `apps/front/e2e/` (`pnpm test:e2e`).
+- **Tests** : un test unitaire Vitest à côté du fichier testé (`formatPrice.test.ts` à côté de `formatPrice.ts`), lancé par le `vitest.config.ts` de la racine, qui regroupe tous les paquets en **projets nommés** : `core`, `front:utils`, `front:data`, `front:components` (`pnpm test`, ou `pnpm test --project front:utils`). Un dossier de `src/` qui reçoit des tests = un projet `front:<dossier>`. Tests de bout en bout Playwright dans `apps/front/e2e/` (`pnpm test:e2e`), profils et session de test dans `e2e/helpers.ts`, audit d'accessibilité axe-core dans `e2e/a11y.spec.ts`.
 - **Vérification** avant commit : `pnpm typecheck` (`astro check`) **et** `pnpm build` dans `apps/front`. `astro check` ne voit pas un import CSS cassé.
 - **Journal IA** : chaque usage de l'IA est tracé dans `docs/ai-journal.md`.
 

@@ -30,7 +30,12 @@ Toutes les décisions ont été validées le 2026-10-07 (voir la fin de [`plan.m
 - **« ISR » avec Astro 7** : Astro 7 fournit un cache de route (`cache.provider: memoryCache()` + `routeRules` avec `maxAge` / `swr`), vérifié dans les types de `astro@7.3.6`. Règles retenues :
   - `/` : `maxAge: 60, swr: 300` ; `/salles/[id]` : `maxAge: 300, swr: 3600`.
   - Limite : les écritures (création ou modification de salle) partent du navigateur vers l'API, donc le serveur Astro ne peut pas invalider le cache. On compte sur la courte durée de vie (`maxAge`).
-  - À tester en début de lot 3 : si le cache de route ne fonctionne pas avec l'adaptateur Node, on se rabat sur un en-tête `Cache-Control: s-maxage=…, stale-while-revalidate=…`.
+  - **Constaté à l'implémentation (étape 3.1)** :
+    - inactif en `astro dev` par conception (`NoopAstroCache`) : on ne l'observe qu'après `pnpm build` ;
+    - fonctionne avec `@astrojs/node` sans réglage de l'adaptateur, vérifié sur le serveur buildé : en-tête `X-Astro-Cache` `MISS` puis `HIT` sur `/` et `/salles/[id]` ; la clé de cache trie les paramètres d'URL (même entrée quel que soit leur ordre) ;
+    - cache en mémoire du processus Node (1000 entrées, LRU), aucun `Cache-Control` envoyé au navigateur ;
+    - les réponses d'erreur (404, API injoignable) appellent `Astro.cache.set(false)` et ne sont jamais mises en cache (vérifié) ;
+    - repli `Cache-Control` inutile.
 - **Une page mise en cache n'est jamais personnalisée.** Tout ce qui dépend de la session (en-tête de navigation, bouton « Réserver » ou « Se connecter pour réserver ») est un îlot rendu dans le navigateur.
 
 ### 2.2 Interactivité : Svelte
@@ -55,7 +60,13 @@ Toutes les décisions ont été validées le 2026-10-07 (voir la fin de [`plan.m
 - Tous les appels passent par `src/data/<domaine>/<domaine>.queries.ts`, qui enveloppe les fonctions de `core` et transforme un `Result` en erreur `{ ok: false }` exploitable par l'interface (message, statut).
 - **`process.env` dans le navigateur** : le client de `core` lit `process.env.API_BASE_URL`. On le remplace au build avec `vite.define` dans `astro.config.mjs`. Conséquence : l'URL de l'API est **figée au build**, ce qui est acceptable pour ce projet.
 - CORS : le mock Prism accepte les appels depuis `localhost:4321` (vérifié : prévol `OPTIONS` en 204, `Authorization` autorisé).
-- Données fictives : les fichiers `*.mock.ts` ne servent plus une fois l'API branchée. On les supprime au lot 3 ; le mock Prism devient la source de développement.
+- Données fictives : les fichiers `*.mock.ts` ne servent plus une fois l'API branchée. Supprimés au lot 3 ; le mock Prism est la source de développement.
+- **Limites du mock constatées à l'implémentation** (sans effet avec la vraie API, contournées dans les tests de bout en bout par `page.route`) :
+  - `GET /rooms` ignore `page`, `pageSize` et tous les filtres (toujours 15 salles) et refuse `pageSize > 100` ;
+  - `startTime` / `endTime` exigent `HH:MM:SS` (un `<input type="time">` envoie `HH:MM`, converti dans `catalogueParams.ts`) ;
+  - `GET /rooms/{id}` renvoie toujours la Salle Voltaire ; `GET /reservations/{id}` n'a pas d'exemple (réservation générée, datée de 2019 : l'écran 07 l'affiche « non modifiable ») ; `GET /users/{id}` et `PATCH /users/{id}` renvoient « string string » ;
+  - `GET /reservations` renvoie les 8 réservations du jeu de données, de tous les utilisateurs, sans tenir compte de `status` (l'écran 06 refiltre côté client).
+  - Piste (non faite, `mock/` appartient au dépôt du cours) : ajouter ces exemples dans `mock/build-spec.js`.
 
 ### 2.5 Mock Prism et profils de test
 
