@@ -26,6 +26,39 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-10-07 — Implémentation, lot 6 : finitions (séance 3)
+
+- **Outil** : Claude Code (Claude Opus 5.5), sans sous-agent.
+- **Objectif** : étapes 6.1 à 6.4 : accessibilité, affichage mobile/desktop, titres, nettoyage et docs.
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** :
+  - **6.1** : audit automatique **axe-core** (dépendance `@axe-core/playwright` ajoutée) sur les 14 pages, en 1280 px et 375 px, règles WCAG 2.2 A/AA : **0 violation sur 28 audits**. Pour m'assurer que ce 0 n'était pas un faux positif, j'ai injecté une image sans `alt` et un bouton sans nom : axe les détecte (`image-alt`, `button-name`), et le contenu était bien chargé au moment de l'audit ;
+  - **6.2** : captures de 9 écrans aux deux tailles, relues contre la maquette (la barre de filtres de l'écran 06 défile en mobile, comme la maquette) ;
+  - **6.3** : titres d'onglet et descriptions posés par chaque écran ;
+  - **6.4** : aucun TODO restant ; `cadrage.md` (cache vérifié, limites du mock), `architecture.md` (exception des pages publiques, règle de `client.ts`, aides e2e) et l'état du plan mis à jour.
+- **Non fait** : vérification **manuelle** au clavier et au lecteur d'écran (6.1) : un audit automatique ne la remplace pas. 6.5 (synthèse du journal) : à rédiger par moi.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-07 — Implémentation, lots 3 à 5 : les 11 écrans (séance 3)
+
+- **Outil** : Claude Code (Claude Opus 5.5), qui a réparti les écrans entre 7 sous-agents en parallèle (catalogue, salle, auth, reservations, modifier-reservation, gestion-salles, gestion-planning). Consignes communes, fichiers attribués à chacun, contrats écrits pour les composants partagés (SlotPicker, ReservationItem, ErrorSummary, cache des noms de salles), puis relecture, intégration et commits.
+- **Objectif** : étapes 3.1 à 5.6 : les 11 écrans et leurs tests de bout en bout.
+- **Résultat** : _à compléter_
+- **Vérifications** : `pnpm check` (304 tests unitaires), **56 tests de bout en bout** Playwright lancés ensemble, build de production.
+  - **Cache de route** testé sur le serveur buildé : `X-Astro-Cache` `MISS` puis `HIT`, même entrée quel que soit l'ordre des paramètres, 404 jamais mises en cache.
+  - Les tests vérifient **les requêtes envoyées** (le mock est sans état) : `POST /reservations` en UTC correct pour Paris, `PATCH /users` sans `role`, corps complet de `PATCH /rooms`, créneaux d'une heure dans `PUT …/availability`, etc.
+  - **Le piège du focus de la `Modal`** (impossible avec jsdom) est testé dans un vrai navigateur : Échap ferme et rend le focus au bouton.
+- **Erreurs relevées (agents ou intégration)** :
+  - **boutons secondaires sans bordure** sur toute l'application, relevé par deux agents sur leurs captures : même cause que l'icône du lot 1 (`border-transparent` l'emportait selon l'ordre de la feuille Tailwind). Corrigé dans `Button` avec un test « une seule couleur de bordure par variante » ;
+  - **changement de mot de passe** : un 401 aurait déconnecté l'utilisateur au lieu d'afficher « mot de passe actuel incorrect » (conflit signalé par l'agent auth entre `withSession` et l'écran 05). Corrigé : `changePassword` ne passe plus par `withSession` ;
+  - **commit mélangé de ma part** (encore) : `git add pages/gestion` a embarqué la page de l'écran 11 dans le commit de l'écran 10, alors que ses composants n'étaient pas committés (build cassé à ce commit). Vu dans le `--stat`, commit refait avant de continuer ;
+  - **fausse alerte de ma part** : le premier essai du cache sur le build montrait des 404 partout. Le serveur de test lancé au lot 1 tournait encore sur le port, avec l'ancien build ;
+  - côté agents : `bind:this` sur un composant (renvoie l'instance, pas l'élément), `$props.id()` dans une chaîne de gabarit, espace manquant « 12personnes » vu sur capture, tests e2e trop larges (`getByText('Refusée')` trouvait aussi un titre) : corrigés par eux ;
+  - un agent a reformaté (Prettier) un fichier d'un autre agent, et l'a signalé.
+- **Limites du mock découvertes** (listées dans `cadrage.md` § 2.4) : filtres et pagination ignorés, heures `HH:MM:SS` exigées, `GET /rooms/{id}` toujours « Salle Voltaire », pas d'exemple pour `GET /reservations/{id}` ni `GET /users/{id}` (« string string » sur l'écran 11).
+- **Écarts assumés** : pas de prix estimé (décision 10) ; compteur « Demandes » de l'en-tête non filtré sur les salles du gestionnaire (2 dans l'en-tête, 1 sur l'écran 11 avec le mock) et non rafraîchi après une action ; l'en-tête suit la maquette (« LM Léa Martin », « Se déconnecter » visible).
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-10-07 — Implémentation, lot 2 : données, session, logique (séance 3)
 
 - **Outil** : Claude Code (Claude Opus 5.5), qui a réparti le travail entre 3 sous-agents en parallèle (data, logic, session-header), puis a relu, intégré et committé.
