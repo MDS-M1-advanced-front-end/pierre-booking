@@ -36,12 +36,15 @@
   }: Props = $props();
 
   // Couleurs de chaque variante (maquette.css, .btn--*), appliquées hors état désactivé.
+  // Chaque variante porte sa couleur de bordure : deux utilitaires `border-*` concurrents
+  // seraient départagés par l'ordre de la feuille générée, pas par l'ordre des classes.
   const variantClasses: Record<Variant, string> = {
-    primary: 'bg-action text-on-action hover:bg-action-hover active:bg-action-active',
+    primary:
+      'border-transparent bg-action text-on-action hover:bg-action-hover active:bg-action-active',
     secondary:
       'border-border-strong bg-surface text-action hover:bg-action-subtle active:bg-action-subtle-hover',
-    ghost: 'bg-transparent text-action hover:bg-action-subtle',
-    danger: 'bg-danger text-text-inverse hover:bg-danger-hover',
+    ghost: 'border-transparent bg-transparent text-action hover:bg-action-subtle',
+    danger: 'border-transparent bg-danger text-text-inverse hover:bg-danger-hover',
   };
 
   // `aria-disabled` (ex. bouton en cours d'envoi) prend le même aspect que `disabled`.
@@ -50,7 +53,7 @@
   );
 
   const classes = $derived([
-    'inline-flex items-center justify-center gap-(--space-2) rounded-md border border-transparent',
+    'inline-flex items-center justify-center gap-(--space-2) rounded-md border',
     'leading-none font-semibold no-underline',
     'transition-[background-color,border-color] duration-(--duration-fast) ease-(--easing-standard)',
     size === 'md' ? 'min-h-(--size-control)' : 'min-h-(--size-control-sm) text-sm',
