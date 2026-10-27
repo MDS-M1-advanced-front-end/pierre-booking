@@ -41,14 +41,23 @@ export class ReservationsService {
     private readonly availabilityService: AvailabilityService,
   ) {}
 
-  // GET /reservations : uniquement celles de l'utilisateur connecté
+  /**
+   * GET /reservations : celles de l'utilisateur connecté, ou, pour un gestionnaire,
+   * celles de ses salles (écran « Demandes » du front, anomalie 4 de docs/cadrage.md).
+   */
   async findMine(
     query: ReservationsQueryDTO,
     user: AuthUser,
   ): Promise<PaginatedReservationsDTO> {
-    const qb = this.reservations
-      .createQueryBuilder('reservation')
-      .where('reservation.user_id = :userId', { userId: user.id });
+    const qb = this.reservations.createQueryBuilder('reservation');
+    if (user.role === UserRole.GESTIONNAIRE) {
+      qb.innerJoin('reservation.room', 'room').where(
+        'room.owner_id = :userId',
+        { userId: user.id },
+      );
+    } else {
+      qb.where('reservation.user_id = :userId', { userId: user.id });
+    }
     if (query.status) {
       qb.andWhere('reservation.status = :status', { status: query.status });
     }
