@@ -85,6 +85,31 @@ paths:
                 $ref: '#/components/schemas/User'
         '401':
           $ref: '#/components/responses/Unauthorized'
+    patch:
+      tags: [Authentification]
+      summary: Modifier son profil
+      description: |
+        Modification partielle du profil de l'utilisateur connecté : seuls les champs envoyés
+        sont modifiés. Le rôle ne se modifie pas ici (`PATCH /users/{userId}`, administrateurs).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdateRequest'
+      responses:
+        '200':
+          description: Profil modifié
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Adresse e-mail déjà utilisée
 
   /auth/password:
     patch:
@@ -896,6 +921,18 @@ components:
           format: password
           minLength: 8
 
+    ProfileUpdateRequest:
+      type: object
+      minProperties: 1
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+
     UserUpdateRequest:
       type: object
       properties:
@@ -984,6 +1021,8 @@ components:
           type: string
         description:
           type: string
+          nullable: true
+          description: null efface la description
         capacity:
           type: integer
           minimum: 1
@@ -1000,6 +1039,8 @@ components:
         imageUrl:
           type: string
           format: uri
+          nullable: true
+          description: null retire la photo
         status:
           type: string
           enum: [ACTIVE, INACTIVE]

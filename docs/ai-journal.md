@@ -26,6 +26,181 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-10-27 — CORS (#7) et pull request de la branche `back` (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : lever le dernier point qui empêche le front d'appeler le back depuis le navigateur, puis proposer la branche `back` à la fusion.
+- **Demande** : « Attaque le 7 maintenant. Ensuite, committe et ouvre la PR vers `main`. »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : `app.enableCors` dans `main.ts`, origines lues dans `CORS_ORIGIN` (défaut `http://localhost:4321`, plusieurs origines séparées par des virgules) ; en-têtes du prévol autorisés tels que demandés (`Authorization`, et `Prefer` envoyé par `mockPersona`) ; `CORS_ORIGIN` ajouté au `.env.example`. Pull request de `back` vers `main`.
+- **Erreurs de l'IA relevées** : PR ouverte après les seules vérifications du back, sans lancer les étapes de la CI à la racine (`pnpm typecheck`, `lint`, `format:check`, `test`). `format:check` échouait sur `docs/use-cases.md` (ligne vide manquante et espaces en fin de ligne, déjà présents dans le commit `a899ec9`). Repéré pendant que la CI tournait ; mise en forme corrigée par Prettier et poussée sur la PR.
+- **Vérification** : typecheck et lint ; requêtes `curl` sur l'app lancée : prévol `OPTIONS` depuis `localhost:4321` → `204` avec `Access-Control-Allow-Origin` et les en-têtes demandés ; `GET` depuis le front → en-tête présent ; origine inconnue → pas d'en-tête (le navigateur bloque). Pas encore testé depuis le vrai front dans un navigateur (ticket #2).
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-27 — Tickets back #11, #12, #13, #14 et #16 (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : corriger cinq des tickets back ouverts juste avant.
+- **Demande** : « Commit, puis attaque les points 11, 12, 13, 14, 16. »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** :
+  - **#11** : filtre d'exception global (`common/api-errors.ts`) : toutes les erreurs au format `{ code, message, details }` du schéma `Error`, avec les erreurs de validation par champ dans `details` (chemin des champs imbriqués : `slots.0.startTime`) ; une erreur inattendue donne `INTERNAL_ERROR` sans fuite de détail, et elle est journalisée ;
+  - **#12** : `description` et `imageUrl` acceptent `null` dans `PATCH /rooms` pour effacer la valeur ; `nullable: true` ajouté au contrat, `core` régénéré ;
+  - **#13** : `NonEmptyBodyPipe` (`minProperties: 1`) sur les `PATCH` de salle, de réservation et de profil ; `@IsUrl({ require_tld: false })` pour les URL `localhost` ; décorateur `IsOptionalNotNull` pour les champs `NOT NULL` ;
+  - **#14** : préfixe `/api` et port 8080, comme le serveur du contrat (et la valeur par défaut de `core`) ;
+  - **#16** : le back refuse de démarrer en production sans `JWT_SECRET` ; le guard relit l'utilisateur en base à chaque appel (rôle à jour, compte supprimé refusé) ; `GET /` public ;
+  - commits : `dc33bc2` (contrat), `b07e412` (#11), `33d0493` (#12, #13), `9d8ac45` (#14), `db9d41d` (#16). `main.ts` et `.env.example` touchaient plusieurs tickets : versions intermédiaires stagées pour séparer les commits, chacun vérifié seul au typecheck. Les tickets se fermeront à la fusion dans `main` (`Closes #…`). Ticket front #2 mis à jour avec la nouvelle URL.
+- **Erreurs de l'IA relevées** :
+  - **ticket #12 inexact** : l'IA y affirmait que `null` était refusé. Vérification faite avant de coder, c'était faux : `@IsOptional()` laisse passer `null`, et le back effaçait déjà la photo. Il ne manquait que le contrat ;
+  - ce même essai a révélé un **bug que l'IA avait introduit** dans ses DTOs : `null` sur un champ obligatoire (`{"name": null}`, `{"firstName": null}`) passait la validation et finissait en **500** (contrainte `NOT NULL` en base). Corrigé avec `IsOptionalNotNull` ;
+  - le script de test de l'IA supposait une réponse JSON partout : en dehors de `/api`, Nest 12 laisse Express répondre avec une page HTML (404). Comportement gardé (seul `/api` est l'API) ; le test de 404 lui-même ne changeait pas l'identifiant de la salle, refait à la main.
+- **Limite** : le message de `ParseUUIDPipe` reste en anglais (`Validation failed (uuid is expected)`), avec le bon `code`. Le front n'affiche jamais le message brut.
+- **Vérification** : typecheck, lint, test unitaire, `pnpm check` de `core` ; scénario complet (74/74) sur une base de test séparée (`resa_test`, pour ne pas toucher aux données du seed) ; tests ciblés par ticket sur la base du seed (corps d'erreur, `400` sur les `PATCH` vides et les `null`, effacement de la photo, admin rétrogradé refusé sans se reconnecter : `200` puis `403`) ; démarrage refusé avec `NODE_ENV=production` sans secret ; seed relancé après les essais.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-27 — Tickets pour les problèmes du back (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : tracer en tickets les problèmes du back relevés pendant la séance, comme ceux du front (#2 à #6).
+- **Demande** : « J'aimerais retourner sur les problèmes que je t'ai fait chercher plus tôt. Ajoute aussi des issues pour les problèmes back que tu as relevés. »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : label `back` et 10 tickets (#7 à #16), avec `bug`, `enhancement` ou `question` en plus : CORS non activé (#7), noms des demandeurs refusés au gestionnaire (#8), passage automatique en `COMPLETED` (#9), réservations simultanées et contrainte d'exclusion (#10), format des erreurs non conforme au schéma `Error` (#11), `imageUrl` impossible à effacer (#12), écarts de validation (`PATCH` vide accepté, URL `localhost` refusée) (#13), préfixe `/api` et port 8080 du contrat (#14), notifications non branchées (#15), sécurité (secret JWT par défaut, rôle figé dans le jeton, `GET /` protégé) (#16). Les tickets liés au front y renvoient (#2, #4, #6).
+- **Erreurs de l'IA relevées** : première création des tickets lancée depuis un dossier temporaire, hors du dépôt : `gh` a échoué (le label, lui, était créé). Relancée avec `-R` sur le dépôt.
+- **Vérification** : liste des tickets relue sur GitHub ; les points #13 (`PATCH` vide accepté) et #10 (concurrence) viennent de la lecture du code, ils n'ont pas été reproduits par un appel.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-27 — Journal reconstitué et consigne permanente `AGENTS.md` (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : rattraper le journal de la séance, puis faire en sorte que l'IA le tienne sans qu'on le lui rappelle.
+- **Demande** : « Tu as complètement oublié de mettre à jour le journal, t'aurais moyen de remettre tout ce qu'on a fait aujourd'hui ? » ; puis séparer l'entrée DTOs / controllers en deux ; puis « souviens-toi de remplir ça à chaque prompt. Normalement tu l'avais stocké en mémoire mais c'est pas resté, donc il faut peut-être le mettre dans un `AGENTS.md` ».
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** :
+  - 8 entrées du 2026-10-27 reconstituées à partir de la conversation (`cdd1f16`) ;
+  - **cause de la perte** : la mémoire de Claude Code est rangée par chemin de projet. Le dépôt est passé de `pierre-booking/` à `pierre-booking/main/`, et la mémoire de l'ancien chemin ne suit pas (elle était d'ailleurs vide) ;
+  - `AGENTS.md` à la racine (consigne du journal, conventions de commit, points d'attention du dépôt), importé par `CLAUDE.md`, que Claude Code charge automatiquement ; consigne aussi enregistrée dans la mémoire du nouveau chemin.
+- **Erreurs de l'IA relevées** : le journal non tenu pendant toute la séance (voir l'entrée `PATCH /auth/me`).
+- **Vérification** : Prettier sur le journal ; relecture des entrées contre l'historique `git log`.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-27 — Route `PATCH /auth/me` : modification du profil (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal, sans sous-agent.
+- **Objectif** : permettre à un utilisateur de modifier son propre profil sans ouvrir `/users/{userId}` (réservé aux administrateurs).
+- **Demande** : à la question de l'IA (ouvrir `/users/{userId}` à l'utilisateur lui-même ?), j'ai répondu que c'était plutôt la route à revoir, puisque le profil se lit déjà par `GET /auth/me`. Puis : « vas-y pour `PATCH /auth/me` ».
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** :
+  - contrat `packages/core/openapi.yml` : `PATCH /auth/me` avec le schéma `ProfileUpdateRequest` (`firstName`, `lastName`, `email`, sans `role`) ; schéma de `core` régénéré (`pnpm generate:api`), type et fonction `updateMe` ajoutés ;
+  - back : `UpdateProfileDTO`, `AuthService.updateMe`, route dans `AuthController` ; route ajoutée dans `docs/use-cases.md` ;
+  - ticket front #3 renommé et complété avec les tâches (appeler `updateMe`, gérer le `409`).
+- **Point d'attention signalé par l'IA** : `packages/core` est recopié depuis ma branche du dépôt `core` par `pnpm core:sync`. Si je ne reporte pas ces changements sur ce dépôt, le prochain `core:sync` les écrasera.
+- **Vérification** : `pnpm check` de `core` ; typecheck et lint du back ; appels réels sur la base du seed avec `client1` : `200` (rôle inchangé), `400` si `role` est envoyé ou e-mail invalide, `409` avec l'e-mail d'un autre compte, `401` sans jeton.
+- **Erreur de l'IA relevée** : **le journal n'a pas été tenu pendant la séance**. Toutes les entrées du 2026-10-27 ont été écrites après coup, à ma demande, en reprenant la conversation.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-27 — Analyse front/back, seed et tickets front (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : lister ce qui empêche de brancher le front sur le back, puis remplir la base de données.
+- **Demande** : « Analyse l'avancement du projet et liste les points manquants entre le front et le back qui empêcheraient de les connecter. » Puis mes décisions sur les points relevés : CORS laissé pour plus tard, route du profil à revoir, réservations du gestionnaire à corriger, et « fais un script de seed, lance le Postgres via compose et applique-le ; ouvre des tickets avec un label `front` pour tout ce qui concerne le front ».
+- **Résultat** : _à compléter_
+- **Points bloquants trouvés** (en lisant `data/` du front, le client de `core` et les anomalies de `cadrage.md`) :
+  - **CORS non activé** : les îlots Svelte, qui appellent l'API depuis le navigateur, seraient bloqués ;
+  - **profil** : l'écran 05 appelle `PATCH /users/{id}`, réservé aux administrateurs côté back (→ entrée `PATCH /auth/me`) ;
+  - **écran Demandes** : le front suppose que `GET /reservations` renvoie au gestionnaire les réservations de ses salles (anomalie 4), le back suivait la spec à la lettre. Corrigé côté back (`7bbeed6`) ;
+  - **base vide**, et impossible de créer un gestionnaire ou un admin par l'API.
+- **Ce qui a été fait** :
+  - `pnpm seed` (`947df44`) : vide les tables puis reprend `mock/data/*.json` (mêmes ids, mêmes comptes `client1@salles.example`…, mot de passe `motdepasse`), avec des créneaux de 08:00 à 19:00 sur 60 jours ; refusé si `NODE_ENV=production` ;
+  - chargement d'un `.env` dans le back (`src/env.ts`, comme `process.loadEnvFile()` dans le front) : le port 5432 de ma machine est pris par un autre projet (`trading-postgres`), la base du compose tourne donc sur 5433 ;
+  - label `front` et tickets #2 à #6 : brancher le front sur le back, route du profil, anomalie 4 confirmée, nom manquant d'une salle devenue inactive, photo de salle impossible à retirer.
+- **Vérification** : migrations et seed appliqués sur la base du compose ; seed relancé (rejouable) ; connexion par l'API avec un compte de chaque rôle (`gestionnaire1` ne voit que les réservations de ses salles, `client1` que les siennes, statistiques admin cohérentes).
+- **Erreurs de l'IA relevées** :
+  - lors des services, l'IA avait vu le problème de l'anomalie 4 mais choisi de suivre la spec, en le signalant seulement : il a fallu revenir dessus ;
+  - aucune autre trouvée sur cette partie.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-27 — Filtre de disponibilité des salles réécrit avec l'ORM (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : remplacer le SQL brut de `whereAvailable` (filtre `date` / `startTime` / `endTime` de `GET /rooms`).
+- **Demande** : « Je ne suis pas fan de la manière dont tu l'as fait. Il n'y aurait pas une autre solution en passant par l'ORM plutôt qu'en écrivant du SQL ? »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (`b69ad88`) : deux `find` TypeORM (créneaux ouverts qui couvrent la plage avec `LessThanOrEqual` / `MoreThanOrEqual`, puis réservations actives de la journée avec `In` / `LessThan` / `MoreThan`), chevauchement calculé en TypeScript par la même fonction que `GET /rooms/{id}/availability`. La requête principale ne garde que les ids libres (`andWhereInIds`) : la pagination reste faite par la base. `AvailabilityService` ne dépend plus de `RoomsService`, pour éviter une dépendance circulaire.
+- **Compromis** : 3 requêtes au lieu d'une ; les autres filtres (`ILIKE`, capacité, visibilité) restent en query builder.
+- **Erreurs de l'IA relevées** : dans le scénario de test, une **attente fausse de l'IA** (1 salle libre alors que la réservation empiétait sur les deux créneaux ouverts) : le code était juste, le test non.
+- **Vérification** : scénario relancé sur une base migrée, avec 6 cas de filtre en plus (avant et après déplacement d'une réservation).
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-27 — Migrations TypeORM et PostgreSQL dans le compose (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : générer les migrations et ajouter la base au `compose.yaml`.
+- **Demande** : « J'ai grillé les étapes. Génère-moi les migrations (de mémoire il y a une commande TypeORM pour ça), puis ajoute au compose une image Postgres alpine (ou le plus léger possible). »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (`be688e9`) :
+  - `src/database/data-source.ts`, partagé entre l'application et la CLI TypeORM ; scripts `migration:generate`, `migration:run`, `migration:revert`. `ts-node` n'étant pas installé, la CLI tourne sur le code compilé (`nest build` avant) ; les migrations générées restent en TypeScript dans `src/` ;
+  - service `db` en `postgres:17-alpine` (volume, healthcheck, port réglable par `DB_PORT`).
+- **Erreurs de l'IA relevées** (trouvées en relisant la migration générée, avant de la garder) :
+  - les ids utilisaient `uuid_generate_v4()`, qui demande l'extension `uuid-ossp`, que la migration ne crée pas : elle aurait échoué sur une base neuve. L'IA ne l'avait pas vu aux tests précédents, parce qu'elle avait créé le schéma avec `synchronize`, qui installe l'extension. Corrigé avec `uuidExtension: 'pgcrypto'` (`gen_random_uuid()`, natif depuis PostgreSQL 13) ;
+  - **double contrainte unique** sur `payments.reservation_id` : la relation `OneToOne` en pose déjà une, l'IA en avait ajouté une seconde dans le model.
+- **Vérification** : `migration:run`, `migration:generate --check` (« No changes in database schema »), `migration:revert` puis `run` ; scénario API complet sur la base migrée (68/68).
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-27 — Services, authentification JWT et règles métier (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : écrire les services et les brancher sur les controllers.
+- **Demande** : « Fais les services et branche-les sur les controllers. »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (`93c42bb`) :
+  - un module Nest par feature (service, mapper entité → DTO, `forFeature`) ;
+  - authentification ajoutée par l'IA, parce que les services en ont besoin (propriétaire d'une salle, auteur d'une réservation) : `@nestjs/jwt`, mots de passe hachés avec `scrypt` de Node, guard global avec `@Public()` (les routes `security: []` du contrat) et `@Roles()` ;
+  - règles du contrat : créneau dans le futur et couvert par des disponibilités, chevauchement → `409`, capacité, montant figé, retour à `PENDING` si le créneau d'une réservation confirmée change, `409` sur les changements de statut interdits, `ON DELETE RESTRICT` traduit en `409` ;
+  - heure de Paris pour les créneaux et UTC pour les réservations (`common/paris-time.ts`), comme l'hypothèse du cadrage front ; paiement simulé (`PAID` immédiatement).
+- **Erreurs de l'IA relevées** :
+  - **erreur 500 sur `GET /admin/reservations`** sans filtre, trouvée par le scénario de test : TypeORM 1.x refuse les valeurs `undefined` dans un `where`. Le même bug existait sur `GET /users` sans `role`, non vu car le test passait toujours le rôle. Corrigé aux deux endroits ;
+  - deux `spread` d'instances de DTO signalés par le lint, corrigés ;
+  - `GET /` (le hello world de Nest) exige maintenant une connexion, effet de bord du guard global, signalé et laissé tel quel.
+- **Vérification** : base PostgreSQL jetable dans un conteneur (sans toucher à `trading-postgres`) ; scénario de 66 puis 68 appels couvrant toutes les routes et les 4 rôles (statuts attendus, montants, droits, `passwordHash` jamais renvoyé) ; typecheck, lint, Prettier, test unitaire existant.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-27 — Schéma de base de données et models TypeORM (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : vérifier mon schéma de base de données contre les routes de l'API, puis écrire les models.
+- **Demande** : « J'ai fait le premier model `rooms.model.ts` et mis le schéma dans `docs/Database.md`. Analyse-le, réécris-le proprement et dis-moi s'il est en accord avec les routes. Ensuite, fais les autres models. »
+- **Résultat** : _à compléter_
+- **Écarts trouvés dans mon schéma** (`5d707e8`) : des champs requis par le contrat manquaient : `first_name` / `last_name` (users), `location` / `status` (rooms), `date` / `is_available` (availabilities), `total_amount` et les champs optionnels (reservations), `currency` / `payment_method` (payments). `Database.md` réécrit (MCD, MLD, une table par entité, liste des écarts corrigés).
+- **Erreurs dans mon `rooms.model.ts`**, relevées par l'IA : imports manquants (le fichier ne compilait pas), `Availability.room` au lieu de `availability.room` dans les relations inverses, `precision` / `scale` en chaînes.
+- **Choix de l'IA à valider** : `ON DELETE RESTRICT` sur les réservations (pour le `409` de `DELETE /rooms`), mon `CASCADE` sur le propriétaire gardé ; `Relation<>` sur les relations (sinon les imports croisés entre entités plantent en ESM) ; transformer pour les `decimal`, que `pg` renvoie en chaîne.
+- **Vérification** : typecheck et lint ; métadonnées TypeORM construites pour les 5 entités (relations, noms de colonnes, `RESTRICT`). Pas de test contre une vraie base à ce moment-là.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-27 — Controllers de toutes les routes (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : écrire les controllers NestJS de toutes les routes de `openapi.yml`, qui valident les entrées avec les DTOs.
+- **Demande** : « Fais-moi tous les controllers qui utilisent ces DTOs pour la vérification. »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (`049a28c`) : 6 controllers (réponse `501` en attendant les services), `@Body()` et `@Query()` typés par les DTOs, `ParseUUIDPipe` sur les ids, codes HTTP du contrat (`200` pour login, confirm et reject, `204` pour les suppressions), `ValidationPipe` global (`whitelist`, `forbidNonWhitelisted`, `transform`) dans `main.ts`.
+- **Erreurs de l'IA relevées** :
+  - pour arrêter le serveur de test, un `pkill -f` a de nouveau **tué son propre shell** (même erreur qu'au lot 1 du front) ; puis mauvais chemin du build (`dist/src/main.js` au lieu de `dist/main.js`) et attente trop courte du démarrage, avant que les tests passent ;
+  - question mal ciblée : à « enchaîne sur les routes », l'IA a proposé un choix entre trois interprétations, que j'ai refusé.
+- **Vérification** : typecheck (le lint ne signale que les paramètres inutilisés des stubs) ; appels `curl` sur l'app lancée : `400` sur un query param invalide, un id qui n'est pas un UUID, un e-mail invalide, un créneau à `25:00` dans un tableau imbriqué, un champ inconnu (`property hack should not exist`) ; `501` sur les requêtes valides.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-27 — DTOs de toutes les routes (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : écrire les DTOs (`class-validator`) de toutes les routes de `openapi.yml`, sur le modèle de mon premier DTO `rooms.dto.ts`.
+- **Demande** : « Fais-moi tous les DTOs de toutes les routes en respectant l'archi que j'ai commencé à mettre en place. »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (`0041b9b`) : un `<feature>.dto.ts` par feature (auth, users, rooms avec les disponibilités, reservations, payments, admin) : DTO de l'entité, de création, de modification, de query et de liste paginée. Pagination commune et formats `date` / `time` du contrat dans `src/common/`. `class-transformer` ajouté : requis par le `ValidationPipe` de Nest, et pour convertir les query params et valider les objets imbriqués.
+- **Erreurs dans mon `RoomDTO`**, relevées par l'IA : champs optionnels sans `@IsOptional()` (la validation aurait échoué sur un champ absent), `@IsDataURI()` au lieu d'une date ISO sur `createdAt`, contraintes du contrat absentes (`capacity` entier ≥ 1, `pricePerHour` ≥ 0, `ownerId` en UUID).
+- **Point relevé par l'IA** : `@Type(() => Boolean)` convertit la chaîne `"false"` en `true` ; le filtre `available` utilise donc un `@Transform` explicite.
+- **Vérification** : typecheck et lint ; test de validation à l'exécution, supprimé ensuite (conversion `"5"` → `5`, `"false"` → `false`, valeurs par défaut de la pagination, erreurs imbriquées sur `slots[0].startTime`).
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-10-07 — Implémentation, lot 6 : finitions (séance 3)
 
 - **Outil** : Claude Code (Claude Opus 5.5), sans sous-agent.

@@ -3,6 +3,7 @@
 #   docker compose run --rm node                 # toutes les vérifications (pnpm check)
 #   docker compose up mock                       # API mock sur http://localhost:4010
 #   docker compose up dev                        # mock + serveur de dev de l'application
+#   docker compose up -d db                      # PostgreSQL du back-end sur localhost:5432
 # Les dépendances sont installées automatiquement à chaque lancement.
 
 # Configuration commune aux trois services
@@ -57,6 +58,24 @@ services:
       mock:
         condition: service_healthy
 
+  # Base du back-end (apps/backend). Identifiants : valeurs par défaut de src/database/data-source.ts
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER:-resa_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-resa_password}
+      POSTGRES_DB: ${DB_NAME:-resa_db}
+    ports:
+      # DB_PORT=5433 docker compose up db si le port 5432 est déjà pris
+      - '${DB_PORT:-5432}:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}
+      interval: 2s
+      retries: 30
+
 volumes:
   pnpm-store:
   cache:
+  pgdata:
