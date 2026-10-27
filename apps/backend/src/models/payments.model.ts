@@ -21,8 +21,8 @@ export class Payment {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  // Unique : une réservation a au plus un paiement (MCD 0,1)
-  @Column({ name: 'reservation_id', type: 'uuid', unique: true })
+  // Unique (posé par la relation OneToOne) : une réservation a au plus un paiement (MCD 0,1)
+  @Column({ name: 'reservation_id', type: 'uuid' })
   reservationId: string;
 
   @Column({
