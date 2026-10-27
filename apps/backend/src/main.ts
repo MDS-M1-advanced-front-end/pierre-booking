@@ -1,14 +1,16 @@
-import "./env.js";
-import { ValidationPipe } from "@nestjs/common";
-import { NestFactory } from "@nestjs/core";
-import { AppModule } from "./app.module.js";
+import './env.js';
+import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module.js';
 import {
   ApiExceptionFilter,
   validationException,
-} from "./common/api-errors.js";
+} from './common/api-errors.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // Serveur du contrat : http://localhost:8080/api
+  app.setGlobalPrefix('api');
   app.useGlobalFilters(new ApiExceptionFilter());
   app.useGlobalPipes(
     new ValidationPipe({
@@ -20,6 +22,6 @@ async function bootstrap() {
       exceptionFactory: validationException,
     }),
   );
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 8080);
 }
 await bootstrap();
