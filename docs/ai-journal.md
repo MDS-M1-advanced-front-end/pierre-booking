@@ -26,6 +26,17 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-10-27 — CORS (#7) et pull request de la branche `back` (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : lever le dernier point qui empêche le front d'appeler le back depuis le navigateur, puis proposer la branche `back` à la fusion.
+- **Demande** : « Attaque le 7 maintenant. Ensuite, committe et ouvre la PR vers `main`. »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : `app.enableCors` dans `main.ts`, origines lues dans `CORS_ORIGIN` (défaut `http://localhost:4321`, plusieurs origines séparées par des virgules) ; en-têtes du prévol autorisés tels que demandés (`Authorization`, et `Prefer` envoyé par `mockPersona`) ; `CORS_ORIGIN` ajouté au `.env.example`. Pull request de `back` vers `main`.
+- **Erreurs de l'IA relevées** : aucune trouvée.
+- **Vérification** : typecheck et lint ; requêtes `curl` sur l'app lancée : prévol `OPTIONS` depuis `localhost:4321` → `204` avec `Access-Control-Allow-Origin` et les en-têtes demandés ; `GET` depuis le front → en-tête présent ; origine inconnue → pas d'en-tête (le navigateur bloque). Pas encore testé depuis le vrai front dans un navigateur (ticket #2).
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-10-27 — Tickets back #11, #12, #13, #14 et #16 (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
