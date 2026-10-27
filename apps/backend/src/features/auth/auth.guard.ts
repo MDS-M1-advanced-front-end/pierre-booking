@@ -7,7 +7,10 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
 import type { Request } from 'express';
+import { Repository } from 'typeorm';
+import { User } from '../../models/users.model.js';
 import type { UserRole } from '../users/users.dto.js';
 import { IS_PUBLIC_KEY, ROLES_KEY, type AuthUser } from './auth.decorators.js';
 
@@ -17,6 +20,7 @@ export class AuthGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
     private readonly reflector: Reflector,
+    @InjectRepository(User) private readonly users: Repository<User>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -47,11 +51,14 @@ export class AuthGuard implements CanActivate {
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
     if (type !== 'Bearer' || !token) return undefined;
     try {
-      const payload = await this.jwtService.verifyAsync<{
-        sub: string;
-        role: UserRole;
-      }>(token);
-      return { id: payload.sub, role: payload.role };
+      const payload = await this.jwtService.verifyAsync<{ sub: string }>(token);
+      // Relu en base : un changement de rôle ou une suppression s'applique sans attendre
+      // l'expiration du jeton (une requête par appel authentifié)
+      const user = await this.users.findOne({
+        where: { id: payload.sub },
+        select: { id: true, role: true },
+      });
+      return user ? { id: user.id, role: user.role } : undefined;
     } catch {
       return undefined;
     }
