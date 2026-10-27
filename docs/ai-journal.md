@@ -26,6 +26,20 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-10-27 — Journal reconstitué et consigne permanente `AGENTS.md` (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : rattraper le journal de la séance, puis faire en sorte que l'IA le tienne sans qu'on le lui rappelle.
+- **Demande** : « Tu as complètement oublié de mettre à jour le journal, t'aurais moyen de remettre tout ce qu'on a fait aujourd'hui ? » ; puis séparer l'entrée DTOs / controllers en deux ; puis « souviens-toi de remplir ça à chaque prompt. Normalement tu l'avais stocké en mémoire mais c'est pas resté, donc il faut peut-être le mettre dans un `AGENTS.md` ».
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** :
+  - 8 entrées du 2026-10-27 reconstituées à partir de la conversation (`cdd1f16`) ;
+  - **cause de la perte** : la mémoire de Claude Code est rangée par chemin de projet. Le dépôt est passé de `pierre-booking/` à `pierre-booking/main/`, et la mémoire de l'ancien chemin ne suit pas (elle était d'ailleurs vide) ;
+  - `AGENTS.md` à la racine (consigne du journal, conventions de commit, points d'attention du dépôt), importé par `CLAUDE.md`, que Claude Code charge automatiquement ; consigne aussi enregistrée dans la mémoire du nouveau chemin.
+- **Erreurs de l'IA relevées** : le journal non tenu pendant toute la séance (voir l'entrée `PATCH /auth/me`).
+- **Vérification** : Prettier sur le journal ; relecture des entrées contre l'historique `git log`.
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-10-27 — Route `PATCH /auth/me` : modification du profil (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal, sans sous-agent.
