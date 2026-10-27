@@ -1,0 +1,147 @@
+import { Type } from 'class-transformer';
+import {
+  IsEnum,
+  IsInt,
+  IsISO8601,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  Min,
+  ValidateNested,
+} from 'class-validator';
+import { DATE_REGEX } from '../../common/formats.js';
+import {
+  PaginatedDTO,
+  PaginationQueryDTO,
+} from '../../common/pagination.dto.js';
+
+export enum ReservationStatus {
+  PENDING = 'PENDING',
+  CONFIRMED = 'CONFIRMED',
+  REJECTED = 'REJECTED',
+  CANCELLED = 'CANCELLED',
+  COMPLETED = 'COMPLETED',
+}
+
+export class ReservationDTO {
+  @IsUUID()
+  @IsNotEmpty()
+  id: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  roomId: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  userId: string;
+
+  @IsISO8601()
+  @IsNotEmpty()
+  startAt: string;
+
+  @IsISO8601()
+  @IsNotEmpty()
+  endAt: string;
+
+  @IsEnum(ReservationStatus)
+  @IsNotEmpty()
+  status: ReservationStatus;
+
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  numberOfParticipants?: number;
+
+  @IsString()
+  @IsOptional()
+  comment?: string;
+
+  @IsNumber()
+  @Min(0)
+  totalAmount: number;
+
+  @IsString()
+  @IsOptional()
+  currency?: string;
+
+  @IsISO8601()
+  @IsOptional()
+  createdAt?: string;
+}
+
+// POST /reservations
+// startAt < endAt et numberOfParticipants <= capacité : vérifiés dans le service
+export class CreateReservationDTO {
+  @IsUUID()
+  @IsNotEmpty()
+  roomId: string;
+
+  @IsISO8601()
+  @IsNotEmpty()
+  startAt: string;
+
+  @IsISO8601()
+  @IsNotEmpty()
+  endAt: string;
+
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  numberOfParticipants?: number;
+
+  @IsString()
+  @IsOptional()
+  comment?: string;
+}
+
+// PATCH /reservations/{reservationId}
+export class UpdateReservationDTO {
+  @IsISO8601()
+  @IsOptional()
+  startAt?: string;
+
+  @IsISO8601()
+  @IsOptional()
+  endAt?: string;
+
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  numberOfParticipants?: number;
+
+  @IsString()
+  @IsOptional()
+  comment?: string;
+}
+
+// POST /reservations/{reservationId}/reject
+export class RejectReservationDTO {
+  @IsString()
+  @IsOptional()
+  reason?: string;
+}
+
+// GET /reservations
+export class ReservationsQueryDTO extends PaginationQueryDTO {
+  @IsEnum(ReservationStatus)
+  @IsOptional()
+  status?: ReservationStatus;
+
+  @Matches(DATE_REGEX)
+  @IsOptional()
+  from?: string;
+
+  @Matches(DATE_REGEX)
+  @IsOptional()
+  to?: string;
+}
+
+export class PaginatedReservationsDTO extends PaginatedDTO {
+  @ValidateNested({ each: true })
+  @Type(() => ReservationDTO)
+  items: ReservationDTO[];
+}
