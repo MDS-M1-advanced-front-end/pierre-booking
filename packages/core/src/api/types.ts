@@ -18,6 +18,7 @@ export type PaginatedReservations = Schemas['PaginatedReservations'];
 export type RegisterRequest = Schemas['RegisterRequest'];
 export type LoginRequest = Schemas['LoginRequest'];
 export type ChangePasswordRequest = Schemas['ChangePasswordRequest'];
+export type ProfileUpdateRequest = Schemas['ProfileUpdateRequest'];
 export type UserUpdateRequest = Schemas['UserUpdateRequest'];
 export type RoomCreateRequest = Schemas['RoomCreateRequest'];
 export type RoomUpdateRequest = Schemas['RoomUpdateRequest'];
