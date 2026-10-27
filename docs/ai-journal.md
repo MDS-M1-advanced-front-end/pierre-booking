@@ -26,6 +26,124 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-10-27 — Route `PATCH /auth/me` : modification du profil (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal, sans sous-agent.
+- **Objectif** : permettre à un utilisateur de modifier son propre profil sans ouvrir `/users/{userId}` (réservé aux administrateurs).
+- **Demande** : à la question de l'IA (ouvrir `/users/{userId}` à l'utilisateur lui-même ?), j'ai répondu que c'était plutôt la route à revoir, puisque le profil se lit déjà par `GET /auth/me`. Puis : « vas-y pour `PATCH /auth/me` ».
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** :
+  - contrat `packages/core/openapi.yml` : `PATCH /auth/me` avec le schéma `ProfileUpdateRequest` (`firstName`, `lastName`, `email`, sans `role`) ; schéma de `core` régénéré (`pnpm generate:api`), type et fonction `updateMe` ajoutés ;
+  - back : `UpdateProfileDTO`, `AuthService.updateMe`, route dans `AuthController` ; route ajoutée dans `docs/use-cases.md` ;
+  - ticket front #3 renommé et complété avec les tâches (appeler `updateMe`, gérer le `409`).
+- **Point d'attention signalé par l'IA** : `packages/core` est recopié depuis ma branche du dépôt `core` par `pnpm core:sync`. Si je ne reporte pas ces changements sur ce dépôt, le prochain `core:sync` les écrasera.
+- **Vérification** : `pnpm check` de `core` ; typecheck et lint du back ; appels réels sur la base du seed avec `client1` : `200` (rôle inchangé), `400` si `role` est envoyé ou e-mail invalide, `409` avec l'e-mail d'un autre compte, `401` sans jeton.
+- **Erreur de l'IA relevée** : **le journal n'a pas été tenu pendant la séance**. Toutes les entrées du 2026-10-27 ont été écrites après coup, à ma demande, en reprenant la conversation.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-27 — Analyse front/back, seed et tickets front (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : lister ce qui empêche de brancher le front sur le back, puis remplir la base de données.
+- **Demande** : « Analyse l'avancement du projet et liste les points manquants entre le front et le back qui empêcheraient de les connecter. » Puis mes décisions sur les points relevés : CORS laissé pour plus tard, route du profil à revoir, réservations du gestionnaire à corriger, et « fais un script de seed, lance le Postgres via compose et applique-le ; ouvre des tickets avec un label `front` pour tout ce qui concerne le front ».
+- **Résultat** : _à compléter_
+- **Points bloquants trouvés** (en lisant `data/` du front, le client de `core` et les anomalies de `cadrage.md`) :
+  - **CORS non activé** : les îlots Svelte, qui appellent l'API depuis le navigateur, seraient bloqués ;
+  - **profil** : l'écran 05 appelle `PATCH /users/{id}`, réservé aux administrateurs côté back (→ entrée `PATCH /auth/me`) ;
+  - **écran Demandes** : le front suppose que `GET /reservations` renvoie au gestionnaire les réservations de ses salles (anomalie 4), le back suivait la spec à la lettre. Corrigé côté back (`7bbeed6`) ;
+  - **base vide**, et impossible de créer un gestionnaire ou un admin par l'API.
+- **Ce qui a été fait** :
+  - `pnpm seed` (`947df44`) : vide les tables puis reprend `mock/data/*.json` (mêmes ids, mêmes comptes `client1@salles.example`…, mot de passe `motdepasse`), avec des créneaux de 08:00 à 19:00 sur 60 jours ; refusé si `NODE_ENV=production` ;
+  - chargement d'un `.env` dans le back (`src/env.ts`, comme `process.loadEnvFile()` dans le front) : le port 5432 de ma machine est pris par un autre projet (`trading-postgres`), la base du compose tourne donc sur 5433 ;
+  - label `front` et tickets #2 à #6 : brancher le front sur le back, route du profil, anomalie 4 confirmée, nom manquant d'une salle devenue inactive, photo de salle impossible à retirer.
+- **Vérification** : migrations et seed appliqués sur la base du compose ; seed relancé (rejouable) ; connexion par l'API avec un compte de chaque rôle (`gestionnaire1` ne voit que les réservations de ses salles, `client1` que les siennes, statistiques admin cohérentes).
+- **Erreurs de l'IA relevées** :
+  - lors des services, l'IA avait vu le problème de l'anomalie 4 mais choisi de suivre la spec, en le signalant seulement : il a fallu revenir dessus ;
+  - aucune autre trouvée sur cette partie.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-27 — Filtre de disponibilité des salles réécrit avec l'ORM (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : remplacer le SQL brut de `whereAvailable` (filtre `date` / `startTime` / `endTime` de `GET /rooms`).
+- **Demande** : « Je ne suis pas fan de la manière dont tu l'as fait. Il n'y aurait pas une autre solution en passant par l'ORM plutôt qu'en écrivant du SQL ? »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (`b69ad88`) : deux `find` TypeORM (créneaux ouverts qui couvrent la plage avec `LessThanOrEqual` / `MoreThanOrEqual`, puis réservations actives de la journée avec `In` / `LessThan` / `MoreThan`), chevauchement calculé en TypeScript par la même fonction que `GET /rooms/{id}/availability`. La requête principale ne garde que les ids libres (`andWhereInIds`) : la pagination reste faite par la base. `AvailabilityService` ne dépend plus de `RoomsService`, pour éviter une dépendance circulaire.
+- **Compromis** : 3 requêtes au lieu d'une ; les autres filtres (`ILIKE`, capacité, visibilité) restent en query builder.
+- **Erreurs de l'IA relevées** : dans le scénario de test, une **attente fausse de l'IA** (1 salle libre alors que la réservation empiétait sur les deux créneaux ouverts) : le code était juste, le test non.
+- **Vérification** : scénario relancé sur une base migrée, avec 6 cas de filtre en plus (avant et après déplacement d'une réservation).
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-27 — Migrations TypeORM et PostgreSQL dans le compose (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : générer les migrations et ajouter la base au `compose.yaml`.
+- **Demande** : « J'ai grillé les étapes. Génère-moi les migrations (de mémoire il y a une commande TypeORM pour ça), puis ajoute au compose une image Postgres alpine (ou le plus léger possible). »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (`be688e9`) :
+  - `src/database/data-source.ts`, partagé entre l'application et la CLI TypeORM ; scripts `migration:generate`, `migration:run`, `migration:revert`. `ts-node` n'étant pas installé, la CLI tourne sur le code compilé (`nest build` avant) ; les migrations générées restent en TypeScript dans `src/` ;
+  - service `db` en `postgres:17-alpine` (volume, healthcheck, port réglable par `DB_PORT`).
+- **Erreurs de l'IA relevées** (trouvées en relisant la migration générée, avant de la garder) :
+  - les ids utilisaient `uuid_generate_v4()`, qui demande l'extension `uuid-ossp`, que la migration ne crée pas : elle aurait échoué sur une base neuve. L'IA ne l'avait pas vu aux tests précédents, parce qu'elle avait créé le schéma avec `synchronize`, qui installe l'extension. Corrigé avec `uuidExtension: 'pgcrypto'` (`gen_random_uuid()`, natif depuis PostgreSQL 13) ;
+  - **double contrainte unique** sur `payments.reservation_id` : la relation `OneToOne` en pose déjà une, l'IA en avait ajouté une seconde dans le model.
+- **Vérification** : `migration:run`, `migration:generate --check` (« No changes in database schema »), `migration:revert` puis `run` ; scénario API complet sur la base migrée (68/68).
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-27 — Services, authentification JWT et règles métier (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : écrire les services et les brancher sur les controllers.
+- **Demande** : « Fais les services et branche-les sur les controllers. »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (`93c42bb`) :
+  - un module Nest par feature (service, mapper entité → DTO, `forFeature`) ;
+  - authentification ajoutée par l'IA, parce que les services en ont besoin (propriétaire d'une salle, auteur d'une réservation) : `@nestjs/jwt`, mots de passe hachés avec `scrypt` de Node, guard global avec `@Public()` (les routes `security: []` du contrat) et `@Roles()` ;
+  - règles du contrat : créneau dans le futur et couvert par des disponibilités, chevauchement → `409`, capacité, montant figé, retour à `PENDING` si le créneau d'une réservation confirmée change, `409` sur les changements de statut interdits, `ON DELETE RESTRICT` traduit en `409` ;
+  - heure de Paris pour les créneaux et UTC pour les réservations (`common/paris-time.ts`), comme l'hypothèse du cadrage front ; paiement simulé (`PAID` immédiatement).
+- **Erreurs de l'IA relevées** :
+  - **erreur 500 sur `GET /admin/reservations`** sans filtre, trouvée par le scénario de test : TypeORM 1.x refuse les valeurs `undefined` dans un `where`. Le même bug existait sur `GET /users` sans `role`, non vu car le test passait toujours le rôle. Corrigé aux deux endroits ;
+  - deux `spread` d'instances de DTO signalés par le lint, corrigés ;
+  - `GET /` (le hello world de Nest) exige maintenant une connexion, effet de bord du guard global, signalé et laissé tel quel.
+- **Vérification** : base PostgreSQL jetable dans un conteneur (sans toucher à `trading-postgres`) ; scénario de 66 puis 68 appels couvrant toutes les routes et les 4 rôles (statuts attendus, montants, droits, `passwordHash` jamais renvoyé) ; typecheck, lint, Prettier, test unitaire existant.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-27 — Schéma de base de données et models TypeORM (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : vérifier mon schéma de base de données contre les routes de l'API, puis écrire les models.
+- **Demande** : « J'ai fait le premier model `rooms.model.ts` et mis le schéma dans `docs/Database.md`. Analyse-le, réécris-le proprement et dis-moi s'il est en accord avec les routes. Ensuite, fais les autres models. »
+- **Résultat** : _à compléter_
+- **Écarts trouvés dans mon schéma** (`5d707e8`) : des champs requis par le contrat manquaient : `first_name` / `last_name` (users), `location` / `status` (rooms), `date` / `is_available` (availabilities), `total_amount` et les champs optionnels (reservations), `currency` / `payment_method` (payments). `Database.md` réécrit (MCD, MLD, une table par entité, liste des écarts corrigés).
+- **Erreurs dans mon `rooms.model.ts`**, relevées par l'IA : imports manquants (le fichier ne compilait pas), `Availability.room` au lieu de `availability.room` dans les relations inverses, `precision` / `scale` en chaînes.
+- **Choix de l'IA à valider** : `ON DELETE RESTRICT` sur les réservations (pour le `409` de `DELETE /rooms`), mon `CASCADE` sur le propriétaire gardé ; `Relation<>` sur les relations (sinon les imports croisés entre entités plantent en ESM) ; transformer pour les `decimal`, que `pg` renvoie en chaîne.
+- **Vérification** : typecheck et lint ; métadonnées TypeORM construites pour les 5 entités (relations, noms de colonnes, `RESTRICT`). Pas de test contre une vraie base à ce moment-là.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-27 — Controllers de toutes les routes (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : écrire les controllers NestJS de toutes les routes de `openapi.yml`, qui valident les entrées avec les DTOs.
+- **Demande** : « Fais-moi tous les controllers qui utilisent ces DTOs pour la vérification. »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (`049a28c`) : 6 controllers (réponse `501` en attendant les services), `@Body()` et `@Query()` typés par les DTOs, `ParseUUIDPipe` sur les ids, codes HTTP du contrat (`200` pour login, confirm et reject, `204` pour les suppressions), `ValidationPipe` global (`whitelist`, `forbidNonWhitelisted`, `transform`) dans `main.ts`.
+- **Erreurs de l'IA relevées** :
+  - pour arrêter le serveur de test, un `pkill -f` a de nouveau **tué son propre shell** (même erreur qu'au lot 1 du front) ; puis mauvais chemin du build (`dist/src/main.js` au lieu de `dist/main.js`) et attente trop courte du démarrage, avant que les tests passent ;
+  - question mal ciblée : à « enchaîne sur les routes », l'IA a proposé un choix entre trois interprétations, que j'ai refusé.
+- **Vérification** : typecheck (le lint ne signale que les paramètres inutilisés des stubs) ; appels `curl` sur l'app lancée : `400` sur un query param invalide, un id qui n'est pas un UUID, un e-mail invalide, un créneau à `25:00` dans un tableau imbriqué, un champ inconnu (`property hack should not exist`) ; `501` sur les requêtes valides.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-27 — DTOs de toutes les routes (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : écrire les DTOs (`class-validator`) de toutes les routes de `openapi.yml`, sur le modèle de mon premier DTO `rooms.dto.ts`.
+- **Demande** : « Fais-moi tous les DTOs de toutes les routes en respectant l'archi que j'ai commencé à mettre en place. »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (`0041b9b`) : un `<feature>.dto.ts` par feature (auth, users, rooms avec les disponibilités, reservations, payments, admin) : DTO de l'entité, de création, de modification, de query et de liste paginée. Pagination commune et formats `date` / `time` du contrat dans `src/common/`. `class-transformer` ajouté : requis par le `ValidationPipe` de Nest, et pour convertir les query params et valider les objets imbriqués.
+- **Erreurs dans mon `RoomDTO`**, relevées par l'IA : champs optionnels sans `@IsOptional()` (la validation aurait échoué sur un champ absent), `@IsDataURI()` au lieu d'une date ISO sur `createdAt`, contraintes du contrat absentes (`capacity` entier ≥ 1, `pricePerHour` ≥ 0, `ownerId` en UUID).
+- **Point relevé par l'IA** : `@Type(() => Boolean)` convertit la chaîne `"false"` en `true` ; le filtre `available` utilise donc un `@Transform` explicite.
+- **Vérification** : typecheck et lint ; test de validation à l'exécution, supprimé ensuite (conversion `"5"` → `5`, `"false"` → `false`, valeurs par défaut de la pagination, erreurs imbriquées sur `slots[0].startTime`).
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-10-07 — Implémentation, lot 6 : finitions (séance 3)
 
 - **Outil** : Claude Code (Claude Opus 5.5), sans sous-agent.
