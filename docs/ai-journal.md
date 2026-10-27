@@ -26,6 +26,17 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-10-27 — Tickets pour les problèmes du back (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : tracer en tickets les problèmes du back relevés pendant la séance, comme ceux du front (#2 à #6).
+- **Demande** : « J'aimerais retourner sur les problèmes que je t'ai fait chercher plus tôt. Ajoute aussi des issues pour les problèmes back que tu as relevés. »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : label `back` et 10 tickets (#7 à #16), avec `bug`, `enhancement` ou `question` en plus : CORS non activé (#7), noms des demandeurs refusés au gestionnaire (#8), passage automatique en `COMPLETED` (#9), réservations simultanées et contrainte d'exclusion (#10), format des erreurs non conforme au schéma `Error` (#11), `imageUrl` impossible à effacer (#12), écarts de validation (`PATCH` vide accepté, URL `localhost` refusée) (#13), préfixe `/api` et port 8080 du contrat (#14), notifications non branchées (#15), sécurité (secret JWT par défaut, rôle figé dans le jeton, `GET /` protégé) (#16). Les tickets liés au front y renvoient (#2, #4, #6).
+- **Erreurs de l'IA relevées** : première création des tickets lancée depuis un dossier temporaire, hors du dépôt : `gh` a échoué (le label, lui, était créé). Relancée avec `-R` sur le dépôt.
+- **Vérification** : liste des tickets relue sur GitHub ; les points #13 (`PATCH` vide accepté) et #10 (concurrence) viennent de la lecture du code, ils n'ont pas été reproduits par un appel.
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-10-27 — Journal reconstitué et consigne permanente `AGENTS.md` (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
