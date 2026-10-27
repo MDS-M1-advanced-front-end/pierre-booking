@@ -14,6 +14,7 @@ import {
   ChangePasswordDTO,
   LoginDTO,
   RegisterDTO,
+  UpdateProfileDTO,
 } from './auth.dto.js';
 import { AuthService } from './auth.service.js';
 
@@ -37,6 +38,14 @@ export class AuthController {
   @Get('me')
   me(@CurrentUser() user: AuthUser): Promise<UserDTO> {
     return this.authService.me(user);
+  }
+
+  @Patch('me')
+  updateMe(
+    @CurrentUser() user: AuthUser,
+    @Body() body: UpdateProfileDTO,
+  ): Promise<UserDTO> {
+    return this.authService.updateMe(user, body);
   }
 
   @Patch('password')

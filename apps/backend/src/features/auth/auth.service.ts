@@ -17,6 +17,7 @@ import type {
   ChangePasswordDTO,
   LoginDTO,
   RegisterDTO,
+  UpdateProfileDTO,
 } from './auth.dto.js';
 import { hashPassword, verifyPassword } from './password.js';
 
@@ -71,6 +72,22 @@ export class AuthService {
     const user = await this.users.findOneBy({ id: authUser.id });
     if (!user) throw new UnauthorizedException();
     return toUserDTO(user);
+  }
+
+  async updateMe(authUser: AuthUser, body: UpdateProfileDTO): Promise<UserDTO> {
+    const user = await this.users.findOneBy({ id: authUser.id });
+    if (!user) throw new UnauthorizedException();
+    if (body.firstName !== undefined) user.firstName = body.firstName;
+    if (body.lastName !== undefined) user.lastName = body.lastName;
+    if (body.email !== undefined) user.email = body.email.toLowerCase();
+    try {
+      return toUserDTO(await this.users.save(user));
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new ConflictException('Adresse e-mail déjà utilisée');
+      }
+      throw error;
+    }
   }
 
   async changePassword(

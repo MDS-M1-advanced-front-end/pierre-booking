@@ -80,4 +80,5 @@ Routes issues de [`packages/core/openapi.yml`](../packages/core/openapi.yml)
 ## Routes hors diagramme
 
 - `GET /auth/me` : profil de l'utilisateur connecté
+- `PATCH /auth/me` : modifier son profil (prénom, nom, e-mail ; pas le rôle)
 - `PATCH /auth/password` : modifier son mot de passe

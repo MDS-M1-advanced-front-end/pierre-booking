@@ -58,6 +58,23 @@ export class AuthResponseDTO {
   user: UserDTO;
 }
 
+// PATCH /auth/me : le rôle ne se modifie pas ici
+export class UpdateProfileDTO {
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  firstName?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  lastName?: string;
+
+  @IsEmail()
+  @IsOptional()
+  email?: string;
+}
+
 // PATCH /auth/password
 export class ChangePasswordDTO {
   @IsString()
