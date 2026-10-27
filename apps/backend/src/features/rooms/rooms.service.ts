@@ -10,8 +10,8 @@ import { toSkipTake } from '../../common/pagination.dto.js';
 import { normalizeTime } from '../../common/paris-time.js';
 import { Room } from '../../models/rooms.model.js';
 import type { AuthUser } from '../auth/auth.decorators.js';
-import { ACTIVE_RESERVATION_STATUSES } from '../reservations/reservations.constants.js';
 import { UserRole } from '../users/users.dto.js';
+import { AvailabilityService } from './availability.service.js';
 import { assertCanManageRoom, canManageRoom } from './rooms.access.js';
 import {
   RoomStatus,
@@ -27,6 +27,7 @@ import { toRoomDTO } from './rooms.mapper.js';
 export class RoomsService {
   constructor(
     @InjectRepository(Room) private readonly rooms: Repository<Room>,
+    private readonly availabilityService: AvailabilityService,
   ) {}
 
   async findAll(
@@ -35,6 +36,17 @@ export class RoomsService {
   ): Promise<PaginatedRoomsDTO> {
     const { skip, take, page, pageSize } = toSkipTake(query);
     const qb = this.rooms.createQueryBuilder('room');
+
+    if (query.date && query.available !== false) {
+      const freeRoomIds = await this.availabilityService.findFreeRoomIds(
+        query.date,
+        query.startTime && normalizeTime(query.startTime),
+        query.endTime && normalizeTime(query.endTime),
+      );
+      if (freeRoomIds.length === 0)
+        return { items: [], page, pageSize, total: 0 };
+      qb.andWhereInIds(freeRoomIds);
+    }
 
     // Salles inactives : visibles seulement par leur gestionnaire et les administrateurs
     if (user?.role !== UserRole.ADMINISTRATEUR) {
@@ -67,9 +79,6 @@ export class RoomsService {
         capacityMax: query.capacityMax,
       });
     }
-    if (query.date && query.available !== false) {
-      this.whereAvailable(qb, query);
-    }
 
     const [rooms, total] = await qb
       .orderBy('room.name', 'ASC')
@@ -77,45 +86,6 @@ export class RoomsService {
       .take(take)
       .getManyAndCount();
     return { items: rooms.map(toRoomDTO), page, pageSize, total };
-  }
-
-  // Un créneau disponible à la date, qui couvre la plage demandée et n'est pas déjà réservé
-  private whereAvailable(
-    qb: ReturnType<Repository<Room>['createQueryBuilder']>,
-    query: RoomsQueryDTO,
-  ): void {
-    const startTime = query.startTime ? normalizeTime(query.startTime) : null;
-    const endTime = query.endTime ? normalizeTime(query.endTime) : null;
-    const from = startTime
-      ? 'GREATEST(slot.start_time, CAST(:startTime AS time))'
-      : 'slot.start_time';
-    const to = endTime
-      ? 'LEAST(slot.end_time, CAST(:endTime AS time))'
-      : 'slot.end_time';
-
-    qb.andWhere(
-      `EXISTS (
-        SELECT 1 FROM availabilities slot
-        WHERE slot.room_id = room.id
-          AND slot.date = :date
-          AND slot.is_available
-          ${startTime ? 'AND slot.start_time <= CAST(:startTime AS time) AND slot.end_time > CAST(:startTime AS time)' : ''}
-          ${endTime ? 'AND slot.end_time >= CAST(:endTime AS time) AND slot.start_time < CAST(:endTime AS time)' : ''}
-          AND NOT EXISTS (
-            SELECT 1 FROM reservations reservation
-            WHERE reservation.room_id = room.id
-              AND reservation.status IN (:...activeStatuses)
-              AND reservation.start_at < (slot.date + ${to}) AT TIME ZONE 'Europe/Paris'
-              AND reservation.end_at > (slot.date + ${from}) AT TIME ZONE 'Europe/Paris'
-          )
-      )`,
-      {
-        date: query.date,
-        startTime,
-        endTime,
-        activeStatuses: ACTIVE_RESERVATION_STATUSES,
-      },
-    );
   }
 
   async findOne(roomId: string, user?: AuthUser): Promise<RoomDTO> {

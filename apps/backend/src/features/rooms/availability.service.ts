@@ -2,15 +2,19 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import {
   DataSource,
   In,
   LessThan,
+  LessThanOrEqual,
   MoreThan,
+  MoreThanOrEqual,
   Not,
   Repository,
+  type FindOperator,
   type FindOptionsWhere,
 } from 'typeorm';
 import {
@@ -21,7 +25,7 @@ import {
 } from '../../common/paris-time.js';
 import { Availability } from '../../models/availabilities.model.js';
 import { Reservation } from '../../models/reservations.model.js';
-import type { Room } from '../../models/rooms.model.js';
+import { Room } from '../../models/rooms.model.js';
 import type { AuthUser } from '../auth/auth.decorators.js';
 import { ACTIVE_RESERVATION_STATUSES } from '../reservations/reservations.constants.js';
 import { assertCanManageRoom } from './rooms.access.js';
@@ -31,7 +35,6 @@ import type {
   UpdateAvailabilityDTO,
 } from './rooms.dto.js';
 import { toAvailabilitySlotDTO } from './rooms.mapper.js';
-import { RoomsService } from './rooms.service.js';
 
 @Injectable()
 export class AvailabilityService {
@@ -40,8 +43,9 @@ export class AvailabilityService {
     private readonly availabilities: Repository<Availability>,
     @InjectRepository(Reservation)
     private readonly reservations: Repository<Reservation>,
+    // Pas de RoomsService ici : il dépend de ce service (findFreeRoomIds)
+    @InjectRepository(Room) private readonly rooms: Repository<Room>,
     @InjectDataSource() private readonly dataSource: DataSource,
-    private readonly roomsService: RoomsService,
   ) {}
 
   // Un créneau est disponible s'il est ouvert et qu'aucune réservation active ne le chevauche
@@ -49,7 +53,7 @@ export class AvailabilityService {
     roomId: string,
     query: AvailabilityQueryDTO,
   ): Promise<AvailabilitySlotDTO[]> {
-    await this.roomsService.getOrFail(roomId);
+    await this.getRoomOrFail(roomId);
     const startTime = query.startTime && normalizeTime(query.startTime);
     const endTime = query.endTime && normalizeTime(query.endTime);
 
@@ -69,15 +73,44 @@ export class AvailabilityService {
       fromParis(addDays(query.date, 1)),
     );
 
-    return slots.map((slot) => {
-      const slotStart = fromParis(slot.date, slot.startTime);
-      const slotEnd = fromParis(slot.date, slot.endTime);
-      const reserved = reservations.some(
-        (reservation) =>
-          reservation.startAt < slotEnd && reservation.endAt > slotStart,
-      );
-      return toAvailabilitySlotDTO(slot, slot.isAvailable && !reserved);
-    });
+    return slots.map((slot) =>
+      toAvailabilitySlotDTO(
+        slot,
+        slot.isAvailable && !this.isReserved(slot, reservations),
+      ),
+    );
+  }
+
+  /**
+   * Salles libres à la date : un créneau ouvert couvre la plage [startTime, endTime]
+   * (ou contient l'heure donnée, ou existe simplement) et aucune réservation active ne la chevauche.
+   */
+  async findFreeRoomIds(
+    date: string,
+    startTime?: string,
+    endTime?: string,
+  ): Promise<string[]> {
+    const where: FindOptionsWhere<Availability> = { date, isAvailable: true };
+    if (startTime) {
+      where.startTime = LessThanOrEqual(startTime);
+      where.endTime = MoreThan(startTime);
+    }
+    if (endTime) {
+      where.endTime = MoreThanOrEqual(endTime);
+      if (!startTime) where.startTime = LessThan(endTime);
+    }
+    const slots = await this.availabilities.find({ where });
+    if (slots.length === 0) return [];
+
+    const reservations = await this.findOverlapping(
+      In(slots.map((slot) => slot.roomId)),
+      fromParis(date),
+      fromParis(addDays(date, 1)),
+    );
+    const freeSlots = slots.filter(
+      (slot) => !this.isReserved(slot, reservations, startTime, endTime),
+    );
+    return [...new Set(freeSlots.map((slot) => slot.roomId))];
   }
 
   // Remplace tous les créneaux de la date
@@ -86,7 +119,7 @@ export class AvailabilityService {
     body: UpdateAvailabilityDTO,
     user: AuthUser,
   ): Promise<AvailabilitySlotDTO[]> {
-    const room = await this.roomsService.getOrFail(roomId);
+    const room = await this.getRoomOrFail(roomId);
     assertCanManageRoom(room, user);
 
     const slots = body.slots
@@ -173,8 +206,37 @@ export class AvailabilityService {
     }
   }
 
+  // Une réservation de la salle du créneau chevauche-t-elle le créneau, réduit à la plage demandée ?
+  private isReserved(
+    slot: Availability,
+    reservations: Reservation[],
+    startTime = slot.startTime,
+    endTime = slot.endTime,
+  ): boolean {
+    const from = fromParis(
+      slot.date,
+      startTime > slot.startTime ? startTime : slot.startTime,
+    );
+    const to = fromParis(
+      slot.date,
+      endTime < slot.endTime ? endTime : slot.endTime,
+    );
+    return reservations.some(
+      (reservation) =>
+        reservation.roomId === slot.roomId &&
+        reservation.startAt < to &&
+        reservation.endAt > from,
+    );
+  }
+
+  private async getRoomOrFail(roomId: string): Promise<Room> {
+    const room = await this.rooms.findOneBy({ id: roomId });
+    if (!room) throw new NotFoundException('Salle introuvable');
+    return room;
+  }
+
   private findOverlapping(
-    roomId: string,
+    roomId: string | FindOperator<string>,
     from: Date,
     to: Date,
     excludedReservationId?: string,
