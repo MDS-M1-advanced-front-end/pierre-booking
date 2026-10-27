@@ -37,7 +37,8 @@ Framework / méta-framework : Astro (sans framework de composants)
   - **#12** : `description` et `imageUrl` acceptent `null` dans `PATCH /rooms` pour effacer la valeur ; `nullable: true` ajouté au contrat, `core` régénéré ;
   - **#13** : `NonEmptyBodyPipe` (`minProperties: 1`) sur les `PATCH` de salle, de réservation et de profil ; `@IsUrl({ require_tld: false })` pour les URL `localhost` ; décorateur `IsOptionalNotNull` pour les champs `NOT NULL` ;
   - **#14** : préfixe `/api` et port 8080, comme le serveur du contrat (et la valeur par défaut de `core`) ;
-  - **#16** : le back refuse de démarrer en production sans `JWT_SECRET` ; le guard relit l'utilisateur en base à chaque appel (rôle à jour, compte supprimé refusé) ; `GET /` public.
+  - **#16** : le back refuse de démarrer en production sans `JWT_SECRET` ; le guard relit l'utilisateur en base à chaque appel (rôle à jour, compte supprimé refusé) ; `GET /` public ;
+  - commits : `dc33bc2` (contrat), `b07e412` (#11), `33d0493` (#12, #13), `9d8ac45` (#14), `db9d41d` (#16). `main.ts` et `.env.example` touchaient plusieurs tickets : versions intermédiaires stagées pour séparer les commits, chacun vérifié seul au typecheck. Les tickets se fermeront à la fusion dans `main` (`Closes #…`). Ticket front #2 mis à jour avec la nouvelle URL.
 - **Erreurs de l'IA relevées** :
   - **ticket #12 inexact** : l'IA y affirmait que `null` était refusé. Vérification faite avant de coder, c'était faux : `@IsOptional()` laisse passer `null`, et le back effaçait déjà la photo. Il ne manquait que le contrat ;
   - ce même essai a révélé un **bug que l'IA avait introduit** dans ses DTOs : `null` sur un champ obligatoire (`{"name": null}`, `{"firstName": null}`) passait la validation et finissait en **500** (contrainte `NOT NULL` en base). Corrigé avec `IsOptionalNotNull` ;
