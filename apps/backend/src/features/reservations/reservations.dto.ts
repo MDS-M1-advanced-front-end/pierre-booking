@@ -12,6 +12,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import { IsOptionalNotNull } from '../../common/validators.js';
 import { DATE_REGEX } from '../../common/formats.js';
 import {
   PaginatedDTO,
@@ -101,11 +102,11 @@ export class CreateReservationDTO {
 // PATCH /reservations/{reservationId}
 export class UpdateReservationDTO {
   @IsISO8601()
-  @IsOptional()
+  @IsOptionalNotNull()
   startAt?: string;
 
   @IsISO8601()
-  @IsOptional()
+  @IsOptionalNotNull()
   endAt?: string;
 
   @IsInt()

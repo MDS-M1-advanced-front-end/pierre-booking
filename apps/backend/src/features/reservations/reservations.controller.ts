@@ -11,6 +11,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { NonEmptyBodyPipe } from '../../common/non-empty-body.pipe.js';
 import { CurrentUser, type AuthUser } from '../auth/auth.decorators.js';
 import {
   CreateReservationDTO,
@@ -53,7 +54,7 @@ export class ReservationsController {
   @Patch(':reservationId')
   update(
     @Param('reservationId', ParseUUIDPipe) reservationId: string,
-    @Body() body: UpdateReservationDTO,
+    @Body(NonEmptyBodyPipe) body: UpdateReservationDTO,
     @CurrentUser() user: AuthUser,
   ): Promise<ReservationDTO> {
     return this.reservationsService.update(reservationId, body, user);

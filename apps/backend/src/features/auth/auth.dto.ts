@@ -8,6 +8,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
+import { IsOptionalNotNull } from '../../common/validators.js';
 import { UserDTO } from '../users/users.dto.js';
 
 // POST /auth/register
@@ -62,16 +63,16 @@ export class AuthResponseDTO {
 export class UpdateProfileDTO {
   @IsString()
   @IsNotEmpty()
-  @IsOptional()
+  @IsOptionalNotNull()
   firstName?: string;
 
   @IsString()
   @IsNotEmpty()
-  @IsOptional()
+  @IsOptionalNotNull()
   lastName?: string;
 
   @IsEmail()
-  @IsOptional()
+  @IsOptionalNotNull()
   email?: string;
 }
 

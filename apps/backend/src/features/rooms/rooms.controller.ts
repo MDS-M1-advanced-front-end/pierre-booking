@@ -12,6 +12,7 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
+import { NonEmptyBodyPipe } from '../../common/non-empty-body.pipe.js';
 import {
   CurrentUser,
   Public,
@@ -69,7 +70,7 @@ export class RoomsController {
   @Patch(':roomId')
   update(
     @Param('roomId', ParseUUIDPipe) roomId: string,
-    @Body() body: UpdateRoomDTO,
+    @Body(NonEmptyBodyPipe) body: UpdateRoomDTO,
     @CurrentUser() user: AuthUser,
   ): Promise<RoomDTO> {
     return this.roomsService.update(roomId, body, user);

@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { NonEmptyBodyPipe } from '../../common/non-empty-body.pipe.js';
 import { UserDTO } from '../users/users.dto.js';
 import { CurrentUser, Public, type AuthUser } from './auth.decorators.js';
 import {
@@ -43,7 +44,7 @@ export class AuthController {
   @Patch('me')
   updateMe(
     @CurrentUser() user: AuthUser,
-    @Body() body: UpdateProfileDTO,
+    @Body(NonEmptyBodyPipe) body: UpdateProfileDTO,
   ): Promise<UserDTO> {
     return this.authService.updateMe(user, body);
   }

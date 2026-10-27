@@ -18,6 +18,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { DATE_REGEX, TIME_REGEX } from '../../common/formats.js';
+import { IsOptionalNotNull } from '../../common/validators.js';
 import {
   PaginatedDTO,
   PaginationQueryDTO,
@@ -51,7 +52,7 @@ export class RoomDTO {
 
   @IsArray()
   @IsString({ each: true })
-  @IsOptional()
+  @IsOptionalNotNull()
   equipment?: string[];
 
   @IsNumber()
@@ -66,7 +67,8 @@ export class RoomDTO {
   @IsOptional()
   ownerId?: string;
 
-  @IsUrl()
+  // URL sans domaine de premier niveau acceptée (localhost), comme format: uri
+  @IsUrl({ require_tld: false })
   @IsOptional()
   imageUrl?: string;
 
@@ -95,55 +97,58 @@ export class CreateRoomDTO {
 
   @IsArray()
   @IsString({ each: true })
-  @IsOptional()
+  @IsOptionalNotNull()
   equipment?: string[];
 
   @IsNumber()
   @Min(0)
   pricePerHour: number;
 
-  @IsUrl()
+  // URL sans domaine de premier niveau acceptée (localhost), comme format: uri
+  @IsUrl({ require_tld: false })
   @IsOptional()
   imageUrl?: string;
 }
 
 // PATCH /rooms/{roomId}
+// description et imageUrl acceptent null pour effacer la valeur
 export class UpdateRoomDTO {
   @IsString()
   @IsNotEmpty()
-  @IsOptional()
+  @IsOptionalNotNull()
   name?: string;
 
   @IsString()
   @IsOptional()
-  description?: string;
+  description?: string | null;
 
   @IsInt()
   @Min(1)
-  @IsOptional()
+  @IsOptionalNotNull()
   capacity?: number;
 
   @IsString()
   @IsNotEmpty()
-  @IsOptional()
+  @IsOptionalNotNull()
   location?: string;
 
   @IsArray()
   @IsString({ each: true })
-  @IsOptional()
+  @IsOptionalNotNull()
   equipment?: string[];
 
   @IsNumber()
   @Min(0)
-  @IsOptional()
+  @IsOptionalNotNull()
   pricePerHour?: number;
 
-  @IsUrl()
+  // URL sans domaine de premier niveau acceptée (localhost), comme format: uri
+  @IsUrl({ require_tld: false })
   @IsOptional()
-  imageUrl?: string;
+  imageUrl?: string | null;
 
   @IsEnum(RoomStatus)
-  @IsOptional()
+  @IsOptionalNotNull()
   status?: RoomStatus;
 }
 
