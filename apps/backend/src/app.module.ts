@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
-import { AdminController } from './features/admin/admin.controller.js';
-import { AuthController } from './features/auth/auth.controller.js';
-import { PaymentsController } from './features/payments/payments.controller.js';
-import { ReservationsController } from './features/reservations/reservations.controller.js';
-import { RoomsController } from './features/rooms/rooms.controller.js';
-import { UsersController } from './features/users/users.controller.js';
+import { AdminModule } from './features/admin/admin.module.js';
+import { AuthModule } from './features/auth/auth.module.js';
+import { PaymentsModule } from './features/payments/payments.module.js';
+import { ReservationsModule } from './features/reservations/reservations.module.js';
+import { RoomsModule } from './features/rooms/rooms.module.js';
+import { UsersModule } from './features/users/users.module.js';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { dataSourceOptions } from './database/data-source.js';
 
@@ -16,16 +16,14 @@ import { dataSourceOptions } from './database/data-source.js';
       ...dataSourceOptions,
       autoLoadEntities: true,
     }),
+    AuthModule,
+    UsersModule,
+    RoomsModule,
+    ReservationsModule,
+    PaymentsModule,
+    AdminModule,
   ],
-  controllers: [
-    AppController,
-    AuthController,
-    UsersController,
-    RoomsController,
-    ReservationsController,
-    PaymentsController,
-    AdminController,
-  ],
+  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}

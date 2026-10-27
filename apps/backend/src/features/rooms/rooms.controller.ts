@@ -5,7 +5,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  NotImplementedException,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -13,6 +12,14 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
+import {
+  CurrentUser,
+  Public,
+  Roles,
+  type AuthUser,
+} from '../auth/auth.decorators.js';
+import { UserRole } from '../users/users.dto.js';
+import { AvailabilityService } from './availability.service.js';
 import {
   AvailabilityQueryDTO,
   AvailabilitySlotDTO,
@@ -23,51 +30,75 @@ import {
   UpdateAvailabilityDTO,
   UpdateRoomDTO,
 } from './rooms.dto.js';
+import { RoomsService } from './rooms.service.js';
 
 @Controller('rooms')
 export class RoomsController {
+  constructor(
+    private readonly roomsService: RoomsService,
+    private readonly availabilityService: AvailabilityService,
+  ) {}
+
+  @Public()
   @Get()
-  findAll(@Query() query: RoomsQueryDTO): PaginatedRoomsDTO {
-    throw new NotImplementedException();
+  findAll(
+    @Query() query: RoomsQueryDTO,
+    @CurrentUser() user?: AuthUser,
+  ): Promise<PaginatedRoomsDTO> {
+    return this.roomsService.findAll(query, user);
   }
 
   @Post()
-  create(@Body() body: CreateRoomDTO): RoomDTO {
-    throw new NotImplementedException();
+  @Roles(UserRole.GESTIONNAIRE, UserRole.ADMINISTRATEUR)
+  create(
+    @Body() body: CreateRoomDTO,
+    @CurrentUser() user: AuthUser,
+  ): Promise<RoomDTO> {
+    return this.roomsService.create(body, user);
   }
 
+  @Public()
   @Get(':roomId')
-  findOne(@Param('roomId', ParseUUIDPipe) roomId: string): RoomDTO {
-    throw new NotImplementedException();
+  findOne(
+    @Param('roomId', ParseUUIDPipe) roomId: string,
+    @CurrentUser() user?: AuthUser,
+  ): Promise<RoomDTO> {
+    return this.roomsService.findOne(roomId, user);
   }
 
   @Patch(':roomId')
   update(
     @Param('roomId', ParseUUIDPipe) roomId: string,
     @Body() body: UpdateRoomDTO,
-  ): RoomDTO {
-    throw new NotImplementedException();
+    @CurrentUser() user: AuthUser,
+  ): Promise<RoomDTO> {
+    return this.roomsService.update(roomId, body, user);
   }
 
   @Delete(':roomId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('roomId', ParseUUIDPipe) roomId: string): void {
-    throw new NotImplementedException();
+  remove(
+    @Param('roomId', ParseUUIDPipe) roomId: string,
+    @CurrentUser() user: AuthUser,
+  ): Promise<void> {
+    return this.roomsService.remove(roomId, user);
   }
 
+  @Public()
   @Get(':roomId/availability')
   getAvailability(
     @Param('roomId', ParseUUIDPipe) roomId: string,
     @Query() query: AvailabilityQueryDTO,
-  ): AvailabilitySlotDTO[] {
-    throw new NotImplementedException();
+  ): Promise<AvailabilitySlotDTO[]> {
+    return this.availabilityService.find(roomId, query);
   }
 
   @Put(':roomId/availability')
   setAvailability(
     @Param('roomId', ParseUUIDPipe) roomId: string,
     @Body() body: UpdateAvailabilityDTO,
-  ): AvailabilitySlotDTO[] {
-    throw new NotImplementedException();
+    @CurrentUser() user: AuthUser,
+  ): Promise<AvailabilitySlotDTO[]> {
+    return this.availabilityService.replace(roomId, body, user);
   }
 }

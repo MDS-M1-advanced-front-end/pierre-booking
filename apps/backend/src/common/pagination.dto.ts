@@ -29,3 +29,7 @@ export class PaginatedDTO {
   @IsNotEmpty()
   total: number;
 }
+
+export function toSkipTake({ page = 1, pageSize = 20 }: PaginationQueryDTO) {
+  return { skip: (page - 1) * pageSize, take: pageSize, page, pageSize };
+}

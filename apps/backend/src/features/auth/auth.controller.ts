@@ -4,39 +4,47 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  NotImplementedException,
   Patch,
   Post,
 } from '@nestjs/common';
 import { UserDTO } from '../users/users.dto.js';
+import { CurrentUser, Public, type AuthUser } from './auth.decorators.js';
 import {
   AuthResponseDTO,
   ChangePasswordDTO,
   LoginDTO,
   RegisterDTO,
 } from './auth.dto.js';
+import { AuthService } from './auth.service.js';
 
 @Controller('auth')
 export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Public()
   @Post('register')
-  register(@Body() body: RegisterDTO): UserDTO {
-    throw new NotImplementedException();
+  register(@Body() body: RegisterDTO): Promise<UserDTO> {
+    return this.authService.register(body);
   }
 
+  @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  login(@Body() body: LoginDTO): AuthResponseDTO {
-    throw new NotImplementedException();
+  login(@Body() body: LoginDTO): Promise<AuthResponseDTO> {
+    return this.authService.login(body);
   }
 
   @Get('me')
-  me(): UserDTO {
-    throw new NotImplementedException();
+  me(@CurrentUser() user: AuthUser): Promise<UserDTO> {
+    return this.authService.me(user);
   }
 
   @Patch('password')
   @HttpCode(HttpStatus.NO_CONTENT)
-  changePassword(@Body() body: ChangePasswordDTO): void {
-    throw new NotImplementedException();
+  changePassword(
+    @CurrentUser() user: AuthUser,
+    @Body() body: ChangePasswordDTO,
+  ): Promise<void> {
+    return this.authService.changePassword(user, body);
   }
 }
