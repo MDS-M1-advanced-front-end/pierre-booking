@@ -1,4 +1,5 @@
 # use cases
+
 ![](./references/use-cases.png)
 
 Routes issues de [`packages/core/openapi.yml`](../packages/core/openapi.yml)
@@ -59,9 +60,9 @@ Routes issues de [`packages/core/openapi.yml`](../packages/core/openapi.yml)
   - `PATCH /users/{userId}`
   - `DELETE /users/{userId}`
 - Gérer les salles
-  - `GET /rooms` 
+  - `GET /rooms`
   - `POST /rooms`
-  - `PATCH /rooms/{roomId}` 
+  - `PATCH /rooms/{roomId}`
   - `DELETE /rooms/{roomId}`
   - `PUT /rooms/{roomId}/availability`
 - Gérer les réservations

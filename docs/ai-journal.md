@@ -33,7 +33,7 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Demande** : « Attaque le 7 maintenant. Ensuite, committe et ouvre la PR vers `main`. »
 - **Résultat** : _à compléter_
 - **Ce qui a été fait** : `app.enableCors` dans `main.ts`, origines lues dans `CORS_ORIGIN` (défaut `http://localhost:4321`, plusieurs origines séparées par des virgules) ; en-têtes du prévol autorisés tels que demandés (`Authorization`, et `Prefer` envoyé par `mockPersona`) ; `CORS_ORIGIN` ajouté au `.env.example`. Pull request de `back` vers `main`.
-- **Erreurs de l'IA relevées** : aucune trouvée.
+- **Erreurs de l'IA relevées** : PR ouverte après les seules vérifications du back, sans lancer les étapes de la CI à la racine (`pnpm typecheck`, `lint`, `format:check`, `test`). `format:check` échouait sur `docs/use-cases.md` (ligne vide manquante et espaces en fin de ligne, déjà présents dans le commit `a899ec9`). Repéré pendant que la CI tournait ; mise en forme corrigée par Prettier et poussée sur la PR.
 - **Vérification** : typecheck et lint ; requêtes `curl` sur l'app lancée : prévol `OPTIONS` depuis `localhost:4321` → `204` avec `Access-Control-Allow-Origin` et les en-têtes demandés ; `GET` depuis le front → en-tête présent ; origine inconnue → pas d'en-tête (le navigateur bloque). Pas encore testé depuis le vrai front dans un navigateur (ticket #2).
 - **Ce que j'en retiens** : _à compléter_
 
