@@ -26,6 +26,26 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-10-27 — Tickets back #11, #12, #13, #14 et #16 (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : corriger cinq des tickets back ouverts juste avant.
+- **Demande** : « Commit, puis attaque les points 11, 12, 13, 14, 16. »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** :
+  - **#11** : filtre d'exception global (`common/api-errors.ts`) : toutes les erreurs au format `{ code, message, details }` du schéma `Error`, avec les erreurs de validation par champ dans `details` (chemin des champs imbriqués : `slots.0.startTime`) ; une erreur inattendue donne `INTERNAL_ERROR` sans fuite de détail, et elle est journalisée ;
+  - **#12** : `description` et `imageUrl` acceptent `null` dans `PATCH /rooms` pour effacer la valeur ; `nullable: true` ajouté au contrat, `core` régénéré ;
+  - **#13** : `NonEmptyBodyPipe` (`minProperties: 1`) sur les `PATCH` de salle, de réservation et de profil ; `@IsUrl({ require_tld: false })` pour les URL `localhost` ; décorateur `IsOptionalNotNull` pour les champs `NOT NULL` ;
+  - **#14** : préfixe `/api` et port 8080, comme le serveur du contrat (et la valeur par défaut de `core`) ;
+  - **#16** : le back refuse de démarrer en production sans `JWT_SECRET` ; le guard relit l'utilisateur en base à chaque appel (rôle à jour, compte supprimé refusé) ; `GET /` public.
+- **Erreurs de l'IA relevées** :
+  - **ticket #12 inexact** : l'IA y affirmait que `null` était refusé. Vérification faite avant de coder, c'était faux : `@IsOptional()` laisse passer `null`, et le back effaçait déjà la photo. Il ne manquait que le contrat ;
+  - ce même essai a révélé un **bug que l'IA avait introduit** dans ses DTOs : `null` sur un champ obligatoire (`{"name": null}`, `{"firstName": null}`) passait la validation et finissait en **500** (contrainte `NOT NULL` en base). Corrigé avec `IsOptionalNotNull` ;
+  - le script de test de l'IA supposait une réponse JSON partout : en dehors de `/api`, Nest 12 laisse Express répondre avec une page HTML (404). Comportement gardé (seul `/api` est l'API) ; le test de 404 lui-même ne changeait pas l'identifiant de la salle, refait à la main.
+- **Limite** : le message de `ParseUUIDPipe` reste en anglais (`Validation failed (uuid is expected)`), avec le bon `code`. Le front n'affiche jamais le message brut.
+- **Vérification** : typecheck, lint, test unitaire, `pnpm check` de `core` ; scénario complet (74/74) sur une base de test séparée (`resa_test`, pour ne pas toucher aux données du seed) ; tests ciblés par ticket sur la base du seed (corps d'erreur, `400` sur les `PATCH` vides et les `null`, effacement de la photo, admin rétrogradé refusé sans se reconnecter : `200` puis `403`) ; démarrage refusé avec `NODE_ENV=production` sans secret ; seed relancé après les essais.
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-10-27 — Tickets pour les problèmes du back (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
