@@ -23,7 +23,8 @@
     "typeorm": "nest build && typeorm --dataSource dist/database/data-source.js",
     "migration:generate": "pnpm typeorm migration:generate --pretty --esm",
     "migration:run": "pnpm typeorm migration:run",
-    "migration:revert": "pnpm typeorm migration:revert"
+    "migration:revert": "pnpm typeorm migration:revert",
+    "seed": "nest build && node dist/database/seed.js"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",

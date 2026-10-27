@@ -1,3 +1,4 @@
+import '../env.js';
 import { join } from 'node:path';
 import { DataSource, type DataSourceOptions } from 'typeorm';
 import { Availability } from '../models/availabilities.model.js';
