@@ -19,4 +19,7 @@
 ## Dépôt
 
 - `packages/core` est recopié depuis le dépôt `core` par `pnpm core:sync` : toute modification locale (contrat `openapi.yml`, client) doit être reportée sur ce dépôt, sinon elle sera écrasée.
-- Back (`apps/backend`) : configuration dans `apps/backend/.env` (voir `.env.example`). Sur la machine de l'apprenant, le port 5432 est pris par un autre projet : la base du compose tourne avec `DB_PORT=5433 docker compose up -d db`.
+- Développement : `pnpm dev` à la racine lance la base (`compose.dev.yaml`), applique les migrations, puis le back et le front ; `pnpm seed` remplit la base. Configuration du back dans `apps/backend/.env` (voir `.env.example`) : sur la machine de l'apprenant, le port 5432 est pris par un autre projet, d'où `DB_PORT=5433`.
+- Production : `compose.yaml` (images `apps/*/Dockerfile`), variables dans `.env` à la racine (`JWT_SECRET` obligatoire).
+- Tests de bout en bout : contre le mock Prism (`API_BASE_URL` fixée dans `playwright.config.ts`). Arrêter `pnpm dev` avant, sinon Playwright réutilise le serveur du port 4321, branché sur le back.
+- **Agent IA** : Astro ≥ 7.4 détecte un agent (`CLAUDECODE`, `AI_AGENT`) et lance `astro dev` en arrière-plan, puis rend la main. Playwright croit alors que le serveur a planté (« exited early ») et reste bloqué. Lancer les e2e avec `env -u CLAUDECODE -u AI_AGENT pnpm test:e2e`, et arrêter un serveur resté en fond avec `npx astro dev stop` (dans `apps/front`).

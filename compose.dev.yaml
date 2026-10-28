@@ -1,0 +1,23 @@
+# Développement : la base seulement. Le front et le back tournent avec pnpm sur la machine :
+#   pnpm dev   (à la racine) lance cette base, applique les migrations, puis les deux apps
+# Port publié : DB_PORT de apps/backend/.env (5432 par défaut), lu par scripts/dev-db.js.
+name: room-booking-dev
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER:-resa_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-resa_password}
+      POSTGRES_DB: ${DB_NAME:-resa_db}
+    ports:
+      - '${DB_PORT:-5432}:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}
+      interval: 2s
+      retries: 30
+
+volumes:
+  pgdata:

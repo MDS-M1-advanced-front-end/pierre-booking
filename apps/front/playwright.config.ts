@@ -24,6 +24,8 @@ export default defineConfig({
     },
     {
       command: 'pnpm dev',
+      // Les tests de bout en bout tournent contre le mock (données fixes), pas contre le back
+      env: { API_BASE_URL: 'http://localhost:4010' },
       url: 'http://localhost:4321',
       // Astro n'accepte qu'un serveur de dev par projet : on réutilise celui qui tourne
       reuseExistingServer: !process.env.CI,

@@ -26,6 +26,36 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-10-28 — Front branché sur le back, Docker de production et `pnpm dev` (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : faire tourner le front sur le vrai back, passer `compose.yaml` en production avec une image par app, et un environnement de développement où seule la base tourne dans Docker.
+- **Demande** : « J'ai mergé vers `main`. Brancher le front sur le back, modifier `compose.yaml` pour qu'il devienne celui de prod, utilisant les Dockerfile des apps que tu dois créer, puis faire un compose de dev avec juste la db et modifier le script de dev pour qu'il lance le compose avant de faire un dev sur les apps pnpm. » (interrompu pendant les tests, puis « reprends »)
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (branche `feat/docker`) :
+  - **front** (#2) : vise le back par défaut (`http://localhost:8080/api`). Problème relevé par l'IA avant de coder : l'URL de l'API était inscrite au build pour le serveur **et** le navigateur ; en Docker, le serveur Astro doit appeler `backend:8080` et le navigateur `localhost:8080`. `define` limité au code client (`vite.environments.client`, Vite 8) avec `PUBLIC_API_BASE_URL` ; le SSR lit `API_BASE_URL` au démarrage. Les e2e restent sur le mock (`env` dans `playwright.config.ts`) ;
+  - **production** : `apps/backend/Dockerfile` et `apps/front/Dockerfile` (multi-étapes, contexte à la racine pour l'espace de travail pnpm, `pnpm fetch` pour le cache, `pnpm deploy --prod`, utilisateur non root ; migrations au démarrage du back), `.dockerignore`, `compose.yaml` réécrit (base non exposée, healthchecks, `JWT_SECRET` obligatoire), `.env.example` à la racine ;
+  - **développement** : `compose.dev.yaml` (base seule), `scripts/dev-db.js` (lit le port dans `apps/backend/.env`), `pnpm dev` = base → migrations → back et front en parallèle ; `pnpm seed` à la racine ;
+  - `Dockerfile` du cours supprimé (plus utilisé) ; README, `AGENTS.md`, `architecture.md` et `cadrage.md` mis à jour ;
+  - commits `44a1e21` (front, ferme #2), `5f06b12` (Docker de production), `22464e5` (`pnpm dev`), `4ac9229` (docs), puis pull request vers `main`.
+- **Points d'attention** :
+  - les services Docker du cours (`node`, `mock`, `dev` : travailler sans Node) disparaissent avec l'ancien `compose.yaml` ;
+  - noms de projet compose distincts (`room-booking`, `room-booking-dev`) : sans eux, prod et dev auraient partagé le même volume de base ;
+  - `${JWT_SECRET:?}` fait échouer **toute** commande compose de prod sans la variable (même `ps`, `logs`) : d'où le `.env` à la racine ;
+  - `pnpm deploy` n'emporte pas `dist/`, ignoré par git : copié à part dans les images ;
+  - la base de prod démarre vide : le seed est réservé au développement.
+- **Erreurs de l'IA relevées** :
+  - **commit mélangé, encore** : le premier commit (front) a embarqué la suppression du `Dockerfile`, déjà indexée par `git rm`. Vu dans le `--stat`, commit défait (`reset --soft`) et refait, la suppression rangée dans le commit Docker ;
+  - première modification d'`astro.config.mjs` avec **deux clés `vite`** (la seconde aurait écrasé le plugin Tailwind), vue à la relecture avant le build ;
+  - les e2e lancés juste après `pnpm dev` auraient réutilisé le serveur du port 4321, branché sur le back : serveur arrêté avant les e2e, consigne ajoutée dans `AGENTS.md` ;
+  - **e2e bloqués près de 30 minutes sans que l'IA le voie** : c'est moi qui ai demandé s'il y avait une boucle. L'IA attendait la notification de fin au lieu de regarder le journal du test, où l'erreur était visible dès la première minute (`Process from config.webServer exited early`). Cause : Astro 7.4.2 (arrivé dans le lockfile avec le commit `584797d`, la création du back) détecte un agent IA (`CLAUDECODE`, `AI_AGENT`) et lance `astro dev` en arrière-plan ; Playwright croit à un plantage et attend indéfiniment. Sans effet dans mon terminal ni en CI. Vérifié en relançant `astro dev` sans `CLAUDECODE` (reste au premier plan) ; e2e relancés sans ces variables, consigne ajoutée dans `AGENTS.md`.
+- **Vérification** :
+  - build du front avec deux URL différentes : seule l'URL publique dans `dist/client`, le serveur lit la variable au démarrage ;
+  - prod : `docker compose up -d --build`, 3 conteneurs sains, migration au démarrage, SSR de l'accueil servi via `backend:8080`, puis **connexion dans un vrai navigateur** (Chromium piloté par Playwright) : `POST /api/auth/login` et `GET /api/reservations` en 200, aucune erreur CORS ; pile arrêtée et volume supprimé ensuite ;
+  - dev : `pnpm dev` (base sur 5433, migration, back et front), `pnpm seed`, connexion dans le navigateur avec `client1` (réservations et noms de salles) et `gestionnaire1` (demandes en attente) sans erreur ;
+  - `pnpm check` ; e2e Playwright sur le mock : **81 sur 84**. Les 3 échecs (`modifier-reservation.spec.ts`) ne viennent pas de la branche : le test modifie la réservation du 12 octobre 2026 du jeu de données, désormais passée, et la page refuse de modifier une réservation passée. Preuve : avec l'horloge du navigateur figée au 5 octobre (`page.clock.install`, modification temporaire annulée ensuite), les 4 tests du fichier passent. Les tests dépendent de la date du jour : à corriger côté front.
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-10-27 — CORS (#7) et pull request de la branche `back` (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.

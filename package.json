@@ -9,7 +9,8 @@
   "scripts": {
     "core:sync": "node scripts/sync-core.js https://github.com/MDS-M1-advanced-front-end/core.git 👨🏻‍🏫pierre",
     "mock": "node mock/build-spec.js && prism mock mock/.generated/openapi.yml --host 0.0.0.0 --port 4010",
-    "dev": "pnpm --filter \"./apps/*\" dev",
+    "dev": "node scripts/dev-db.js && pnpm --filter backend migration:run && pnpm --filter \"./apps/*\" --parallel dev",
+    "seed": "pnpm --filter backend seed",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint . && pnpm -r lint",
     "test": "vitest run",
