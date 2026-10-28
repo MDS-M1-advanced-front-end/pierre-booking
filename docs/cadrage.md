@@ -58,7 +58,7 @@ Toutes les décisions ont été validées le 2026-10-07 (voir la fin de [`plan.m
 ### 2.4 Accès à l'API
 
 - Tous les appels passent par `src/data/<domaine>/<domaine>.queries.ts`, qui enveloppe les fonctions de `core` et transforme un `Result` en erreur `{ ok: false }` exploitable par l'interface (message, statut).
-- **`process.env` dans le navigateur** : le client de `core` lit `process.env.API_BASE_URL`. On le remplace au build avec `vite.define` dans `astro.config.mjs`. Conséquence : l'URL de l'API est **figée au build**, ce qui est acceptable pour ce projet.
+- **`process.env` dans le navigateur** : le client de `core` lit `process.env.API_BASE_URL`. On le remplace au build avec `define`, **pour le code client seulement** (`vite.environments.client` dans `astro.config.mjs`), par `PUBLIC_API_BASE_URL`. L'URL du navigateur est donc figée au build ; le serveur (SSR) lit `API_BASE_URL` au démarrage, ce qui permet en Docker une adresse interne (`http://backend:8080/api`).
 - CORS : le mock Prism accepte les appels depuis `localhost:4321` (vérifié : prévol `OPTIONS` en 204, `Authorization` autorisé).
 - Données fictives : les fichiers `*.mock.ts` ne servent plus une fois l'API branchée. Supprimés au lot 3 ; le mock Prism est la source de développement.
 - **Limites du mock constatées à l'implémentation** (sans effet avec la vraie API, contournées dans les tests de bout en bout par `page.route`) :

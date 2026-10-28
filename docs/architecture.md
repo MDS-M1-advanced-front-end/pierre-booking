@@ -98,7 +98,8 @@ Fonctions pures et testables, sans import d'Astro : formatage (prix, dates en he
 ## Configuration
 
 - `API_BASE_URL` : URL de l'API, lue par le client HTTP de `core` dans `process.env`.
-  - Valeur par défaut, définie dans `astro.config.mjs` : `http://localhost:4010`, le mock Prism (`pnpm mock` ou `docker compose up mock`). Le mock sert les routes **sans** préfixe `/api` (`/rooms` répond, `/api/rooms` renvoie 404).
+  - Valeur par défaut, définie dans `astro.config.mjs` : `http://localhost:8080/api`, le back NestJS (`pnpm dev`). Pour le mock Prism (`pnpm mock`) : `http://localhost:4010`, **sans** préfixe `/api` (les tests de bout en bout le fixent dans `playwright.config.ts`).
+  - `PUBLIC_API_BASE_URL` : URL vue par le navigateur, inscrite au build dans le code client ; par défaut `API_BASE_URL`. Elle diffère en production Docker : le serveur Astro appelle `http://backend:8080/api` (lu au démarrage), le navigateur `http://localhost:8080/api`.
   - Pour viser une autre API : copier `.env.example` en `.env` (ignoré par git) ou définir la variable dans le shell, qui a la priorité.
   - Astro ne place pas le `.env` dans `process.env` : `astro.config.mjs` le charge avec `process.loadEnvFile()` (Node ≥ 20.12).
 

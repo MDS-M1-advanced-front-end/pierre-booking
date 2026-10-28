@@ -11,8 +11,11 @@ try {
 } catch {
   // Pas de .env : on garde la valeur par défaut ci-dessous.
 }
-// Par défaut : le mock Prism (`pnpm mock` ou `docker compose up mock`), servi sans préfixe /api.
-process.env.API_BASE_URL ??= 'http://localhost:4010';
+// Par défaut : le back NestJS (`pnpm dev` à la racine). Pour le mock Prism : http://localhost:4010.
+process.env.API_BASE_URL ??= 'http://localhost:8080/api';
+// URL vue par le navigateur. Elle diffère de celle du serveur en Docker : le serveur Astro appelle
+// http://backend:8080/api, le navigateur http://localhost:8080/api.
+process.env.PUBLIC_API_BASE_URL ??= process.env.API_BASE_URL;
 
 // https://astro.build/config
 export default defineConfig({
@@ -31,10 +34,15 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()],
-    // Le client de core lit process.env.API_BASE_URL, qui n'existe pas dans le navigateur :
-    // la valeur est inscrite au build (voir cadrage.md § 2.4).
-    define: {
-      'process.env.API_BASE_URL': JSON.stringify(process.env.API_BASE_URL),
+    // Le client de core lit process.env.API_BASE_URL, qui n'existe pas dans le navigateur : la valeur
+    // est inscrite au build, pour le code du navigateur seulement (voir cadrage.md § 2.4). Le serveur
+    // (SSR) lit la vraie variable d'environnement au démarrage.
+    environments: {
+      client: {
+        define: {
+          'process.env.API_BASE_URL': JSON.stringify(process.env.PUBLIC_API_BASE_URL),
+        },
+      },
     },
   },
 });
