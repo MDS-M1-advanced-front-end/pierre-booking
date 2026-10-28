@@ -26,6 +26,28 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-10-28 — Clean architecture : cas d'usage des salles (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : poursuivre mon refactor du back en clean architecture (`modules/rooms` : `domain`, `application`, `infrastructure`), sur les salles seulement.
+- **Demande** : « J'ai commencé un gros refactor pour transformer le back en clean architecture. Observe les modifications que j'ai faites, puis fais les autres use-cases de rooms seulement pour l'instant. »
+- **Résultat** : _à compléter_
+- **Ce que l'IA a relevé dans mon travail en cours** (le back ne compilait plus) :
+  - `get-rooms.use-case.ts` contenait `CreateRoomUseCase`, avec `@Injectable` sans parenthèses et une virgule après `@Inject(...)` (erreur de syntaxe) ;
+  - entité `Room` du domaine avec des relations vers `User`, `Availability`, `Reservation` non importées (et sans équivalent dans le domaine) ; `relations?: RoomRepositoryInterface` au lieu de `RoomRepositoryRelationsParam` ;
+  - `TypeOrmRoomEntity` exporté sous ce nom, mais 13 fichiers importaient encore `{ Room }` ; `RoomStatus` importé d'un DTO supprimé ;
+  - controller et DTOs : chemins relatifs faux, `roomsService` utilisé sans être injecté, `create` qui renvoyait un objet partiel au lieu du schéma `Room` ;
+  - filtre : import de l'objet `response` d'Express au lieu de la réponse de la requête, format différent du schéma `Error` ; `validate()` lançait une `Error` simple (→ 500) ;
+  - mapper TypeORM vide ; `app.module` toujours branché sur l'ancien module.
+- **Ce qui a été fait** :
+  - **domaine** : `Room` sans relations (autres agrégats référencés par identifiant), règles `canBeManagedBy`, `isVisibleTo`, `update` ; exceptions `RoomNotFound`, `InvalidRoom`, `RoomAccessDenied`, `RoomHasReservations` ; interface de repository avec `findPage(criteria)` ;
+  - **application** : `CreateRoom` (corrigé, renommé `create-room.use-case.ts`), `GetRooms`, `GetRoom`, `UpdateRoom`, `DeleteRoom` ; port `RoomAvailabilityPort` pour le filtre de disponibilité ;
+  - **infrastructure** : mapper ORM ↔ domaine, repository TypeORM (filtres, visibilité, pagination, conflit `409` à la suppression), filtre d'exceptions au format `{ code, message }`, controller sur les cas d'usage, `toRoomDTO` ;
+  - **transition** : `features/rooms` ne garde que les disponibilités et la lecture d'une salle pour les réservations (`RoomAvailabilityModule`) ; les routes `/rooms/{id}/availability` y délèguent encore.
+- **Erreurs de l'IA relevées** : dans le mapper ORM → domaine, **`pricePerHour` oublié** dans l'appel au constructeur à 11 paramètres positionnels : tous les arguments suivants étaient décalés. Vu à la relecture, avant le typecheck. Ce type de constructeur est fragile.
+- **Vérification** : typecheck, lint, `pnpm check` à la racine ; `migration:generate --check` sans écart (le renommage de l'entité ne change pas le schéma) ; scénario d'API réécrit (le dossier temporaire avait été vidé) et rejoué sur une base neuve : **78 vérifications OK**, aucune erreur serveur (création complète, `PATCH` partiel et effacement, visibilité par rôle, pagination, filtres de disponibilité, `403` / `404` / `409`, réservations et paiement sur les nouvelles salles) ; corps d'erreur du filtre de domaine vérifiés.
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-10-28 — Front branché sur le back, Docker de production et `pnpm dev` (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
