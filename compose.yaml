@@ -1,73 +1,20 @@
-# Travailler sans installer Node : seul Docker est nécessaire. Depuis ce dossier :
-#   docker compose run --rm node pnpm core:sync  # une commande au choix
-#   docker compose run --rm node                 # toutes les vérifications (pnpm check)
-#   docker compose up mock                       # API mock sur http://localhost:4010
-#   docker compose up dev                        # mock + serveur de dev de l'application
-#   docker compose up -d db                      # PostgreSQL du back-end sur localhost:5432
-# Les dépendances sont installées automatiquement à chaque lancement.
-
-# Configuration commune aux trois services
-x-node: &node
-  build: .
-  environment:
-    # Cache pnpm dans son volume (sinon pnpm le crée dans le dossier du projet)
-    pnpm_config_store_dir: /home/node/.local/share/pnpm/store
-    # Détection des modifications faites depuis Windows ou macOS
-    CHOKIDAR_USEPOLLING: 'true'
-    WATCHPACK_POLLING: 'true'
-    VITEST_POLLING: '1'
-  entrypoint:
-    - sh
-    - -c
-    - pnpm install --reporter=silent && exec "$$@"
-    - --
-  volumes:
-    - .:/app
-    - pnpm-store:/home/node/.local/share/pnpm
-    - cache:/home/node/.cache
+# Production : base, API et front, construits depuis les Dockerfile des apps. Depuis ce dossier :
+#   JWT_SECRET=<secret> docker compose up -d --build
+#   front : http://localhost:4321   API : http://localhost:8080/api
+# Variables (shell ou .env à la racine) : JWT_SECRET (obligatoire), DB_PASSWORD,
+# FRONT_URL et PUBLIC_API_BASE_URL (adresses publiques, si autres que localhost).
+# Développement : compose.dev.yaml (base seule) et `pnpm dev`.
+name: room-booking
 
 services:
-  node:
-    <<: *node
-    command: [pnpm, check]
-
-  mock:
-    <<: *node
-    command: [pnpm, mock]
-    # Les ports du serveur de dev sont publiés ici, car `dev` partage le réseau de `mock`
-    ports:
-      - '4010:4010' # mock Prism
-      - '3000:3000' # Next.js, Nuxt
-      - '4200:4200' # Angular
-      - '5173:5173' # Vite (Vue, Svelte, SolidStart…)
-      - '4321:4321' # Astro
-    # Prêt quand Prism écoute (donc après le pnpm install)
-    healthcheck:
-      test: nc -z 127.0.0.1 4010
-      interval: 2s
-      retries: 60
-
-  dev:
-    <<: *node
-    # Pas de pnpm install ici : le service mock vient de le faire
-    entrypoint: []
-    command: [pnpm, dev]
-    # Même réseau que le mock : http://localhost:4010 fonctionne aussi côté serveur (SSR)
-    network_mode: service:mock
-    depends_on:
-      mock:
-        condition: service_healthy
-
-  # Base du back-end (apps/backend). Identifiants : valeurs par défaut de src/database/data-source.ts
   db:
     image: postgres:17-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-resa_user}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-resa_password}
       POSTGRES_DB: ${DB_NAME:-resa_db}
-    ports:
-      # DB_PORT=5433 docker compose up db si le port 5432 est déjà pris
-      - '${DB_PORT:-5432}:5432'
+    # Pas de port publié : seule l'API accède à la base
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -75,7 +22,46 @@ services:
       interval: 2s
       retries: 30
 
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-resa_user}
+      DB_PASSWORD: ${DB_PASSWORD:-resa_password}
+      DB_NAME: ${DB_NAME:-resa_db}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET est obligatoire}
+      # Origine du front autorisée par le CORS
+      CORS_ORIGIN: ${FRONT_URL:-http://localhost:4321}
+    ports:
+      - '8080:8080'
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: wget -qO- http://127.0.0.1:8080/api || exit 1
+      interval: 5s
+      retries: 30
+
+  front:
+    build:
+      context: .
+      dockerfile: apps/front/Dockerfile
+      args:
+        # Adresse de l'API vue par le navigateur
+        PUBLIC_API_BASE_URL: ${PUBLIC_API_BASE_URL:-http://localhost:8080/api}
+    restart: unless-stopped
+    environment:
+      # Adresse de l'API vue par le serveur Astro (réseau interne de compose)
+      API_BASE_URL: http://backend:8080/api
+    ports:
+      - '4321:4321'
+    depends_on:
+      backend:
+        condition: service_healthy
+
 volumes:
-  pnpm-store:
-  cache:
   pgdata:

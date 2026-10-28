@@ -1,0 +1,10 @@
+# Contexte des images de production (apps/*/Dockerfile, construites depuis la racine)
+.git
+**/node_modules
+**/dist
+**/.astro
+**/coverage
+**/.env
+**/test-results
+**/playwright-report
+mock/.generated
