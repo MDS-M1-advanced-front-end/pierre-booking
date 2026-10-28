@@ -26,6 +26,21 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-10-28 — JSDoc du back et question sur la machine à états des réservations (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal, avec 3 sous-agents en parallèle (un par module) ; `common/` fait par l'agent principal.
+- **Objectif** : documenter le back en JSDoc, et répondre à une question sur les transitions de statut des réservations.
+- **Demande** : « Premier point, tu n'as fait aucune JSDoc. Deuxième point, c'est une question uniquement : il n'y a pas de machine à états dans la réservation ? Aucune condition de transition ? »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** :
+  - JSDoc en français, au style du client de `core` (`@param nom - …`, `@returns`, `@throws {Exception} condition`) sur les classes, interfaces et fonctions exportées et les méthodes publiques de `common/` et des trois modules (99 fichiers) ; les commentaires `//` au-dessus des déclarations sont devenus la première phrase de leur JSDoc ; pas de JSDoc sur les propriétés de DTO ni les colonnes TypeORM ;
+  - commit `2fb5f37`, poussé sur la PR #19 ;
+  - un commentaire devenu faux corrigé au passage : `AuthUser` n'est plus « le contenu du JWT » (le jeton ne porte que l'identifiant, le rôle est relu en base).
+- **Réponse à la question** : pas de machine à états explicite. Les conditions existent mais sont dispersées : `confirm` et `reject` exigent `PENDING`, `cancel` exige un statut actif, mais `reschedule` ne contrôle rien lui-même (c'est le cas d'usage qui appelle `assertActive`), `status` est modifiable de l'extérieur, aucune condition de temps (confirmer une demande passée, annuler une réservation terminée), et `COMPLETED` n'est jamais atteint (#9). Proposition faite, pas codée : table de transitions dans le domaine, une méthode `transitionTo` unique, `status` en lecture seule.
+- **Erreurs de l'IA relevées** : la JSDoc n'avait été faite sur aucun fichier du back avant ma remarque, alors que le client de `core` en a partout.
+- **Vérification** : diff filtré pour ne garder que les lignes hors commentaires : **aucune** (seuls des commentaires ont changé) ; `pnpm check`, typecheck et lint du back ; relecture de passages (`Reservation`, cas d'usage de connexion) pour écarter les JSDoc creuses.
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-10-28 — Clean architecture : modules users et reservations (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
