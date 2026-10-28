@@ -8,7 +8,7 @@ import {
   PrimaryGeneratedColumn,
   type Relation,
 } from 'typeorm';
-import { Room } from './rooms.model.js';
+import { TypeOrmRoomEntity as Room } from '../modules/rooms/infrastructure/persistence/typeorm-room.entity.js';
 
 // Heures sans fuseau : heure de Paris (cf. docs/cadrage.md)
 @Entity('availabilities')

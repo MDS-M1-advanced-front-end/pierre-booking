@@ -9,16 +9,16 @@ import {
   PrimaryGeneratedColumn,
   type Relation,
 } from 'typeorm';
-import { RoomStatus } from '../features/rooms/rooms.dto.js';
-import { Availability } from './availabilities.model.js';
-import { decimalTransformer } from './decimal.transformer.js';
-import { Reservation } from './reservations.model.js';
-import { User } from './users.model.js';
+import { RoomStatus } from '../../domain/entities/room.entity.js';
+import { Availability } from '../../../../models/availabilities.model.js';
+import { decimalTransformer } from '../../../../models/decimal.transformer.js';
+import { Reservation } from '../../../../models/reservations.model.js';
+import { User } from '../../../../models/users.model.js';
 
 @Entity('rooms')
 @Check(`"capacity" >= 1`)
 @Check(`"price_per_hour" >= 0`)
-export class Room {
+export class TypeOrmRoomEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

@@ -5,12 +5,12 @@ import { join } from 'node:path';
 import { addDays } from '../common/paris-time.js';
 import { hashPassword } from '../features/auth/password.js';
 import type { ReservationStatus } from '../features/reservations/reservations.dto.js';
-import type { RoomStatus } from '../features/rooms/rooms.dto.js';
+import type { RoomStatus } from '../modules/rooms/domain/entities/room.entity.js';
 import type { UserRole } from '../features/users/users.dto.js';
 import { Availability } from '../models/availabilities.model.js';
 import { Payment } from '../models/payments.model.js';
 import { Reservation } from '../models/reservations.model.js';
-import { Room } from '../models/rooms.model.js';
+import { TypeOrmRoomEntity as Room } from '../modules/rooms/infrastructure/persistence/typeorm-room.entity.js';
 import { User } from '../models/users.model.js';
 import dataSource from './data-source.js';
 

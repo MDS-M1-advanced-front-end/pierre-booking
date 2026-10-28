@@ -13,7 +13,7 @@ import {
 import { ReservationStatus } from '../features/reservations/reservations.dto.js';
 import { decimalTransformer } from './decimal.transformer.js';
 import { Payment } from './payments.model.js';
-import { Room } from './rooms.model.js';
+import { TypeOrmRoomEntity as Room } from '../modules/rooms/infrastructure/persistence/typeorm-room.entity.js';
 import { User } from './users.model.js';
 
 @Entity('reservations')

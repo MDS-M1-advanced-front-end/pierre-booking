@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Reservation } from '../../models/reservations.model.js';
-import { Room } from '../../models/rooms.model.js';
+import { TypeOrmRoomEntity as Room } from '../../modules/rooms/infrastructure/persistence/typeorm-room.entity.js';
 import { User } from '../../models/users.model.js';
 import { ReservationsModule } from '../reservations/reservations.module.js';
 import { AdminController } from './admin.controller.js';

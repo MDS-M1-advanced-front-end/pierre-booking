@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { UserRole } from '../features/users/users.dto.js';
 import { Reservation } from './reservations.model.js';
-import { Room } from './rooms.model.js';
+import { TypeOrmRoomEntity as Room } from '../modules/rooms/infrastructure/persistence/typeorm-room.entity.js';
 
 @Entity('users')
 export class User {

@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { addDays, fromParis } from '../../common/paris-time.js';
 import { Reservation } from '../../models/reservations.model.js';
-import { Room } from '../../models/rooms.model.js';
+import { TypeOrmRoomEntity as Room } from '../../modules/rooms/infrastructure/persistence/typeorm-room.entity.js';
 import { User } from '../../models/users.model.js';
 import { ReservationStatus } from '../reservations/reservations.dto.js';
 import type { StatisticsDTO, StatisticsQueryDTO } from './admin.dto.js';

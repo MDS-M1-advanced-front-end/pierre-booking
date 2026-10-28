@@ -17,17 +17,14 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { DATE_REGEX, TIME_REGEX } from '../../common/formats.js';
-import { IsOptionalNotNull } from '../../common/validators.js';
+import { DATE_REGEX, TIME_REGEX } from '../../../../common/formats.js';
+import { IsOptionalNotNull } from '../../../../common/validators.js';
 import {
   PaginatedDTO,
   PaginationQueryDTO,
-} from '../../common/pagination.dto.js';
+} from '../../../../common/pagination.dto.js';
 
-export enum RoomStatus {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
-}
+import { RoomStatus } from '../../domain/entities/room.entity.js';
 
 export class RoomDTO {
   @IsUUID()

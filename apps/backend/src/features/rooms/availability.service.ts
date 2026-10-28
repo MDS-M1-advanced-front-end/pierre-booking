@@ -25,7 +25,7 @@ import {
 } from '../../common/paris-time.js';
 import { Availability } from '../../models/availabilities.model.js';
 import { Reservation } from '../../models/reservations.model.js';
-import { Room } from '../../models/rooms.model.js';
+import { TypeOrmRoomEntity as Room } from '../../modules/rooms/infrastructure/persistence/typeorm-room.entity.js';
 import type { AuthUser } from '../auth/auth.decorators.js';
 import { ACTIVE_RESERVATION_STATUSES } from '../reservations/reservations.constants.js';
 import { assertCanManageRoom } from './rooms.access.js';
@@ -33,7 +33,7 @@ import type {
   AvailabilityQueryDTO,
   AvailabilitySlotDTO,
   UpdateAvailabilityDTO,
-} from './rooms.dto.js';
+} from '../../modules/rooms/infrastructure/dtos/rooms.dto.js';
 import { toAvailabilitySlotDTO } from './rooms.mapper.js';
 
 @Injectable()

@@ -1,5 +1,5 @@
 import { ForbiddenException } from '@nestjs/common';
-import type { Room } from '../../models/rooms.model.js';
+import type { TypeOrmRoomEntity as Room } from '../../modules/rooms/infrastructure/persistence/typeorm-room.entity.js';
 import type { AuthUser } from '../auth/auth.decorators.js';
 import { UserRole } from '../users/users.dto.js';
 

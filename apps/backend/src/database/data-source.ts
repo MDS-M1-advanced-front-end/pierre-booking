@@ -4,7 +4,7 @@ import { DataSource, type DataSourceOptions } from 'typeorm';
 import { Availability } from '../models/availabilities.model.js';
 import { Payment } from '../models/payments.model.js';
 import { Reservation } from '../models/reservations.model.js';
-import { Room } from '../models/rooms.model.js';
+import { TypeOrmRoomEntity as Room } from '../modules/rooms/infrastructure/persistence/typeorm-room.entity.js';
 import { User } from '../models/users.model.js';
 
 // Partagée par l'application (app.module.ts) et la CLI TypeORM (scripts migration:*)
