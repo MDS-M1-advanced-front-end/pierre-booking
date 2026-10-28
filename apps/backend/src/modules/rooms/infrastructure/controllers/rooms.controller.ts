@@ -20,9 +20,10 @@ import {
   Public,
   Roles,
   type AuthUser,
-} from '../../../../features/auth/auth.decorators.js';
-import { AvailabilityService } from '../../../../features/rooms/availability.service.js';
-import { UserRole } from '../../../../features/users/users.dto.js';
+} from '../../../users/infrastructure/auth/auth.decorators.js';
+import { UserRole } from '../../../users/domain/entities/user.entity.js';
+import { GetRoomAvailabilityUseCase } from '../../application/use-cases/get-room-availability.use-case.js';
+import { SetRoomAvailabilityUseCase } from '../../application/use-cases/set-room-availability.use-case.js';
 import { CreateRoomUseCase } from '../../application/use-cases/create-room.use-case.js';
 import { DeleteRoomUseCase } from '../../application/use-cases/delete-room.use-case.js';
 import { GetRoomUseCase } from '../../application/use-cases/get-room.use-case.js';
@@ -32,7 +33,7 @@ import {
   RoomStatus,
   type RoomActor,
 } from '../../domain/entities/room.entity.js';
-import { toRoomDTO } from '../dtos/room-dto.mapper.js';
+import { toAvailabilitySlotDTO, toRoomDTO } from '../dtos/room-dto.mapper.js';
 import {
   AvailabilityQueryDTO,
   AvailabilitySlotDTO,
@@ -63,8 +64,8 @@ export class RoomsController {
     private readonly getRoomUseCase: GetRoomUseCase,
     private readonly updateRoomUseCase: UpdateRoomUseCase,
     private readonly deleteRoomUseCase: DeleteRoomUseCase,
-    // Disponibilités : pas encore migrées dans ce module
-    private readonly availabilityService: AvailabilityService,
+    private readonly getRoomAvailabilityUseCase: GetRoomAvailabilityUseCase,
+    private readonly setRoomAvailabilityUseCase: SetRoomAvailabilityUseCase,
   ) {}
 
   @Public()
@@ -148,19 +149,33 @@ export class RoomsController {
 
   @Public()
   @Get(':roomId/availability')
-  getAvailability(
+  async getAvailability(
     @Param('roomId', ParseUUIDPipe) roomId: string,
     @Query() query: AvailabilityQueryDTO,
   ): Promise<AvailabilitySlotDTO[]> {
-    return this.availabilityService.find(roomId, query);
+    const slots = await this.getRoomAvailabilityUseCase.execute(
+      roomId,
+      query.date,
+      query.startTime,
+      query.endTime,
+    );
+    return slots.map(({ slot, available }) =>
+      toAvailabilitySlotDTO(slot, available),
+    );
   }
 
   @Put(':roomId/availability')
-  setAvailability(
+  async setAvailability(
     @Param('roomId', ParseUUIDPipe) roomId: string,
-    @Body() body: UpdateAvailabilityDTO,
+    @Body() dto: UpdateAvailabilityDTO,
     @CurrentUser() user: AuthUser,
   ): Promise<AvailabilitySlotDTO[]> {
-    return this.availabilityService.replace(roomId, body, user);
+    const slots = await this.setRoomAvailabilityUseCase.execute(
+      roomId,
+      dto.date,
+      dto.slots,
+      toActor(user),
+    );
+    return slots.map((slot) => toAvailabilitySlotDTO(slot));
   }
 }

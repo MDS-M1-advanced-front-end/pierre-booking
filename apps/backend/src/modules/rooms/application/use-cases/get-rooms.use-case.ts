@@ -6,10 +6,7 @@ import {
   type RoomRepositoryInterface,
   type RoomSearchCriteria,
 } from '../../domain/repositories/room.repository.interface.js';
-import {
-  ROOM_AVAILABILITY,
-  type RoomAvailabilityPort,
-} from '../ports/room-availability.port.js';
+import { RoomAvailabilityService } from '../services/room-availability.service.js';
 
 export interface GetRoomsFilters {
   search?: string;
@@ -30,8 +27,7 @@ export class GetRoomsUseCase {
   constructor(
     @Inject(ROOM_REPOSITORY)
     private readonly roomRepository: RoomRepositoryInterface,
-    @Inject(ROOM_AVAILABILITY)
-    private readonly roomAvailability: RoomAvailabilityPort,
+    private readonly roomAvailability: RoomAvailabilityService,
   ) {}
 
   async execute(

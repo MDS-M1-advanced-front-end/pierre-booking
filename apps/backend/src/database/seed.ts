@@ -3,15 +3,15 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { addDays } from '../common/paris-time.js';
-import { hashPassword } from '../features/auth/password.js';
-import type { ReservationStatus } from '../features/reservations/reservations.dto.js';
+import type { ReservationStatus } from '../modules/reservations/domain/entities/reservation.entity.js';
 import type { RoomStatus } from '../modules/rooms/domain/entities/room.entity.js';
-import type { UserRole } from '../features/users/users.dto.js';
-import { Availability } from '../models/availabilities.model.js';
-import { Payment } from '../models/payments.model.js';
-import { Reservation } from '../models/reservations.model.js';
-import { TypeOrmRoomEntity as Room } from '../modules/rooms/infrastructure/persistence/typeorm-room.entity.js';
-import { User } from '../models/users.model.js';
+import type { UserRole } from '../modules/users/domain/entities/user.entity.js';
+import { ScryptPasswordHasher } from '../modules/users/infrastructure/security/scrypt-password-hasher.js';
+import { TypeOrmReservationEntity } from '../modules/reservations/infrastructure/persistence/typeorm-reservation.entity.js';
+import { TypeOrmPaymentEntity } from '../modules/reservations/infrastructure/persistence/typeorm-payment.entity.js';
+import { TypeOrmAvailabilityEntity } from '../modules/rooms/infrastructure/persistence/typeorm-availability.entity.js';
+import { TypeOrmRoomEntity } from '../modules/rooms/infrastructure/persistence/typeorm-room.entity.js';
+import { TypeOrmUserEntity } from '../modules/users/infrastructure/persistence/typeorm-user.entity.js';
 import dataSource from './data-source.js';
 
 interface MockUser {
@@ -77,7 +77,7 @@ async function seed(): Promise<void> {
   // Le mock renvoie la même journée pour toutes les salles ; « available: false » y marque des
   // créneaux réservés, calculés ici à partir des réservations : tous les créneaux sont ouverts.
   const slots = readMock<MockSlot>('availability');
-  const passwordHash = await hashPassword(
+  const passwordHash = await new ScryptPasswordHasher().hash(
     process.env.SEED_PASSWORD || 'motdepasse',
   );
 
@@ -88,7 +88,7 @@ async function seed(): Promise<void> {
     );
 
     await manager.insert(
-      User,
+      TypeOrmUserEntity,
       users.map((user) => ({
         id: user.id,
         firstName: user.firstName,
@@ -101,7 +101,7 @@ async function seed(): Promise<void> {
     );
 
     await manager.insert(
-      Room,
+      TypeOrmRoomEntity,
       rooms.map((room) => ({
         id: room.id,
         ownerId: room.ownerId,
@@ -131,11 +131,14 @@ async function seed(): Promise<void> {
     );
     // Par lots : PostgreSQL limite le nombre de paramètres d'une requête
     for (let i = 0; i < availabilities.length; i += 1000) {
-      await manager.insert(Availability, availabilities.slice(i, i + 1000));
+      await manager.insert(
+        TypeOrmAvailabilityEntity,
+        availabilities.slice(i, i + 1000),
+      );
     }
 
     await manager.insert(
-      Reservation,
+      TypeOrmReservationEntity,
       reservations.map((reservation) => ({
         id: reservation.id,
         roomId: reservation.roomId,
@@ -152,7 +155,13 @@ async function seed(): Promise<void> {
   });
 
   const counts = await Promise.all(
-    [User, Room, Availability, Reservation, Payment].map(
+    [
+      TypeOrmUserEntity,
+      TypeOrmRoomEntity,
+      TypeOrmAvailabilityEntity,
+      TypeOrmReservationEntity,
+      TypeOrmPaymentEntity,
+    ].map(
       async (entity) =>
         `${dataSource.getMetadata(entity).tableName} : ${await dataSource.getRepository(entity).count()}`,
     ),

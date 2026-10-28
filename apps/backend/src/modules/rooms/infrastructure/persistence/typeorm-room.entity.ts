@@ -10,10 +10,10 @@ import {
   type Relation,
 } from 'typeorm';
 import { RoomStatus } from '../../domain/entities/room.entity.js';
-import { Availability } from '../../../../models/availabilities.model.js';
-import { decimalTransformer } from '../../../../models/decimal.transformer.js';
-import { Reservation } from '../../../../models/reservations.model.js';
-import { User } from '../../../../models/users.model.js';
+import { decimalTransformer } from '../../../../common/decimal.transformer.js';
+import { TypeOrmReservationEntity } from '../../../reservations/infrastructure/persistence/typeorm-reservation.entity.js';
+import { TypeOrmUserEntity } from '../../../users/infrastructure/persistence/typeorm-user.entity.js';
+import { TypeOrmAvailabilityEntity } from './typeorm-availability.entity.js';
 
 @Entity('rooms')
 @Check(`"capacity" >= 1`)
@@ -58,13 +58,18 @@ export class TypeOrmRoomEntity {
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
-  @ManyToOne(() => User, (user) => user.rooms, { onDelete: 'CASCADE' })
+  @ManyToOne(() => TypeOrmUserEntity, (user) => user.rooms, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'owner_id' })
-  owner: Relation<User>;
+  owner: Relation<TypeOrmUserEntity>;
 
-  @OneToMany(() => Availability, (availability) => availability.room)
-  availabilities: Relation<Availability>[];
+  @OneToMany(
+    () => TypeOrmAvailabilityEntity,
+    (availability) => availability.room,
+  )
+  availabilities: Relation<TypeOrmAvailabilityEntity>[];
 
-  @OneToMany(() => Reservation, (reservation) => reservation.room)
-  reservations: Relation<Reservation>[];
+  @OneToMany(() => TypeOrmReservationEntity, (reservation) => reservation.room)
+  reservations: Relation<TypeOrmReservationEntity>[];
 }
