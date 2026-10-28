@@ -4,53 +4,41 @@ Application de réservation de salles, dans le framework de votre choix. Le code
 
 ## Structure
 
-- `apps/<framework>/` : votre application (créée en séance 1 avec le générateur du méta-framework)
-- `packages/core/` : copie du dépôt `core`, gérée par `pnpm core:sync` (ne pas modifier ici)
-- `mock/` : mock de l'API servi par Prism, avec un jeu de données (`mock/data/`)
-- `docs/ai-journal.md` : journal d'usage de l'IA, à tenir tout au long du module (livrable évalué)
+- `apps/front/` : le front (Astro + Svelte)
+- `apps/backend/` : l'API (NestJS, TypeORM, PostgreSQL)
+- `packages/core/` : copie du dépôt `core`, gérée par `pnpm core:sync` (contrat `openapi.yml` et client HTTP)
+- `mock/` : mock de l'API servi par Prism, avec un jeu de données (`mock/data/`), utilisé par les tests de bout en bout
+- `docs/` : cadrage, architecture, base de données, journal d'usage de l'IA (`ai-journal.md`, livrable évalué)
 
-## Démarrer
+## Développement
 
-Deux possibilités, au choix. Gardez la même pour tout le module : les dépendances installées par Docker ne fonctionnent pas avec le Node de votre machine, et inversement. Pour changer de mode, supprimez d'abord tous les dossiers `node_modules/`.
-
-### Option A : avec Docker (rien d'autre à installer)
-
-Prérequis : Docker Desktop (Windows, macOS) ou Docker Engine avec le plugin Compose (Linux).
-
-```sh
-docker compose run --rm node pnpm core:sync   # copie le dépôt core dans packages/core
-docker compose up mock                         # API mock sur http://localhost:4010
-docker compose up dev                          # mock + serveur de dev de l'application
-```
-
-Toute autre commande `pnpm` se lance de la même façon : `docker compose run --rm node pnpm <commande>`. Les dépendances sont installées automatiquement à chaque lancement, dans le dossier du projet : votre éditeur voit donc les types.
-
-Pour `docker compose up dev`, votre application (`apps/<framework>/`) doit avoir un script `dev` qui écoute sur `0.0.0.0` et sur l'un des ports publiés :
-
-| Méta-framework | Script `dev`                                 | URL                   |
-| -------------- | -------------------------------------------- | --------------------- |
-| Next.js        | `next dev -H 0.0.0.0`                        | http://localhost:3000 |
-| Nuxt           | `nuxt dev --host 0.0.0.0`                    | http://localhost:3000 |
-| Angular        | `ng serve --host 0.0.0.0`                    | http://localhost:4200 |
-| Vite           | `vite dev --host 0.0.0.0` (ou `vite --host`) | http://localhost:5173 |
-
-Le serveur de dev partage le réseau du mock : `http://localhost:4010` fonctionne aussi depuis le code exécuté côté serveur (SSR).
-
-### Option B : avec Node installé
-
-Prérequis : Node 24 ou plus.
+Prérequis : Node 24 ou plus, et Docker (pour la base PostgreSQL).
 
 ```sh
 corepack enable
-pnpm core:sync     # copie le dépôt core dans packages/core
 pnpm install
-pnpm mock          # API mock sur http://localhost:4010
-pnpm dev           # serveur de dev de l'application (dans un autre terminal)
+cp apps/backend/.env.example apps/backend/.env   # facultatif : port de la base, secret JWT…
+pnpm dev           # base (compose.dev.yaml), migrations, puis back et front en parallèle
+pnpm seed          # une fois, dans un autre terminal : jeu de données du mock
 ```
 
-## Commandes
+- Front : http://localhost:4321 ; API : http://localhost:8080/api
+- Comptes du seed : ceux du mock (`client1@salles.example`, `gestionnaire1@salles.example`, `admin1@salles.example`…), mot de passe `motdepasse`.
+- Port 5432 déjà pris : mettre `DB_PORT=5433` dans `apps/backend/.env`. `pnpm dev` publie la base sur ce port et le back s'y connecte.
+- Front sur le mock au lieu du back : `pnpm mock`, et `API_BASE_URL=http://localhost:4010` dans `apps/front/.env`.
 
-Avec Docker, préfixez chaque commande par `docker compose run --rm node`.
+## Production
+
+Images construites depuis `apps/backend/Dockerfile` et `apps/front/Dockerfile`, orchestrées par `compose.yaml` :
+
+```sh
+cp .env.example .env   # au minimum JWT_SECRET
+docker compose up -d --build
+```
+
+Front sur http://localhost:4321, API sur http://localhost:8080/api. Les migrations s'appliquent au démarrage du back. La base n'est pas exposée ; elle démarre vide (le seed est réservé au développement).
+
+## Commandes
 
 ```sh
 pnpm check         # tout ce que vérifie la CI : typecheck, lint, format:check, test
