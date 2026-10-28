@@ -26,6 +26,25 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-10-28 — Clean architecture : modules users et reservations (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : terminer la migration du back en clean architecture, avec trois modules (`rooms`, `users`, `reservations`) auxquels le reste se rattache.
+- **Demande** : « Fais un premier commit, puis fais les modules user et reservation. Ce sont nos trois modules et le reste des éléments peuvent normalement s'y greffer. »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (commit `581677d` pour le module rooms, avant ce travail) :
+  - **`users`** : utilisateurs et authentification. Domaine `User` (normalisation de l'e-mail, profil, rôle), exceptions, repository ; ports `PasswordHasherPort` (scrypt) et `TokenPort` (JWT) ; 8 cas d'usage (inscription, connexion, authentification d'un jeton, lecture, liste, modification, mot de passe, suppression) ; guard global et décorateurs (`@Public`, `@Roles`, `@CurrentUser`) dans `infrastructure/auth`, utilisés par tous les modules ;
+  - **`reservations`** : réservations, paiements et administration. Domaine `Reservation` (cycle de vie, créneau, capacité, montant), `Payment` ; ports `RoomBookingPort` (vers rooms), `PaymentGatewayPort` (paiement simulé), `StatisticsPort` ; 11 cas d'usage ;
+  - **`rooms`** : récupère les disponibilités (entité `AvailabilitySlot` avec les règles de chevauchement et de couverture, 2 cas d'usage, `RoomAvailabilityService`) et expose `RoomBookingService` au module reservations ;
+  - **dépendances entre modules** : reservations → rooms par un port ; rooms lit l'occupation directement dans la table des réservations (adaptateur TypeORM en lecture seule), pour éviter une dépendance circulaire entre modules Nest ;
+  - entités TypeORM déplacées dans l'infrastructure de chaque module (`git mv`, historique conservé) ; `features/` et `models/` supprimés ;
+  - nouvelles entités du domaine construites à partir d'un objet de propriétés plutôt que de paramètres positionnels (après l'erreur du mapper des salles).
+- **Commit** : `e3e77dd` (un seul : les entités TypeORM des trois modules s'importent entre elles, aucun découpage par module ne compilait seul), puis pull request vers `main`.
+- **Choix à valider** : statistiques calculées par une requête de lecture sur trois tables (`TypeormStatisticsQuery`) plutôt qu'à travers les repositories ; guard et décorateurs d'authentification rangés dans le module `users`.
+- **Erreurs de l'IA relevées** : `git rm` du dernier fichier de `application/ports` a supprimé le dossier, et l'écriture suivante a échoué (vu dans la sortie, recréé).
+- **Vérification** : typecheck, lint, `pnpm check` ; `migration:generate --check` sans écart (mêmes tables) ; démarrage de l'app (injection de dépendances et imports croisés entre entités en ESM) ; scénario d'API étendu aux routes `auth`, `users`, `admin` et `payments`, sur une base neuve : **123 vérifications OK**, aucune erreur serveur (dont un changement de rôle appliqué sans reconnexion et la connexion avec un e-mail en majuscules) ; `pnpm seed` avec les nouvelles entités.
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-10-28 — Clean architecture : cas d'usage des salles (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
