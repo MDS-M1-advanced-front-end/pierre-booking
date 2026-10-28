@@ -17,7 +17,10 @@ import {
 } from '../ports/room-booking.port.js';
 import { findRoomOrFail, managesRoom } from '../room-access.js';
 
-// Gestionnaire de la salle ou administrateur ; réservation PENDING seulement
+/**
+ * POST /reservations/{reservationId}/reject : refuse une demande.
+ * Gestionnaire de la salle ou administrateur ; réservation PENDING seulement.
+ */
 @Injectable()
 export class RejectReservationUseCase {
   constructor(
@@ -26,6 +29,15 @@ export class RejectReservationUseCase {
     @Inject(ROOM_BOOKING) private readonly rooms: RoomBookingPort,
   ) {}
 
+  /**
+   * @param reservationId - UUID de la réservation.
+   * @param reason - Motif du refus, facultatif.
+   * @param actor - Utilisateur connecté.
+   * @returns La réservation, au statut REJECTED.
+   * @throws {ReservationNotFoundException} Réservation ou salle introuvable.
+   * @throws {ReservationAccessDeniedException} Ni gestionnaire de la salle ni administrateur.
+   * @throws {ReservationConflictException} Statut autre que PENDING.
+   */
   async execute(
     reservationId: string,
     reason: string | undefined,

@@ -14,7 +14,10 @@ import {
   type ReservationRepositoryInterface,
 } from '../../domain/repositories/reservation.repository.interface.js';
 
-// L'auteur de la réservation ou un administrateur
+/**
+ * GET /payments/{paymentId} : statut d'un paiement.
+ * L'auteur de la réservation ou un administrateur.
+ */
 @Injectable()
 export class GetPaymentUseCase {
   constructor(
@@ -24,6 +27,13 @@ export class GetPaymentUseCase {
     private readonly reservationRepository: ReservationRepositoryInterface,
   ) {}
 
+  /**
+   * @param paymentId - UUID du paiement.
+   * @param actor - Utilisateur connecté.
+   * @returns Le paiement.
+   * @throws {ReservationNotFoundException} Paiement introuvable.
+   * @throws {ReservationAccessDeniedException} Ni auteur de la réservation ni administrateur.
+   */
   async execute(paymentId: string, actor: ReservationActor): Promise<Payment> {
     const payment = await this.paymentRepository.findById(paymentId);
     if (!payment)

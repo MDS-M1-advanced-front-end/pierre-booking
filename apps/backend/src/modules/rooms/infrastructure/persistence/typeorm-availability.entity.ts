@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { TypeOrmRoomEntity } from './typeorm-room.entity.js';
 
-// Heures sans fuseau : heure de Paris (cf. docs/cadrage.md)
+/** Table availabilities. Heures sans fuseau : heure de Paris (cf. docs/cadrage.md). */
 @Entity('availabilities')
 @Index(['roomId', 'date'])
 @Check(`"end_time" > "start_time"`)

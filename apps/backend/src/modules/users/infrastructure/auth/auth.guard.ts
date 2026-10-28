@@ -11,7 +11,10 @@ import { AuthenticateUseCase } from '../../application/use-cases/authenticate.us
 import type { UserRole } from '../../domain/entities/user.entity.js';
 import { IS_PUBLIC_KEY, ROLES_KEY, type AuthUser } from './auth.decorators.js';
 
-// Guard global : jeton Bearer obligatoire sauf sur les routes @Public(), puis contrôle @Roles()
+/**
+ * Guard global : jeton Bearer obligatoire sauf sur les routes @Public(), puis contrôle @Roles().
+ * Enregistré par UsersModule (APP_GUARD), il s'applique à tous les modules.
+ */
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
@@ -19,6 +22,12 @@ export class AuthGuard implements CanActivate {
     private readonly reflector: Reflector,
   ) {}
 
+  /**
+   * @param context - Contexte de la requête HTTP.
+   * @returns `true` si la requête peut continuer.
+   * @throws {UnauthorizedException} sans jeton valide sur une route protégée (401).
+   * @throws {ForbiddenException} si le rôle n'est pas dans @Roles() (403).
+   */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const targets = [context.getHandler(), context.getClass()];
     const isPublic = this.reflector.getAllAndOverride<boolean>(

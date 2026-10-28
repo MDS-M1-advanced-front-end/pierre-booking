@@ -25,8 +25,10 @@ import {
 } from './infrastructure/security/jwt-token.service.js';
 import { ScryptPasswordHasher } from './infrastructure/security/scrypt-password-hasher.js';
 
-// Utilisateurs et authentification. Le guard est global (APP_GUARD) : les décorateurs
-// @Public(), @Roles() et @CurrentUser() de infrastructure/auth servent à tous les modules.
+/**
+ * Utilisateurs et authentification. Le guard est global (APP_GUARD) : les décorateurs
+ * @Public(), @Roles() et @CurrentUser() de infrastructure/auth servent à tous les modules.
+ */
 @Module({
   imports: [
     TypeOrmModule.forFeature([TypeOrmUserEntity]),

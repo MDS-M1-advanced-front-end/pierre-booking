@@ -1,7 +1,11 @@
 import type { User } from '../../domain/entities/user.entity.js';
 import type { UserDTO } from './users.dto.js';
 
-// Ne jamais renvoyer passwordHash
+/**
+ * Convertit un utilisateur du domaine en réponse de l'API. Ne jamais renvoyer passwordHash.
+ * @param user - Utilisateur enregistré.
+ * @returns L'utilisateur au format du contrat.
+ */
 export function toUserDTO(user: User): UserDTO {
   return {
     id: user.id!,

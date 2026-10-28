@@ -10,7 +10,10 @@ import {
   type UserRepositoryInterface,
 } from '../../domain/repositories/user.repository.interface.js';
 
-// PATCH /auth/me (sans rôle) et PATCH /users/{userId} (administrateurs, rôle compris)
+/**
+ * Modifie un utilisateur : PATCH /auth/me (sans rôle) et PATCH /users/{userId}
+ * (administrateurs, rôle compris).
+ */
 @Injectable()
 export class UpdateUserUseCase {
   constructor(
@@ -18,6 +21,14 @@ export class UpdateUserUseCase {
     private readonly userRepository: UserRepositoryInterface,
   ) {}
 
+  /**
+   * @param userId - UUID de l'utilisateur.
+   * @param changes - Champs à modifier ; un champ absent est conservé. Le controller de
+   *   PATCH /auth/me ne transmet jamais `role`.
+   * @returns L'utilisateur modifié.
+   * @throws {UserNotFoundException} si l'utilisateur n'existe pas.
+   * @throws {EmailAlreadyUsedException} si le nouvel e-mail est pris.
+   */
   async execute(
     userId: string,
     changes: UserProfileChanges & { role?: UserRole },

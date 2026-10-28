@@ -11,6 +11,7 @@ import type {
 import { RoomMapper } from './room.mapper.js';
 import { TypeOrmRoomEntity } from './typeorm-room.entity.js';
 
+/** Implémentation TypeORM de {@link RoomRepositoryInterface}. */
 @Injectable()
 export class TypeormRoomRepository implements RoomRepositoryInterface {
   constructor(
@@ -18,6 +19,12 @@ export class TypeormRoomRepository implements RoomRepositoryInterface {
     private readonly typeormRoomRepository: Repository<TypeOrmRoomEntity>,
   ) {}
 
+  /**
+   * Recherche paginée, triée par nom : visibilité des salles inactives, liste d'identifiants,
+   * texte (nom ou description), lieu et capacité.
+   * @param criteria - Critères de recherche.
+   * @returns La page de salles et le nombre total de résultats.
+   */
   async findPage(
     criteria: RoomSearchCriteria,
   ): Promise<{ items: Room[]; total: number }> {
@@ -70,11 +77,21 @@ export class TypeormRoomRepository implements RoomRepositoryInterface {
     };
   }
 
+  /**
+   * Lit une salle.
+   * @param id - Identifiant de la salle.
+   * @returns La salle, ou null si elle n'existe pas.
+   */
   async findById(id: string): Promise<Room | null> {
     const entity = await this.typeormRoomRepository.findOneBy({ id });
     return entity ? RoomMapper.toDomain(entity) : null;
   }
 
+  /**
+   * Insère ou met à jour la salle, puis la relit (created_at n'est pas renvoyé par une mise à jour).
+   * @param room - Salle à enregistrer.
+   * @returns La salle enregistrée.
+   */
   async save(room: Room): Promise<Room> {
     const ormEntity = RoomMapper.toOrm(room);
     const savedEntity = await this.typeormRoomRepository.save(ormEntity);
@@ -85,6 +102,11 @@ export class TypeormRoomRepository implements RoomRepositoryInterface {
     return RoomMapper.toDomain(reloaded);
   }
 
+  /**
+   * Supprime une salle ; ses disponibilités partent en cascade.
+   * @param id - Identifiant de la salle.
+   * @throws {RoomHasReservationsException} Des réservations sont rattachées à la salle.
+   */
   async delete(id: string): Promise<void> {
     try {
       await this.typeormRoomRepository.delete(id);

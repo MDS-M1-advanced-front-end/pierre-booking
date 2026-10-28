@@ -10,6 +10,9 @@ import { TypeOrmReservationEntity } from '../../../reservations/infrastructure/p
 import { TypeOrmRoomEntity } from '../../../rooms/infrastructure/persistence/typeorm-room.entity.js';
 import { UserRole } from '../../domain/entities/user.entity.js';
 
+/**
+ * Table `users`. Entité de persistance : le domaine manipule User (domain/entities).
+ */
 @Entity('users')
 export class TypeOrmUserEntity {
   @PrimaryGeneratedColumn('uuid')

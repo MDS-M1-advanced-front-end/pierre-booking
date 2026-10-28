@@ -13,7 +13,11 @@ import {
   RoomNotFoundException,
 } from '../../domain/exceptions/room-domain.exception.js';
 
-// Exception du domaine → statut HTTP et code du schéma Error du contrat
+/**
+ * Exception du domaine → statut HTTP et code du schéma Error du contrat.
+ * @param exception - Exception levée par le domaine ou un cas d'usage.
+ * @returns Le statut HTTP et le code d'erreur.
+ */
 function toHttp(exception: RoomDomainException): [HttpStatus, string] {
   if (exception instanceof RoomNotFoundException) {
     return [HttpStatus.NOT_FOUND, 'NOT_FOUND'];
@@ -30,9 +34,17 @@ function toHttp(exception: RoomDomainException): [HttpStatus, string] {
   return [HttpStatus.BAD_REQUEST, 'BAD_REQUEST'];
 }
 
-// Même format que ApiExceptionFilter (common/api-errors.ts) : { code, message }
+/**
+ * Traduit les exceptions du domaine des salles en réponses HTTP, au même format que
+ * ApiExceptionFilter (common/api-errors.ts) : { code, message }.
+ */
 @Catch(RoomDomainException)
 export class DomainExceptionFilter implements ExceptionFilter {
+  /**
+   * Écrit la réponse d'erreur.
+   * @param exception - Exception du domaine.
+   * @param host - Contexte de la requête.
+   */
   catch(exception: RoomDomainException, host: ArgumentsHost): void {
     const response = host.switchToHttp().getResponse<Response>();
     const [status, code] = toHttp(exception);

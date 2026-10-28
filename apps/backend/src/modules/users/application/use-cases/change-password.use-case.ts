@@ -12,6 +12,9 @@ import {
   type PasswordHasherPort,
 } from '../ports/password-hasher.port.js';
 
+/**
+ * Change le mot de passe de l'utilisateur connecté (PATCH /auth/password).
+ */
 @Injectable()
 export class ChangePasswordUseCase {
   constructor(
@@ -21,6 +24,14 @@ export class ChangePasswordUseCase {
     private readonly passwordHasher: PasswordHasherPort,
   ) {}
 
+  /**
+   * L'ancien mot de passe est exigé.
+   * @param userId - UUID de l'utilisateur connecté.
+   * @param currentPassword - Mot de passe actuel, vérifié avant la modification.
+   * @param newPassword - Nouveau mot de passe (8 caractères minimum, contrôlé par le DTO).
+   * @throws {UserNotFoundException} si le compte n'existe plus.
+   * @throws {WrongCurrentPasswordException} si le mot de passe actuel est faux.
+   */
   async execute(
     userId: string,
     currentPassword: string,

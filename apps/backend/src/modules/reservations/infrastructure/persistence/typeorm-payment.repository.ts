@@ -8,6 +8,7 @@ import type { PaymentRepositoryInterface } from '../../domain/repositories/payme
 import { PaymentMapper } from './payment.mapper.js';
 import { TypeOrmPaymentEntity } from './typeorm-payment.entity.js';
 
+/** Implémentation TypeORM de `PaymentRepositoryInterface`. */
 @Injectable()
 export class TypeormPaymentRepository implements PaymentRepositoryInterface {
   constructor(
@@ -15,11 +16,13 @@ export class TypeormPaymentRepository implements PaymentRepositoryInterface {
     private readonly typeormPaymentRepository: Repository<TypeOrmPaymentEntity>,
   ) {}
 
+  /** @inheritdoc */
   async findById(id: string): Promise<Payment | null> {
     const entity = await this.typeormPaymentRepository.findOneBy({ id });
     return entity ? PaymentMapper.toDomain(entity) : null;
   }
 
+  /** @inheritdoc */
   async save(payment: Payment): Promise<Payment> {
     try {
       const saved = await this.typeormPaymentRepository.save(

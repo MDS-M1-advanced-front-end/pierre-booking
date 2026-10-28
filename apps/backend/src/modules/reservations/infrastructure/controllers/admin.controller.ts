@@ -13,6 +13,7 @@ import { toReservationDTO } from '../dtos/reservation-dto.mapper.js';
 import { PaginatedReservationsDTO } from '../dtos/reservations.dto.js';
 import { ReservationExceptionFilter } from '../filters/reservation-exception.filter.js';
 
+/** Routes `/admin`, réservées aux administrateurs. */
 @Controller('admin')
 @Roles(UserRole.ADMINISTRATEUR)
 @UseFilters(ReservationExceptionFilter)
@@ -22,6 +23,11 @@ export class AdminController {
     private readonly getStatisticsUseCase: GetStatisticsUseCase,
   ) {}
 
+  /**
+   * GET /admin/reservations : toutes les réservations, filtrables.
+   * @param query - Statut, salle, client et pagination.
+   * @returns Une page de réservations.
+   */
   @Get('reservations')
   async findReservations(
     @Query() query: AdminReservationsQueryDTO,
@@ -37,6 +43,11 @@ export class AdminController {
     return { items: items.map(toReservationDTO), page, pageSize, total };
   }
 
+  /**
+   * GET /admin/statistics : compteurs et chiffre d'affaires.
+   * @param query - Période (dates de Paris, bornes incluses), facultative.
+   * @returns Les statistiques.
+   */
   @Get('statistics')
   getStatistics(@Query() query: StatisticsQueryDTO): Promise<StatisticsDTO> {
     return this.getStatisticsUseCase.execute(query.from, query.to);

@@ -41,7 +41,12 @@ const DEFAULTS: Record<number, ApiErrorBody> = {
   },
 };
 
-// Erreurs par champ, avec le chemin des champs imbriqués : { "slots.0.startTime": [...] }
+/**
+ * Erreurs par champ, avec le chemin des champs imbriqués : `{ "slots.0.startTime": [...] }`.
+ * @param errors - Erreurs de class-validator, éventuellement imbriquées.
+ * @param parent - Chemin du champ parent, pour les appels récursifs.
+ * @returns Les messages d'erreur indexés par chemin de champ.
+ */
 function toDetails(
   errors: ValidationError[],
   parent?: string,
@@ -57,7 +62,12 @@ function toDetails(
   return details;
 }
 
-// exceptionFactory du ValidationPipe global
+/**
+ * `exceptionFactory` du ValidationPipe global : une erreur 400 au format du contrat,
+ * avec le détail par champ.
+ * @param errors - Erreurs de validation des DTOs.
+ * @returns L'exception à lever, de code `VALIDATION_ERROR`.
+ */
 export function validationException(
   errors: ValidationError[],
 ): BadRequestException {
@@ -67,11 +77,20 @@ export function validationException(
   });
 }
 
-// Toutes les erreurs au format { code, message, details } du contrat
+/**
+ * Filtre global : toutes les erreurs au format `{ code, message, details }` du schéma `Error`
+ * du contrat. Une erreur inattendue donne `INTERNAL_ERROR`, sans détail, et elle est journalisée.
+ * Les exceptions du domaine sont traduites avant, par le filtre de chaque module.
+ */
 @Catch()
 export class ApiExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(ApiExceptionFilter.name);
 
+  /**
+   * Écrit la réponse d'erreur.
+   * @param exception - Exception levée pendant la requête.
+   * @param host - Contexte de la requête, pour accéder à la réponse Express.
+   */
   catch(exception: unknown, host: ArgumentsHost): void {
     const response = host.switchToHttp().getResponse<Response>();
     if (!(exception instanceof HttpException)) {

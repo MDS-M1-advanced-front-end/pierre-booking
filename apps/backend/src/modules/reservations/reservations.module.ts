@@ -30,7 +30,10 @@ import { TypeOrmReservationEntity } from './infrastructure/persistence/typeorm-r
 import { TypeormReservationRepository } from './infrastructure/persistence/typeorm-reservation.repository.js';
 import { TypeormStatisticsQuery } from './infrastructure/persistence/typeorm-statistics.query.js';
 
-// Réservations, paiements et administration (liste de toutes les réservations, statistiques)
+/**
+ * Réservations, paiements et administration (liste de toutes les réservations, statistiques).
+ * Lit les salles à travers le port ROOM_BOOKING, branché sur RoomBookingService (module rooms).
+ */
 @Module({
   imports: [
     TypeOrmModule.forFeature([

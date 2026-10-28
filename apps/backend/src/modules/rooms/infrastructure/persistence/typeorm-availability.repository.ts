@@ -13,6 +13,11 @@ import { AvailabilitySlot } from '../../domain/entities/availability.entity.js';
 import type { AvailabilityRepositoryInterface } from '../../domain/repositories/availability.repository.interface.js';
 import { TypeOrmAvailabilityEntity } from './typeorm-availability.entity.js';
 
+/**
+ * Ligne de la table availabilities → créneau du domaine.
+ * @param entity - Entité lue par TypeORM.
+ * @returns Le créneau.
+ */
 const toDomain = (entity: TypeOrmAvailabilityEntity) =>
   new AvailabilitySlot(
     entity.roomId,
@@ -22,6 +27,7 @@ const toDomain = (entity: TypeOrmAvailabilityEntity) =>
     entity.isAvailable,
   );
 
+/** Implémentation TypeORM de {@link AvailabilityRepositoryInterface}. */
 @Injectable()
 export class TypeormAvailabilityRepository implements AvailabilityRepositoryInterface {
   constructor(
@@ -30,6 +36,12 @@ export class TypeormAvailabilityRepository implements AvailabilityRepositoryInte
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
+  /**
+   * Lit les créneaux d'une salle pour une journée.
+   * @param roomId - Salle concernée.
+   * @param date - Jour au format YYYY-MM-DD.
+   * @returns Les créneaux, triés par heure de début.
+   */
   async findByRoomAndDate(
     roomId: string,
     date: string,
@@ -41,6 +53,11 @@ export class TypeormAvailabilityRepository implements AvailabilityRepositoryInte
     return entities.map(toDomain);
   }
 
+  /**
+   * Créneaux ouverts de la date qui contiennent les heures données, toutes salles confondues.
+   * @param criteria - Jour (YYYY-MM-DD) et heures (HH:mm:ss) à contenir.
+   * @returns Les créneaux correspondants.
+   */
   async findOpenSlots(criteria: {
     date: string;
     startTime?: string;
@@ -63,6 +80,13 @@ export class TypeormAvailabilityRepository implements AvailabilityRepositoryInte
     return entities.map(toDomain);
   }
 
+  /**
+   * Supprime puis recrée les créneaux de la journée, dans une transaction.
+   * @param roomId - Salle concernée.
+   * @param date - Jour au format YYYY-MM-DD.
+   * @param slots - Nouveaux créneaux.
+   * @returns Les créneaux enregistrés.
+   */
   async replaceDay(
     roomId: string,
     date: string,

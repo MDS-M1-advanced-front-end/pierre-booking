@@ -8,6 +8,7 @@ import {
 } from '../../domain/repositories/room.repository.interface.js';
 import { RoomAvailabilityService } from '../services/room-availability.service.js';
 
+/** Filtres de GET /rooms, déjà validés par le DTO. */
 export interface GetRoomsFilters {
   search?: string;
   location?: string;
@@ -22,6 +23,7 @@ export interface GetRoomsFilters {
   pageSize: number;
 }
 
+/** GET /rooms : recherche paginée des salles. */
 @Injectable()
 export class GetRoomsUseCase {
   constructor(
@@ -30,6 +32,14 @@ export class GetRoomsUseCase {
     private readonly roomAvailability: RoomAvailabilityService,
   ) {}
 
+  /**
+   * Recherche les salles visibles par l'acteur : les salles actives, plus les salles inactives
+   * qu'il gère (toutes pour un administrateur). Avec une date, seules les salles libres sur le
+   * créneau sont gardées, sauf si `available` vaut false.
+   * @param filters - Critères de recherche et pagination.
+   * @param actor - Utilisateur connecté, ou undefined pour un visiteur.
+   * @returns La page de salles et le nombre total de résultats.
+   */
   async execute(
     filters: GetRoomsFilters,
     actor?: RoomActor,

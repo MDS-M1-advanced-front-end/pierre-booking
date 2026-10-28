@@ -21,10 +21,16 @@ export class ListReservationsUseCase {
     private readonly reservationRepository: ReservationRepositoryInterface,
   ) {}
 
+  /**
+   * Liste les réservations visibles de l'utilisateur, de la plus récente à la plus ancienne.
+   * @param filters - Statut, période (dates de Paris, bornes incluses) et pagination.
+   * @param actor - Utilisateur connecté.
+   * @returns Les réservations de la page et le nombre total de résultats.
+   */
   execute(
     filters: {
       status?: ReservationStatus;
-      // Dates de Paris (YYYY-MM-DD), bornes incluses, sur la date de début
+      /** Dates de Paris (YYYY-MM-DD), bornes incluses, sur la date de début. */
       from?: string;
       to?: string;
       page: number;

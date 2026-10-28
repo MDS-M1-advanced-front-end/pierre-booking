@@ -13,6 +13,7 @@ import {
   PaymentStatus,
 } from '../../domain/entities/payment.entity.js';
 
+/** Paiement renvoyé par l'API (schéma Payment du contrat). */
 export class PaymentDTO {
   @IsUUID()
   @IsNotEmpty()
@@ -42,7 +43,7 @@ export class PaymentDTO {
   createdAt?: string;
 }
 
-// POST /payments
+/** POST /payments. */
 export class CreatePaymentDTO {
   @IsUUID()
   @IsNotEmpty()

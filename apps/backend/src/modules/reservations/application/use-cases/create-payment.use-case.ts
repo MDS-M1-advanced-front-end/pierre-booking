@@ -22,7 +22,10 @@ import {
   type PaymentGatewayPort,
 } from '../ports/payment-gateway.port.js';
 
-// Réservé au client auteur de la réservation
+/**
+ * POST /payments : paie une réservation auprès du prestataire.
+ * Réservé au client auteur de la réservation.
+ */
 @Injectable()
 export class CreatePaymentUseCase {
   constructor(
@@ -33,6 +36,15 @@ export class CreatePaymentUseCase {
     @Inject(PAYMENT_GATEWAY) private readonly gateway: PaymentGatewayPort,
   ) {}
 
+  /**
+   * @param reservationId - UUID de la réservation à payer.
+   * @param method - Moyen de paiement.
+   * @param actor - Utilisateur connecté.
+   * @returns Le paiement enregistré, avec le statut renvoyé par le prestataire.
+   * @throws {ReservationNotFoundException} Réservation introuvable.
+   * @throws {ReservationAccessDeniedException} L'utilisateur n'est pas l'auteur.
+   * @throws {ReservationConflictException} Réservation REJECTED, CANCELLED ou COMPLETED, ou déjà payée.
+   */
   async execute(
     reservationId: string,
     method: PaymentMethod,

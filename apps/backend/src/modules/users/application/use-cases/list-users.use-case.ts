@@ -5,6 +5,9 @@ import {
   type UserRepositoryInterface,
 } from '../../domain/repositories/user.repository.interface.js';
 
+/**
+ * Liste paginée des utilisateurs (GET /users, administrateurs).
+ */
 @Injectable()
 export class ListUsersUseCase {
   constructor(
@@ -12,6 +15,10 @@ export class ListUsersUseCase {
     private readonly userRepository: UserRepositoryInterface,
   ) {}
 
+  /**
+   * @param criteria - Rôle (facultatif), page (à partir de 1) et taille de page.
+   * @returns Les utilisateurs de la page et le nombre total.
+   */
   execute(criteria: {
     role?: UserRole;
     page: number;

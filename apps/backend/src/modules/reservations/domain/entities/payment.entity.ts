@@ -1,3 +1,4 @@
+/** État d'un paiement auprès du prestataire. */
 export enum PaymentStatus {
   PENDING = 'PENDING',
   PAID = 'PAID',
@@ -5,11 +6,13 @@ export enum PaymentStatus {
   REFUNDED = 'REFUNDED',
 }
 
+/** Moyen de paiement choisi par le client (`POST /payments`). */
 export enum PaymentMethod {
   CARD = 'CARD',
   PAYPAL = 'PAYPAL',
 }
 
+/** Données d'un paiement ; `id` et `createdAt` sont absents tant qu'il n'est pas enregistré. */
 export interface PaymentProps {
   id?: string;
   reservationId: string;
@@ -22,6 +25,7 @@ export interface PaymentProps {
   createdAt?: Date;
 }
 
+/** Paiement d'une réservation : une réservation a au plus un paiement (MCD 0,1). */
 export class Payment {
   readonly id?: string;
   readonly reservationId: string;
@@ -33,6 +37,9 @@ export class Payment {
   paymentUrl: string | null;
   readonly createdAt?: Date;
 
+  /**
+   * @param props - Données du paiement, telles que lues en base ou à créer.
+   */
   constructor(props: PaymentProps) {
     this.id = props.id;
     this.reservationId = props.reservationId;

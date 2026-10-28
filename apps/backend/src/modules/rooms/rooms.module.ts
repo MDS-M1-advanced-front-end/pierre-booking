@@ -20,7 +20,9 @@ import { TypeormRoomOccupancyAdapter } from './infrastructure/persistence/typeor
 import { TypeOrmRoomEntity } from './infrastructure/persistence/typeorm-room.entity.js';
 import { TypeormRoomRepository } from './infrastructure/persistence/typeorm-room.repository.js';
 
-// Salles et leurs disponibilités. Exporte RoomBookingService pour le module reservations.
+/**
+ * Salles et leurs disponibilités. Exporte RoomBookingService pour le module reservations.
+ */
 @Module({
   imports: [
     TypeOrmModule.forFeature([

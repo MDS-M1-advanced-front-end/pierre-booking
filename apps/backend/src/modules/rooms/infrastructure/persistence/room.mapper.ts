@@ -1,7 +1,13 @@
 import { Room } from '../../domain/entities/room.entity.js';
 import { TypeOrmRoomEntity } from './typeorm-room.entity.js';
 
+/** Conversion entre l'entité TypeORM et l'entité du domaine. */
 export class RoomMapper {
+  /**
+   * Ligne de la table rooms → salle du domaine.
+   * @param ormEntity - Entité lue par TypeORM.
+   * @returns La salle du domaine.
+   */
   static toDomain(ormEntity: TypeOrmRoomEntity): Room {
     return new Room(
       ormEntity.id,
@@ -18,6 +24,11 @@ export class RoomMapper {
     );
   }
 
+  /**
+   * Salle du domaine → entité TypeORM à enregistrer.
+   * @param domainEntity - Salle du domaine ; sans identifiant, elle sera insérée.
+   * @returns L'entité TypeORM.
+   */
   static toOrm(domainEntity: Room): TypeOrmRoomEntity {
     const ormEntity = new TypeOrmRoomEntity();
     // Sans id : insertion ; avec id : mise à jour

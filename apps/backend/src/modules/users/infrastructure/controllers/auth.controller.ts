@@ -26,6 +26,9 @@ import { toUserDTO } from '../dtos/user-dto.mapper.js';
 import { UserDTO } from '../dtos/users.dto.js';
 import { UserExceptionFilter } from '../filters/user-exception.filter.js';
 
+/**
+ * Routes /auth : inscription, connexion, profil et mot de passe de l'utilisateur connecté.
+ */
 @Controller('auth')
 @UseFilters(UserExceptionFilter)
 export class AuthController {
@@ -37,6 +40,11 @@ export class AuthController {
     private readonly changePasswordUseCase: ChangePasswordUseCase,
   ) {}
 
+  /**
+   * POST /auth/register : crée un compte CLIENT. Route publique.
+   * @param dto - Prénom, nom, e-mail et mot de passe.
+   * @returns L'utilisateur créé (201) ; 409 si l'e-mail est pris.
+   */
   @Public()
   @Post('register')
   async register(@Body() dto: RegisterDTO): Promise<UserDTO> {
@@ -49,6 +57,11 @@ export class AuthController {
     return toUserDTO(user);
   }
 
+  /**
+   * POST /auth/login : connexion. Route publique.
+   * @param dto - E-mail et mot de passe.
+   * @returns Le jeton d'accès et l'utilisateur (200) ; 401 si les identifiants sont faux.
+   */
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -58,12 +71,23 @@ export class AuthController {
     return { accessToken, expiresIn, user: toUserDTO(user) };
   }
 
+  /**
+   * GET /auth/me : profil de l'utilisateur connecté.
+   * @param user - Utilisateur connecté.
+   * @returns L'utilisateur.
+   */
   @Get('me')
   async me(@CurrentUser() user: AuthUser): Promise<UserDTO> {
     return toUserDTO(await this.getUserUseCase.execute(user.id));
   }
 
-  // Le rôle ne se modifie pas ici (UpdateProfileDTO ne l'accepte pas)
+  /**
+   * PATCH /auth/me : modifie le profil de l'utilisateur connecté.
+   * Le rôle ne se modifie pas ici (UpdateProfileDTO ne l'accepte pas).
+   * @param user - Utilisateur connecté.
+   * @param dto - Prénom, nom, e-mail ; au moins un champ.
+   * @returns L'utilisateur modifié ; 409 si l'e-mail est pris.
+   */
   @Patch('me')
   async updateMe(
     @CurrentUser() user: AuthUser,
@@ -77,6 +101,11 @@ export class AuthController {
     return toUserDTO(updated);
   }
 
+  /**
+   * PATCH /auth/password : change le mot de passe de l'utilisateur connecté (204).
+   * @param user - Utilisateur connecté.
+   * @param dto - Mot de passe actuel et nouveau ; 400 si le mot de passe actuel est faux.
+   */
   @Patch('password')
   @HttpCode(HttpStatus.NO_CONTENT)
   changePassword(

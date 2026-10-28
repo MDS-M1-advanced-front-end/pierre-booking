@@ -17,7 +17,10 @@ import {
 } from '../ports/room-booking.port.js';
 import { findRoomOrFail, managesRoom } from '../room-access.js';
 
-// Gestionnaire de la salle ou administrateur ; réservation PENDING seulement
+/**
+ * POST /reservations/{reservationId}/confirm : confirme une demande.
+ * Gestionnaire de la salle ou administrateur ; réservation PENDING seulement.
+ */
 @Injectable()
 export class ConfirmReservationUseCase {
   constructor(
@@ -26,6 +29,14 @@ export class ConfirmReservationUseCase {
     @Inject(ROOM_BOOKING) private readonly rooms: RoomBookingPort,
   ) {}
 
+  /**
+   * @param reservationId - UUID de la réservation.
+   * @param actor - Utilisateur connecté.
+   * @returns La réservation, au statut CONFIRMED.
+   * @throws {ReservationNotFoundException} Réservation ou salle introuvable.
+   * @throws {ReservationAccessDeniedException} Ni gestionnaire de la salle ni administrateur.
+   * @throws {ReservationConflictException} Statut autre que PENDING.
+   */
   async execute(
     reservationId: string,
     actor: ReservationActor,

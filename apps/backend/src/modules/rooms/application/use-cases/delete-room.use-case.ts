@@ -9,6 +9,7 @@ import {
   type RoomRepositoryInterface,
 } from '../../domain/repositories/room.repository.interface.js';
 
+/** DELETE /rooms/{roomId} : supprime une salle sans réservation. */
 @Injectable()
 export class DeleteRoomUseCase {
   constructor(
@@ -16,6 +17,14 @@ export class DeleteRoomUseCase {
     private readonly roomRepository: RoomRepositoryInterface,
   ) {}
 
+  /**
+   * Supprime la salle si l'acteur la gère.
+   * @param roomId - Salle à supprimer.
+   * @param actor - Utilisateur connecté.
+   * @throws {RoomNotFoundException} La salle n'existe pas.
+   * @throws {RoomAccessDeniedException} L'acteur n'est ni le propriétaire ni un administrateur.
+   * @throws {RoomHasReservationsException} Des réservations sont rattachées à la salle.
+   */
   async execute(roomId: string, actor: RoomActor): Promise<void> {
     const room = await this.roomRepository.findById(roomId);
     if (!room) throw new RoomNotFoundException(roomId);

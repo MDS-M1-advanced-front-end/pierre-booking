@@ -16,6 +16,7 @@ import { TypeOrmUserEntity } from '../../../users/infrastructure/persistence/typ
 import { ReservationStatus } from '../../domain/entities/reservation.entity.js';
 import { TypeOrmPaymentEntity } from './typeorm-payment.entity.js';
 
+/** Table `reservations` (voir docs/Database.md). */
 @Entity('reservations')
 @Index(['roomId', 'startAt'])
 @Index(['userId'])

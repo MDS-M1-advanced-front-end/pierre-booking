@@ -10,14 +10,16 @@ import type {
 import { ReservationStatus } from '../../domain/entities/reservation.entity.js';
 import { TypeOrmReservationEntity } from './typeorm-reservation.entity.js';
 
-// Une réservation COMPLETED a été confirmée : elle compte comme confirmée et dans le chiffre d'affaires
+/** Une réservation COMPLETED a été confirmée : elle compte comme confirmée et dans le chiffre d'affaires. */
 const CONFIRMED_STATUSES = [
   ReservationStatus.CONFIRMED,
   ReservationStatus.COMPLETED,
 ];
 
-// Requête de lecture sur les trois tables : un cas où passer par les repositories du domaine
-// (un aller-retour par compteur) n'apporterait rien
+/**
+ * Implémentation TypeORM de `StatisticsPort`. Requête de lecture sur les trois tables : un cas où
+ * passer par les repositories du domaine (un aller-retour par compteur) n'apporterait rien.
+ */
 @Injectable()
 export class TypeormStatisticsQuery implements StatisticsPort {
   constructor(
@@ -29,6 +31,7 @@ export class TypeormStatisticsQuery implements StatisticsPort {
     private readonly reservations: Repository<TypeOrmReservationEntity>,
   ) {}
 
+  /** @inheritdoc */
   async compute(period: { from?: Date; before?: Date }): Promise<Statistics> {
     const qb = this.reservations
       .createQueryBuilder('reservation')

@@ -16,19 +16,23 @@ export enum ReservationStatus {
   COMPLETED = 'COMPLETED',
 }
 
-// Statuts qui occupent le créneau de la salle
+/** Statuts qui occupent le créneau de la salle : une autre réservation ne peut pas le chevaucher. */
 export const ACTIVE_RESERVATION_STATUSES = [
   ReservationStatus.PENDING,
   ReservationStatus.CONFIRMED,
 ];
 
-// Qui agit : le domaine ne connaît pas l'authentification
+/**
+ * Qui agit : le domaine ne connaît pas l'authentification, seulement ce qui compte pour les droits.
+ * Construit par les controllers à partir de l'utilisateur connecté.
+ */
 export interface ReservationActor {
   id: string;
   isAdmin: boolean;
   isManager: boolean;
 }
 
+/** Données d'une réservation ; `id` et `createdAt` sont absents tant qu'elle n'est pas enregistrée. */
 export interface ReservationProps {
   id?: string;
   roomId: string;
@@ -46,6 +50,10 @@ export interface ReservationProps {
 
 const HOUR_MS = 60 * 60 * 1000;
 
+/**
+ * Réservation d'une salle par un utilisateur, sur un créneau en UTC.
+ * Porte le cycle de vie (voir `ReservationStatus`) et les règles de saisie d'un créneau.
+ */
 export class Reservation {
   readonly id?: string;
   readonly roomId: string;
@@ -60,6 +68,9 @@ export class Reservation {
   rejectionReason: string | null;
   readonly createdAt?: Date;
 
+  /**
+   * @param props - Données de la réservation, telles que lues en base ou à créer.
+   */
   constructor(props: ReservationProps) {
     this.id = props.id;
     this.roomId = props.roomId;
@@ -75,7 +86,14 @@ export class Reservation {
     this.createdAt = props.createdAt;
   }
 
-  // Créneau dans le futur, début avant la fin, sur une seule journée (heure de Paris)
+  /**
+   * Créneau dans le futur, début avant la fin, sur une seule journée (heure de Paris).
+   * Une fin à minuit le lendemain est acceptée.
+   * @param startAt - Début du créneau.
+   * @param endAt - Fin du créneau.
+   * @param now - Instant de référence (l'instant courant par défaut).
+   * @throws {InvalidReservationException} Début après la fin, créneau passé ou sur deux jours.
+   */
   static assertValidSlot(startAt: Date, endAt: Date, now = new Date()): void {
     if (startAt >= endAt) {
       throw new InvalidReservationException('startAt doit précéder endAt');
@@ -96,6 +114,12 @@ export class Reservation {
     }
   }
 
+  /**
+   * Le nombre de participants ne doit pas dépasser la capacité de la salle.
+   * @param capacity - Capacité de la salle.
+   * @param numberOfParticipants - Participants annoncés ; absent ou null : pas de contrôle.
+   * @throws {InvalidReservationException} Plus de participants que de places.
+   */
   static assertCapacity(
     capacity: number,
     numberOfParticipants?: number | null,
@@ -107,25 +131,46 @@ export class Reservation {
     }
   }
 
-  // Figé à la réservation : le prix de la salle peut changer ensuite
+  /**
+   * Montant de la réservation : durée en heures × tarif horaire, arrondi au centime.
+   * Figé à la réservation : le prix de la salle peut changer ensuite.
+   * @param pricePerHour - Tarif horaire de la salle.
+   * @param startAt - Début du créneau.
+   * @param endAt - Fin du créneau.
+   * @returns Le montant en euros.
+   */
   static computeAmount(pricePerHour: number, startAt: Date, endAt: Date) {
     const hours = (endAt.getTime() - startAt.getTime()) / HOUR_MS;
     return Math.round(hours * pricePerHour * 100) / 100;
   }
 
+  /** Vrai si la réservation occupe son créneau (PENDING ou CONFIRMED). */
   get isActive(): boolean {
     return ACTIVE_RESERVATION_STATUSES.includes(this.status);
   }
 
+  /**
+   * @param actor - Utilisateur qui agit.
+   * @returns Vrai si l'utilisateur a fait la réservation.
+   */
   isAuthor(actor: ReservationActor): boolean {
     return this.userId === actor.id;
   }
 
-  // Modifier, annuler : l'auteur ou un administrateur
+  /**
+   * Modifier, annuler : l'auteur ou un administrateur.
+   * @param actor - Utilisateur qui agit.
+   * @returns Vrai si l'utilisateur peut modifier ou annuler la réservation.
+   */
   canBeEditedBy(actor: ReservationActor): boolean {
     return this.isAuthor(actor) || actor.isAdmin;
   }
 
+  /**
+   * Exige une réservation PENDING ou CONFIRMED avant une modification ou une annulation.
+   * @param action - Participe passé de l'action, pour le message d'erreur (« modifiée »…).
+   * @throws {ReservationConflictException} Réservation REJECTED, CANCELLED ou COMPLETED.
+   */
   assertActive(action: string): void {
     if (!this.isActive) {
       throw new ReservationConflictException(
@@ -134,7 +179,15 @@ export class Reservation {
     }
   }
 
-  // Un nouveau créneau doit être revalidé par le gestionnaire
+  /**
+   * Déplace la réservation sur un nouveau créneau : statut d'arrivée PENDING, quel que soit le
+   * statut de départ. Un nouveau créneau doit être revalidé par le gestionnaire.
+   * La méthode ne contrôle pas le statut de départ : l'appelant exige d'abord `assertActive`
+   * (PENDING ou CONFIRMED), ainsi que la validité et la disponibilité du créneau.
+   * @param startAt - Nouveau début.
+   * @param endAt - Nouvelle fin.
+   * @param totalAmount - Montant recalculé pour le nouveau créneau.
+   */
   reschedule(startAt: Date, endAt: Date, totalAmount: number): void {
     this.startAt = startAt;
     this.endAt = endAt;
@@ -142,18 +195,31 @@ export class Reservation {
     this.status = ReservationStatus.PENDING;
   }
 
+  /**
+   * Confirme la réservation (gestionnaire de la salle ou administrateur) : PENDING → CONFIRMED.
+   * @throws {ReservationConflictException} Statut de départ autre que PENDING.
+   */
   confirm(): void {
     this.assertPending();
     this.status = ReservationStatus.CONFIRMED;
   }
 
+  /**
+   * Refuse la réservation (gestionnaire de la salle ou administrateur) : PENDING → REJECTED.
+   * @param reason - Motif du refus, conservé s'il est donné.
+   * @throws {ReservationConflictException} Statut de départ autre que PENDING.
+   */
   reject(reason?: string): void {
     this.assertPending();
     this.status = ReservationStatus.REJECTED;
     if (reason !== undefined) this.rejectionReason = reason;
   }
 
-  // Annulation logique : la réservation reste consultable
+  /**
+   * Annulation logique : la réservation reste consultable.
+   * PENDING ou CONFIRMED → CANCELLED.
+   * @throws {ReservationConflictException} Statut de départ REJECTED, CANCELLED ou COMPLETED.
+   */
   cancel(): void {
     this.assertActive('annulée');
     this.status = ReservationStatus.CANCELLED;

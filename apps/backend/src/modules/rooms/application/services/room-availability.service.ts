@@ -11,7 +11,10 @@ import {
   type RoomOccupancyPort,
 } from '../ports/room-occupancy.port.js';
 
-// Croise les créneaux ouverts et l'occupation par les réservations (heure de Paris ↔ UTC)
+/**
+ * Croise les créneaux ouverts et l'occupation par les réservations (heure de Paris ↔ UTC).
+ * Utilisé par les cas d'usage de disponibilité, la recherche de salles et RoomBookingService.
+ */
 @Injectable()
 export class RoomAvailabilityService {
   constructor(
@@ -20,7 +23,15 @@ export class RoomAvailabilityService {
     @Inject(ROOM_OCCUPANCY) private readonly occupancy: RoomOccupancyPort,
   ) {}
 
-  // Créneaux de la journée, « disponible » = ouvert et sans réservation active dessus
+  /**
+   * Créneaux d'une salle pour une journée, avec leur disponibilité réelle :
+   * « disponible » = ouvert et sans réservation active dessus.
+   * @param roomId - Salle concernée.
+   * @param date - Jour au format YYYY-MM-DD (heure de Paris).
+   * @param startTime - Ne garder que les créneaux qui finissent après cette heure (HH:mm:ss).
+   * @param endTime - Ne garder que les créneaux qui commencent avant cette heure (HH:mm:ss).
+   * @returns Chaque créneau et son statut « disponible ».
+   */
   async daySlots(
     roomId: string,
     date: string,
@@ -48,6 +59,11 @@ export class RoomAvailabilityService {
   /**
    * Salles libres à la date : un créneau ouvert couvre la plage [startTime, endTime]
    * (ou contient l'heure donnée, ou existe simplement) et aucune réservation active ne la chevauche.
+   * Sert au filtre `date` / `startTime` / `endTime` de GET /rooms.
+   * @param date - Jour au format YYYY-MM-DD (heure de Paris).
+   * @param startTime - Début de la plage recherchée (HH:mm:ss), facultatif.
+   * @param endTime - Fin de la plage recherchée (HH:mm:ss), facultative.
+   * @returns Les identifiants des salles libres, sans doublon.
    */
   async findFreeRoomIds(
     date: string,
@@ -71,7 +87,15 @@ export class RoomAvailabilityService {
     return [...new Set(free.map((slot) => slot.roomId))];
   }
 
-  // [startAt, endAt[ tient-il dans une journée (heure de Paris), couvert par des créneaux ouverts ?
+  /**
+   * Indique si [startAt, endAt[ tient dans une journée (heure de Paris) et est couvert sans
+   * interruption par des créneaux ouverts. Une fin à minuit le lendemain est acceptée.
+   * Ne tient pas compte des réservations existantes.
+   * @param roomId - Salle concernée.
+   * @param startAt - Début du créneau (instant UTC).
+   * @param endAt - Fin du créneau (instant UTC).
+   * @returns true si le créneau est ouvert à la réservation.
+   */
   async isOpen(roomId: string, startAt: Date, endAt: Date): Promise<boolean> {
     const start = toParis(startAt);
     const end = toParis(endAt);

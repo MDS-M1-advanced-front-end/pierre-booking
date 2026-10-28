@@ -14,7 +14,11 @@ import {
   WrongCurrentPasswordException,
 } from '../../domain/exceptions/user-domain.exception.js';
 
-// Exception du domaine → statut HTTP et code du schéma Error du contrat
+/**
+ * Exception du domaine → statut HTTP et code du schéma Error du contrat.
+ * @param exception - Exception levée par un cas d'usage.
+ * @returns Le statut HTTP et le code d'erreur.
+ */
 function toHttp(exception: UserDomainException): [HttpStatus, string] {
   if (exception instanceof UserNotFoundException) {
     return [HttpStatus.NOT_FOUND, 'NOT_FOUND'];
@@ -34,9 +38,16 @@ function toHttp(exception: UserDomainException): [HttpStatus, string] {
   return [HttpStatus.BAD_REQUEST, 'BAD_REQUEST'];
 }
 
-// Même format que ApiExceptionFilter (common/api-errors.ts) : { code, message }
+/**
+ * Traduit les exceptions du domaine users en réponses HTTP.
+ * Même format que ApiExceptionFilter (common/api-errors.ts) : { code, message }.
+ */
 @Catch(UserDomainException)
 export class UserExceptionFilter implements ExceptionFilter {
+  /**
+   * @param exception - Exception du domaine.
+   * @param host - Contexte de la requête, pour écrire la réponse.
+   */
   catch(exception: UserDomainException, host: ArgumentsHost): void {
     const response = host.switchToHttp().getResponse<Response>();
     const [status, code] = toHttp(exception);

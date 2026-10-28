@@ -9,6 +9,9 @@ import {
   type PasswordHasherPort,
 } from '../ports/password-hasher.port.js';
 
+/**
+ * Crée un compte (POST /auth/register).
+ */
 @Injectable()
 export class RegisterUserUseCase {
   constructor(
@@ -18,7 +21,15 @@ export class RegisterUserUseCase {
     private readonly passwordHasher: PasswordHasherPort,
   ) {}
 
-  // Un compte créé par inscription est toujours CLIENT
+  /**
+   * Un compte créé par inscription est toujours CLIENT.
+   * @param firstName - Prénom.
+   * @param lastName - Nom.
+   * @param email - E-mail, normalisé avant l'enregistrement.
+   * @param password - Mot de passe en clair, haché avant l'enregistrement.
+   * @returns L'utilisateur créé.
+   * @throws {EmailAlreadyUsedException} si l'e-mail est déjà utilisé.
+   */
   async execute(
     firstName: string,
     lastName: string,

@@ -15,6 +15,10 @@ import {
 } from '../ports/room-booking.port.js';
 import { findRoomOrFail } from '../room-access.js';
 
+/**
+ * POST /reservations : réserve une salle. La réservation est créée au statut PENDING, en attente
+ * de confirmation par le gestionnaire.
+ */
 @Injectable()
 export class CreateReservationUseCase {
   constructor(
@@ -23,6 +27,16 @@ export class CreateReservationUseCase {
     @Inject(ROOM_BOOKING) private readonly rooms: RoomBookingPort,
   ) {}
 
+  /**
+   * Vérifie la salle, le créneau et la capacité, puis enregistre la réservation au montant figé.
+   * @param request - Salle, créneau (UTC), participants et commentaire.
+   * @param actor - Utilisateur connecté, auteur de la réservation.
+   * @returns La réservation créée (PENDING).
+   * @throws {ReservationNotFoundException} Salle introuvable.
+   * @throws {ReservationConflictException} Salle inactive, créneau hors disponibilités ou déjà réservé.
+   * @throws {InvalidReservationException} Créneau invalide (passé, à l'envers, sur deux jours) ou
+   *   capacité dépassée.
+   */
   async execute(
     request: {
       roomId: string;

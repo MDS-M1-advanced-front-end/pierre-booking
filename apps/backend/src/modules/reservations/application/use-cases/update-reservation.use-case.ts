@@ -18,6 +18,7 @@ import {
 } from '../ports/room-booking.port.js';
 import { findRoomOrFail } from '../room-access.js';
 
+/** PATCH /reservations/{reservationId} : modifie une réservation. */
 @Injectable()
 export class UpdateReservationUseCase {
   constructor(
@@ -26,7 +27,19 @@ export class UpdateReservationUseCase {
     @Inject(ROOM_BOOKING) private readonly rooms: RoomBookingPort,
   ) {}
 
-  // Réservation PENDING ou CONFIRMED ; un nouveau créneau la repasse en PENDING
+  /**
+   * Réservation PENDING ou CONFIRMED ; un nouveau créneau la repasse en PENDING et recalcule le
+   * montant. Réservé à l'auteur ou à un administrateur.
+   * @param reservationId - UUID de la réservation.
+   * @param changes - Champs à modifier ; absents : inchangés.
+   * @param actor - Utilisateur connecté.
+   * @returns La réservation modifiée.
+   * @throws {ReservationNotFoundException} Réservation ou salle introuvable.
+   * @throws {ReservationAccessDeniedException} Ni auteur ni administrateur.
+   * @throws {ReservationConflictException} Statut REJECTED, CANCELLED ou COMPLETED ; nouveau
+   *   créneau hors disponibilités ou déjà réservé.
+   * @throws {InvalidReservationException} Nouveau créneau invalide ou capacité dépassée.
+   */
   async execute(
     reservationId: string,
     changes: {

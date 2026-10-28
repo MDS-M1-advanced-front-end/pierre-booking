@@ -37,6 +37,7 @@ import {
 import { ReservationExceptionFilter } from '../filters/reservation-exception.filter.js';
 import { toActor } from './actor.js';
 
+/** Routes `/reservations` : consultation, création, modification et traitement des réservations. */
 @Controller('reservations')
 @UseFilters(ReservationExceptionFilter)
 export class ReservationsController {
@@ -50,6 +51,12 @@ export class ReservationsController {
     private readonly rejectReservationUseCase: RejectReservationUseCase,
   ) {}
 
+  /**
+   * GET /reservations : celles de l'utilisateur, ou celles de ses salles pour un gestionnaire.
+   * @param query - Statut, période et pagination.
+   * @param user - Utilisateur connecté.
+   * @returns Une page de réservations.
+   */
   @Get()
   async findMine(
     @Query() query: ReservationsQueryDTO,
@@ -63,6 +70,12 @@ export class ReservationsController {
     return { items: items.map(toReservationDTO), page, pageSize, total };
   }
 
+  /**
+   * POST /reservations : réserve une salle (statut PENDING).
+   * @param dto - Salle, créneau, participants, commentaire.
+   * @param user - Utilisateur connecté.
+   * @returns La réservation créée.
+   */
   @Post()
   async create(
     @Body() dto: CreateReservationDTO,
@@ -81,6 +94,12 @@ export class ReservationsController {
     return toReservationDTO(reservation);
   }
 
+  /**
+   * GET /reservations/{reservationId} : auteur, gestionnaire de la salle ou administrateur.
+   * @param reservationId - UUID de la réservation.
+   * @param user - Utilisateur connecté.
+   * @returns La réservation.
+   */
   @Get(':reservationId')
   async findOne(
     @Param('reservationId', ParseUUIDPipe) reservationId: string,
@@ -91,6 +110,13 @@ export class ReservationsController {
     );
   }
 
+  /**
+   * PATCH /reservations/{reservationId} : un nouveau créneau repasse la réservation en PENDING.
+   * @param reservationId - UUID de la réservation.
+   * @param dto - Champs à modifier (au moins un).
+   * @param user - Utilisateur connecté.
+   * @returns La réservation modifiée.
+   */
   @Patch(':reservationId')
   async update(
     @Param('reservationId', ParseUUIDPipe) reservationId: string,
@@ -110,7 +136,11 @@ export class ReservationsController {
     return toReservationDTO(reservation);
   }
 
-  // Annulation logique : passage au statut CANCELLED
+  /**
+   * DELETE /reservations/{reservationId}. Annulation logique : passage au statut CANCELLED.
+   * @param reservationId - UUID de la réservation.
+   * @param user - Utilisateur connecté.
+   */
   @Delete(':reservationId')
   @HttpCode(HttpStatus.NO_CONTENT)
   cancel(
@@ -120,6 +150,12 @@ export class ReservationsController {
     return this.cancelReservationUseCase.execute(reservationId, toActor(user));
   }
 
+  /**
+   * POST /reservations/{reservationId}/confirm : PENDING → CONFIRMED.
+   * @param reservationId - UUID de la réservation.
+   * @param user - Utilisateur connecté.
+   * @returns La réservation confirmée.
+   */
   @Post(':reservationId/confirm')
   @HttpCode(HttpStatus.OK)
   async confirm(
@@ -134,6 +170,13 @@ export class ReservationsController {
     );
   }
 
+  /**
+   * POST /reservations/{reservationId}/reject : PENDING → REJECTED.
+   * @param reservationId - UUID de la réservation.
+   * @param dto - Motif du refus, facultatif.
+   * @param user - Utilisateur connecté.
+   * @returns La réservation refusée.
+   */
   @Post(':reservationId/reject')
   @HttpCode(HttpStatus.OK)
   async reject(

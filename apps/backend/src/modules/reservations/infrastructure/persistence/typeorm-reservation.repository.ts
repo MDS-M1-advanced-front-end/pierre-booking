@@ -19,6 +19,7 @@ import type {
 import { ReservationMapper } from './reservation.mapper.js';
 import { TypeOrmReservationEntity } from './typeorm-reservation.entity.js';
 
+/** Implémentation TypeORM de `ReservationRepositoryInterface`. */
 @Injectable()
 export class TypeormReservationRepository implements ReservationRepositoryInterface {
   constructor(
@@ -26,11 +27,13 @@ export class TypeormReservationRepository implements ReservationRepositoryInterf
     private readonly typeormReservationRepository: Repository<TypeOrmReservationEntity>,
   ) {}
 
+  /** @inheritdoc */
   async findById(id: string): Promise<Reservation | null> {
     const entity = await this.typeormReservationRepository.findOneBy({ id });
     return entity ? ReservationMapper.toDomain(entity) : null;
   }
 
+  /** @inheritdoc */
   async findPage(
     criteria: ReservationSearchCriteria,
   ): Promise<{ items: Reservation[]; total: number }> {
@@ -72,6 +75,7 @@ export class TypeormReservationRepository implements ReservationRepositoryInterf
     };
   }
 
+  /** @inheritdoc */
   async hasOverlap(
     roomId: string,
     startAt: Date,
@@ -88,6 +92,7 @@ export class TypeormReservationRepository implements ReservationRepositoryInterf
     return this.typeormReservationRepository.exists({ where });
   }
 
+  /** @inheritdoc */
   async save(reservation: Reservation): Promise<Reservation> {
     const saved = await this.typeormReservationRepository.save(
       ReservationMapper.toOrm(reservation),

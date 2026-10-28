@@ -20,6 +20,7 @@ import {
   PaginationQueryDTO,
 } from '../../../../common/pagination.dto.js';
 
+/** Réservation renvoyée par l'API (schéma Reservation du contrat). */
 export class ReservationDTO {
   @IsUUID()
   @IsNotEmpty()
@@ -67,8 +68,10 @@ export class ReservationDTO {
   createdAt?: string;
 }
 
-// POST /reservations
-// startAt < endAt et numberOfParticipants <= capacité : vérifiés dans le service
+/**
+ * POST /reservations.
+ * startAt < endAt et numberOfParticipants <= capacité : vérifiés dans le domaine.
+ */
 export class CreateReservationDTO {
   @IsUUID()
   @IsNotEmpty()
@@ -92,7 +95,7 @@ export class CreateReservationDTO {
   comment?: string;
 }
 
-// PATCH /reservations/{reservationId}
+/** PATCH /reservations/{reservationId} : au moins un champ. */
 export class UpdateReservationDTO {
   @IsISO8601()
   @IsOptionalNotNull()
@@ -112,14 +115,14 @@ export class UpdateReservationDTO {
   comment?: string;
 }
 
-// POST /reservations/{reservationId}/reject
+/** POST /reservations/{reservationId}/reject : corps facultatif. */
 export class RejectReservationDTO {
   @IsString()
   @IsOptional()
   reason?: string;
 }
 
-// GET /reservations
+/** GET /reservations : filtres et pagination. */
 export class ReservationsQueryDTO extends PaginationQueryDTO {
   @IsEnum(ReservationStatus)
   @IsOptional()
@@ -134,6 +137,7 @@ export class ReservationsQueryDTO extends PaginationQueryDTO {
   to?: string;
 }
 
+/** Page de réservations (schéma PaginatedReservations du contrat). */
 export class PaginatedReservationsDTO extends PaginatedDTO {
   @ValidateNested({ each: true })
   @Type(() => ReservationDTO)

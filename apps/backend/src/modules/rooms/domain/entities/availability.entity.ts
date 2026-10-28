@@ -1,6 +1,9 @@
 import { InvalidRoomException } from '../exceptions/room-domain.exception.js';
 
-// Créneau d'une salle pour une date. Heures de Paris, au format HH:mm:ss (cf. docs/cadrage.md)
+/**
+ * Créneau d'une salle pour une date. Heures de Paris, au format HH:mm:ss (cf. docs/cadrage.md) :
+ * comparer les chaînes revient à comparer les heures.
+ */
 export class AvailabilitySlot {
   constructor(
     public readonly roomId: string,
@@ -10,7 +13,12 @@ export class AvailabilitySlot {
     public readonly isAvailable: boolean,
   ) {}
 
-  // Les créneaux d'une même journée : début avant la fin, sans chevauchement
+  /**
+   * Vérifie les créneaux d'une même journée : début avant la fin, sans chevauchement
+   * (deux créneaux qui se touchent, 09:00-10:00 puis 10:00-11:00, sont acceptés).
+   * @param slots - Créneaux de la journée, dans n'importe quel ordre.
+   * @throws {InvalidRoomException} Un créneau finit avant de commencer, ou deux créneaux se chevauchent.
+   */
   static assertValidDay(slots: AvailabilitySlot[]): void {
     const sorted = [...slots].sort((a, b) =>
       a.startTime.localeCompare(b.startTime),
@@ -28,7 +36,14 @@ export class AvailabilitySlot {
     });
   }
 
-  // Les créneaux ouverts couvrent-ils [startTime, endTime] sans interruption ?
+  /**
+   * Indique si les créneaux ouverts couvrent [startTime, endTime] sans interruption, en
+   * enchaînant des créneaux contigus (une réservation de 09:00 à 11:00 sur 09:00-10:00 et 10:00-11:00).
+   * @param slots - Créneaux de la journée ; les créneaux fermés sont ignorés.
+   * @param startTime - Début de la plage (HH:mm:ss).
+   * @param endTime - Fin de la plage (HH:mm:ss, ou 24:00:00 pour minuit le lendemain).
+   * @returns true si toute la plage est couverte.
+   */
   static cover(
     slots: AvailabilitySlot[],
     startTime: string,

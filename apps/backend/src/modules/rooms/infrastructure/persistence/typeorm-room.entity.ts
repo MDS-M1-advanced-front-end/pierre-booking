@@ -15,6 +15,7 @@ import { TypeOrmReservationEntity } from '../../../reservations/infrastructure/p
 import { TypeOrmUserEntity } from '../../../users/infrastructure/persistence/typeorm-user.entity.js';
 import { TypeOrmAvailabilityEntity } from './typeorm-availability.entity.js';
 
+/** Table rooms. */
 @Entity('rooms')
 @Check(`"capacity" >= 1`)
 @Check(`"price_per_hour" >= 0`)

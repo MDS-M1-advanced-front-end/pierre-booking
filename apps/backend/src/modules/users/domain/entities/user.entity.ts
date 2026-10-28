@@ -1,9 +1,16 @@
+/**
+ * Rôle d'un compte. Seul CLIENT est attribué à l'inscription ;
+ * GESTIONNAIRE et ADMINISTRATEUR sont donnés par un administrateur.
+ */
 export enum UserRole {
   CLIENT = 'CLIENT',
   GESTIONNAIRE = 'GESTIONNAIRE',
   ADMINISTRATEUR = 'ADMINISTRATEUR',
 }
 
+/**
+ * Données d'un utilisateur. `id` et `createdAt` sont absents avant l'enregistrement.
+ */
 export interface UserProps {
   id?: string;
   firstName: string;
@@ -14,10 +21,17 @@ export interface UserProps {
   createdAt?: Date;
 }
 
+/**
+ * Champs du profil qu'un utilisateur peut modifier lui-même (PATCH /auth/me).
+ * Un champ absent n'est pas modifié.
+ */
 export type UserProfileChanges = Partial<
   Pick<UserProps, 'firstName' | 'lastName' | 'email'>
 >;
 
+/**
+ * Utilisateur du domaine. L'e-mail est toujours stocké normalisé (minuscules, sans espaces).
+ */
 export class User {
   readonly id?: string;
   firstName: string;
@@ -27,6 +41,9 @@ export class User {
   role: UserRole;
   readonly createdAt?: Date;
 
+  /**
+   * @param props - Données de l'utilisateur ; l'e-mail est normalisé.
+   */
   constructor(props: UserProps) {
     this.id = props.id;
     this.firstName = props.firstName;
@@ -37,15 +54,27 @@ export class User {
     this.createdAt = props.createdAt;
   }
 
-  // Les e-mails sont comparés sans tenir compte de la casse
+  /**
+   * Les e-mails sont comparés sans tenir compte de la casse : unicité en base et connexion
+   * reposent sur cette forme normalisée.
+   * @param email - Adresse saisie.
+   * @returns L'adresse en minuscules, sans espaces autour.
+   */
   static normalizeEmail(email: string): string {
     return email.trim().toLowerCase();
   }
 
+  /**
+   * Indique si l'utilisateur est administrateur (accès à /users et /admin).
+   */
   get isAdmin(): boolean {
     return this.role === UserRole.ADMINISTRATEUR;
   }
 
+  /**
+   * Applique les modifications du profil ; l'e-mail est normalisé.
+   * @param changes - Champs à modifier ; un champ absent est conservé.
+   */
   changeProfile(changes: UserProfileChanges): void {
     if (changes.firstName !== undefined) this.firstName = changes.firstName;
     if (changes.lastName !== undefined) this.lastName = changes.lastName;
@@ -54,6 +83,10 @@ export class User {
     }
   }
 
+  /**
+   * Change le rôle. Réservé aux administrateurs (PATCH /users/{userId}), contrôlé par le guard.
+   * @param role - Nouveau rôle.
+   */
   changeRole(role: UserRole): void {
     this.role = role;
   }

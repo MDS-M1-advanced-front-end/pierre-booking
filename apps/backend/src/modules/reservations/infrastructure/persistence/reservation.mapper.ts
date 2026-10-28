@@ -1,7 +1,12 @@
 import { Reservation } from '../../domain/entities/reservation.entity.js';
 import { TypeOrmReservationEntity } from './typeorm-reservation.entity.js';
 
+/** Conversion entre l'entité TypeORM et l'entité du domaine (réservation). */
 export class ReservationMapper {
+  /**
+   * @param ormEntity - Ligne lue en base.
+   * @returns L'entité du domaine.
+   */
   static toDomain(ormEntity: TypeOrmReservationEntity): Reservation {
     return new Reservation({
       id: ormEntity.id,
@@ -19,6 +24,11 @@ export class ReservationMapper {
     });
   }
 
+  /**
+   * Sans identifiant, l'entité TypeORM sera insérée ; avec, mise à jour.
+   * @param domainEntity - Entité du domaine.
+   * @returns L'entité TypeORM à enregistrer.
+   */
   static toOrm(domainEntity: Reservation): TypeOrmReservationEntity {
     const ormEntity = new TypeOrmReservationEntity();
     if (domainEntity.id) ormEntity.id = domainEntity.id;

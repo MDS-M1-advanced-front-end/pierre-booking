@@ -1,3 +1,6 @@
+/**
+ * Exception du domaine des salles. Traduite en réponse HTTP par DomainExceptionFilter.
+ */
 export class RoomDomainException extends Error {
   constructor(message: string) {
     super(message);
@@ -5,15 +8,17 @@ export class RoomDomainException extends Error {
   }
 }
 
+/** La salle n'existe pas, ou n'est pas visible par l'acteur (404). */
 export class RoomNotFoundException extends RoomDomainException {
   constructor(id: string) {
     super(`La salle avec l'id ${id} est introuvable`);
   }
 }
 
-// Règle métier non respectée (capacité, prix…)
+/** Règle métier non respectée : capacité, prix, créneaux (400). */
 export class InvalidRoomException extends RoomDomainException {}
 
+/** L'acteur n'est ni le gestionnaire propriétaire ni un administrateur (403). */
 export class RoomAccessDeniedException extends RoomDomainException {
   constructor() {
     super(
@@ -22,6 +27,7 @@ export class RoomAccessDeniedException extends RoomDomainException {
   }
 }
 
+/** Suppression refusée : des réservations sont rattachées à la salle (409). */
 export class RoomHasReservationsException extends RoomDomainException {
   constructor() {
     super('La salle a des réservations, elle ne peut pas être supprimée');

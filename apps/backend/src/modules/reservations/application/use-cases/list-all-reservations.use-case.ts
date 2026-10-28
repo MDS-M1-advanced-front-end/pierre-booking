@@ -8,7 +8,7 @@ import {
   type ReservationRepositoryInterface,
 } from '../../domain/repositories/reservation.repository.interface.js';
 
-// GET /admin/reservations (administrateurs)
+/** GET /admin/reservations (administrateurs) : toutes les réservations de la plateforme. */
 @Injectable()
 export class ListAllReservationsUseCase {
   constructor(
@@ -16,6 +16,10 @@ export class ListAllReservationsUseCase {
     private readonly reservationRepository: ReservationRepositoryInterface,
   ) {}
 
+  /**
+   * @param filters - Statut, salle, client et pagination ; les filtres absents sont ignorés.
+   * @returns Les réservations de la page et le nombre total de résultats.
+   */
   execute(filters: {
     status?: ReservationStatus;
     roomId?: string;

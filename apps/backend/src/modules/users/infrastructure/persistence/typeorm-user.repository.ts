@@ -14,6 +14,10 @@ import type { UserRepositoryInterface } from '../../domain/repositories/user.rep
 import { TypeOrmUserEntity } from './typeorm-user.entity.js';
 import { UserMapper } from './user.mapper.js';
 
+/**
+ * Implémentation TypeORM de UserRepositoryInterface. Les erreurs PostgreSQL (unicité,
+ * clé étrangère) sont traduites en exceptions du domaine.
+ */
 @Injectable()
 export class TypeormUserRepository implements UserRepositoryInterface {
   constructor(
@@ -21,16 +25,28 @@ export class TypeormUserRepository implements UserRepositoryInterface {
     private readonly typeormUserRepository: Repository<TypeOrmUserEntity>,
   ) {}
 
+  /**
+   * @param id - UUID de l'utilisateur.
+   * @returns L'utilisateur, ou `null`.
+   */
   async findById(id: string): Promise<User | null> {
     const entity = await this.typeormUserRepository.findOneBy({ id });
     return entity ? UserMapper.toDomain(entity) : null;
   }
 
+  /**
+   * @param email - Adresse normalisée.
+   * @returns L'utilisateur, ou `null`.
+   */
   async findByEmail(email: string): Promise<User | null> {
     const entity = await this.typeormUserRepository.findOneBy({ email });
     return entity ? UserMapper.toDomain(entity) : null;
   }
 
+  /**
+   * @param criteria - Rôle (facultatif), page et taille de page.
+   * @returns Les utilisateurs de la page (les plus récents d'abord) et le nombre total.
+   */
   async findPage(criteria: {
     role?: UserRole;
     page: number;
@@ -49,6 +65,11 @@ export class TypeormUserRepository implements UserRepositoryInterface {
     };
   }
 
+  /**
+   * @param user - Utilisateur à créer ou mettre à jour.
+   * @returns L'utilisateur relu en base.
+   * @throws {EmailAlreadyUsedException} si l'e-mail est pris (violation d'unicité).
+   */
   async save(user: User): Promise<User> {
     try {
       const saved = await this.typeormUserRepository.save(
@@ -64,6 +85,10 @@ export class TypeormUserRepository implements UserRepositoryInterface {
     }
   }
 
+  /**
+   * @param id - UUID de l'utilisateur.
+   * @throws {UserHasReservationsException} si des réservations bloquent la suppression (ON DELETE RESTRICT).
+   */
   async delete(id: string): Promise<void> {
     try {
       await this.typeormUserRepository.delete(id);

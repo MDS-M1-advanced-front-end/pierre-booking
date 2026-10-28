@@ -12,11 +12,20 @@ const formatter = new Intl.DateTimeFormat('en-CA', {
   hourCycle: 'h23',
 });
 
-// "HH:mm" ou "HH:mm:ss" → "HH:mm:ss"
+/**
+ * Met une heure au format de la base.
+ * @param time - Heure au format `HH:mm` ou `HH:mm:ss`.
+ * @returns L'heure au format `HH:mm:ss`.
+ */
 export function normalizeTime(time: string): string {
   return time.length === 5 ? `${time}:00` : time;
 }
 
+/**
+ * Date et heure de Paris d'un instant.
+ * @param instant - Instant à convertir (ex. `startAt` d'une réservation, en UTC).
+ * @returns La date (`YYYY-MM-DD`) et l'heure (`HH:mm:ss`) à Paris.
+ */
 export function toParis(instant: Date): { date: string; time: string } {
   const parts = Object.fromEntries(
     formatter.formatToParts(instant).map((part) => [part.type, part.value]),
@@ -27,6 +36,12 @@ export function toParis(instant: Date): { date: string; time: string } {
   };
 }
 
+/**
+ * Instant correspondant à une date et une heure de Paris, changements d'heure compris.
+ * @param date - Date de Paris, `YYYY-MM-DD`.
+ * @param time - Heure de Paris, `HH:mm` ou `HH:mm:ss` (minuit par défaut).
+ * @returns L'instant, à comparer aux dates UTC des réservations.
+ */
 export function fromParis(date: string, time = '00:00:00'): Date {
   const asUtc = Date.parse(`${date}T${normalizeTime(time)}Z`);
   // Décalage de Paris par rapport à UTC à un instant donné (+1 h ou +2 h)
@@ -39,6 +54,12 @@ export function fromParis(date: string, time = '00:00:00'): Date {
   return new Date(asUtc - offsetAt(guess));
 }
 
+/**
+ * Ajoute des jours à une date sans heure.
+ * @param date - Date, `YYYY-MM-DD`.
+ * @param days - Nombre de jours, négatif pour reculer.
+ * @returns La nouvelle date, `YYYY-MM-DD`.
+ */
 export function addDays(date: string, days: number): string {
   const day = new Date(`${date}T00:00:00Z`);
   day.setUTCDate(day.getUTCDate() + days);

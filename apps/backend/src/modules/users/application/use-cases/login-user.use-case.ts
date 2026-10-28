@@ -15,6 +15,9 @@ import {
   type TokenPort,
 } from '../ports/token.port.js';
 
+/**
+ * Connecte un utilisateur (POST /auth/login).
+ */
 @Injectable()
 export class LoginUserUseCase {
   constructor(
@@ -25,6 +28,12 @@ export class LoginUserUseCase {
     @Inject(TOKEN_SERVICE) private readonly tokens: TokenPort,
   ) {}
 
+  /**
+   * @param email - E-mail saisi, quelle que soit sa casse.
+   * @param password - Mot de passe en clair.
+   * @returns Le jeton d'accès, sa durée de vie et l'utilisateur.
+   * @throws {InvalidCredentialsException} si l'e-mail est inconnu ou le mot de passe faux.
+   */
   async execute(
     email: string,
     password: string,

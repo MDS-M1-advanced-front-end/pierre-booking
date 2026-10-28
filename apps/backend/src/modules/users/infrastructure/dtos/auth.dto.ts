@@ -11,7 +11,9 @@ import {
 import { IsOptionalNotNull } from '../../../../common/validators.js';
 import { UserDTO } from './users.dto.js';
 
-// POST /auth/register
+/**
+ * Corps de POST /auth/register (RegisterRequest du contrat).
+ */
 export class RegisterDTO {
   @IsString()
   @IsNotEmpty()
@@ -30,7 +32,9 @@ export class RegisterDTO {
   password: string;
 }
 
-// POST /auth/login
+/**
+ * Corps de POST /auth/login (LoginRequest du contrat).
+ */
 export class LoginDTO {
   @IsEmail()
   @IsNotEmpty()
@@ -41,6 +45,9 @@ export class LoginDTO {
   password: string;
 }
 
+/**
+ * Réponse de POST /auth/login (AuthResponse du contrat).
+ */
 export class AuthResponseDTO {
   @IsString()
   @IsNotEmpty()
@@ -59,7 +66,9 @@ export class AuthResponseDTO {
   user: UserDTO;
 }
 
-// PATCH /auth/me : le rôle ne se modifie pas ici
+/**
+ * Corps de PATCH /auth/me (ProfileUpdateRequest du contrat) : le rôle ne se modifie pas ici.
+ */
 export class UpdateProfileDTO {
   @IsString()
   @IsNotEmpty()
@@ -76,7 +85,9 @@ export class UpdateProfileDTO {
   email?: string;
 }
 
-// PATCH /auth/password
+/**
+ * Corps de PATCH /auth/password (ChangePasswordRequest du contrat).
+ */
 export class ChangePasswordDTO {
   @IsString()
   @IsNotEmpty()

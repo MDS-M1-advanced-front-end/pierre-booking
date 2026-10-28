@@ -26,6 +26,7 @@ import {
 
 import { RoomStatus } from '../../domain/entities/room.entity.js';
 
+/** Salle renvoyée par l'API (schéma Room du contrat). */
 export class RoomDTO {
   @IsUUID()
   @IsNotEmpty()
@@ -74,7 +75,7 @@ export class RoomDTO {
   createdAt?: string;
 }
 
-// POST /rooms
+/** Corps de POST /rooms (schéma RoomCreateRequest). */
 export class CreateRoomDTO {
   @IsString()
   @IsNotEmpty()
@@ -107,8 +108,10 @@ export class CreateRoomDTO {
   imageUrl?: string;
 }
 
-// PATCH /rooms/{roomId}
-// description et imageUrl acceptent null pour effacer la valeur
+/**
+ * Corps de PATCH /rooms/{roomId} (schéma RoomUpdateRequest). description et imageUrl acceptent
+ * null pour effacer la valeur.
+ */
 export class UpdateRoomDTO {
   @IsString()
   @IsNotEmpty()
@@ -149,7 +152,7 @@ export class UpdateRoomDTO {
   status?: RoomStatus;
 }
 
-// GET /rooms
+/** Paramètres de GET /rooms : recherche, capacité, créneau et pagination. */
 export class RoomsQueryDTO extends PaginationQueryDTO {
   @IsString()
   @MaxLength(255)
@@ -194,12 +197,14 @@ export class RoomsQueryDTO extends PaginationQueryDTO {
   available?: boolean;
 }
 
+/** Page de salles renvoyée par GET /rooms. */
 export class PaginatedRoomsDTO extends PaginatedDTO {
   @ValidateNested({ each: true })
   @Type(() => RoomDTO)
   items: RoomDTO[];
 }
 
+/** Créneau d'une salle (schéma AvailabilitySlot), en réponse ou dans le corps du PUT. */
 export class AvailabilitySlotDTO {
   @Matches(TIME_REGEX)
   startTime: string;
@@ -211,7 +216,7 @@ export class AvailabilitySlotDTO {
   available: boolean;
 }
 
-// GET /rooms/{roomId}/availability
+/** Paramètres de GET /rooms/{roomId}/availability. */
 export class AvailabilityQueryDTO {
   @Matches(DATE_REGEX)
   date: string;
@@ -225,7 +230,7 @@ export class AvailabilityQueryDTO {
   endTime?: string;
 }
 
-// PUT /rooms/{roomId}/availability
+/** Corps de PUT /rooms/{roomId}/availability (schéma AvailabilityUpdateRequest). */
 export class UpdateAvailabilityDTO {
   @Matches(DATE_REGEX)
   date: string;

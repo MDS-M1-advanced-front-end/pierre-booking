@@ -16,6 +16,9 @@ import {
   PaginationQueryDTO,
 } from '../../../../common/pagination.dto.js';
 
+/**
+ * Utilisateur renvoyé par l'API (User du contrat), sans le hash du mot de passe.
+ */
 export class UserDTO {
   @IsUUID()
   @IsNotEmpty()
@@ -42,7 +45,9 @@ export class UserDTO {
   createdAt?: string;
 }
 
-// PATCH /users/{userId}
+/**
+ * Corps de PATCH /users/{userId} (UserUpdateRequest du contrat).
+ */
 export class UpdateUserDTO {
   @IsString()
   @IsNotEmpty()
@@ -63,13 +68,18 @@ export class UpdateUserDTO {
   role?: UserRole;
 }
 
-// GET /users
+/**
+ * Paramètres de GET /users.
+ */
 export class UsersQueryDTO extends PaginationQueryDTO {
   @IsEnum(UserRole)
   @IsOptional()
   role?: UserRole;
 }
 
+/**
+ * Réponse de GET /users (PaginatedUsers du contrat).
+ */
 export class PaginatedUsersDTO extends PaginatedDTO {
   @ValidateNested({ each: true })
   @Type(() => UserDTO)

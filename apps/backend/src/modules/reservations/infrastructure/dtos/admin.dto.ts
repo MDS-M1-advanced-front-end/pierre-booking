@@ -10,7 +10,7 @@ import { DATE_REGEX } from '../../../../common/formats.js';
 import { PaginationQueryDTO } from '../../../../common/pagination.dto.js';
 import { ReservationStatus } from '../../domain/entities/reservation.entity.js';
 
-// GET /admin/reservations (réponse : PaginatedReservationsDTO)
+/** GET /admin/reservations : filtres et pagination (réponse : PaginatedReservationsDTO). */
 export class AdminReservationsQueryDTO extends PaginationQueryDTO {
   @IsEnum(ReservationStatus)
   @IsOptional()
@@ -25,7 +25,7 @@ export class AdminReservationsQueryDTO extends PaginationQueryDTO {
   userId?: string;
 }
 
-// GET /admin/statistics
+/** GET /admin/statistics : période facultative. */
 export class StatisticsQueryDTO {
   @Matches(DATE_REGEX)
   @IsOptional()
@@ -36,6 +36,7 @@ export class StatisticsQueryDTO {
   to?: string;
 }
 
+/** Statistiques renvoyées par l'API (schéma Statistics du contrat). */
 export class StatisticsDTO {
   @IsInt()
   @IsOptional()

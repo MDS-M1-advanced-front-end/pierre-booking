@@ -17,6 +17,7 @@ import {
 } from '../ports/room-booking.port.js';
 import { findRoomOrFail, managesRoom } from '../room-access.js';
 
+/** GET /reservations/{reservationId} : détail d'une réservation. */
 @Injectable()
 export class GetReservationUseCase {
   constructor(
@@ -25,7 +26,14 @@ export class GetReservationUseCase {
     @Inject(ROOM_BOOKING) private readonly rooms: RoomBookingPort,
   ) {}
 
-  // L'auteur, le gestionnaire de la salle ou un administrateur
+  /**
+   * L'auteur, le gestionnaire de la salle ou un administrateur.
+   * @param reservationId - UUID de la réservation.
+   * @param actor - Utilisateur connecté.
+   * @returns La réservation.
+   * @throws {ReservationNotFoundException} Réservation ou salle introuvable.
+   * @throws {ReservationAccessDeniedException} Ni auteur, ni gestionnaire de la salle, ni admin.
+   */
   async execute(
     reservationId: string,
     actor: ReservationActor,

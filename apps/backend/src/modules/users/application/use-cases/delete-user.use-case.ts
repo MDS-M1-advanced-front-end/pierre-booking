@@ -5,6 +5,9 @@ import {
   type UserRepositoryInterface,
 } from '../../domain/repositories/user.repository.interface.js';
 
+/**
+ * Supprime un utilisateur (DELETE /users/{userId}, administrateurs).
+ */
 @Injectable()
 export class DeleteUserUseCase {
   constructor(
@@ -12,6 +15,11 @@ export class DeleteUserUseCase {
     private readonly userRepository: UserRepositoryInterface,
   ) {}
 
+  /**
+   * @param userId - UUID de l'utilisateur à supprimer.
+   * @throws {UserNotFoundException} si l'utilisateur n'existe pas.
+   * @throws {UserHasReservationsException} si des réservations lui sont rattachées.
+   */
   async execute(userId: string): Promise<void> {
     if (!(await this.userRepository.findById(userId))) {
       throw new UserNotFoundException();

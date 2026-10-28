@@ -15,8 +15,11 @@ import type {
   RoomOccupancyPort,
 } from '../../application/ports/room-occupancy.port.js';
 
-// Lit la table des réservations directement (lecture seule) : passer par le module reservations
-// créerait une dépendance circulaire, puisqu'il dépend déjà de ce module
+/**
+ * Implémentation de {@link RoomOccupancyPort}. Lit la table des réservations directement (lecture
+ * seule) : passer par le module reservations créerait une dépendance circulaire, puisqu'il dépend
+ * déjà de ce module.
+ */
 @Injectable()
 export class TypeormRoomOccupancyAdapter implements RoomOccupancyPort {
   constructor(
@@ -24,6 +27,14 @@ export class TypeormRoomOccupancyAdapter implements RoomOccupancyPort {
     private readonly reservations: Repository<TypeOrmReservationEntity>,
   ) {}
 
+  /**
+   * Liste les réservations PENDING ou CONFIRMED des salles qui chevauchent [from, to[.
+   * @param roomIds - Salles concernées ; liste vide : aucun résultat, sans requête.
+   * @param from - Début de l'intervalle (inclus).
+   * @param to - Fin de l'intervalle (exclue).
+   * @param excludedReservationId - Réservation à ignorer.
+   * @returns Les périodes occupées.
+   */
   async findOccupied(
     roomIds: string[],
     from: Date,

@@ -1,7 +1,12 @@
 import { Payment } from '../../domain/entities/payment.entity.js';
 import { TypeOrmPaymentEntity } from './typeorm-payment.entity.js';
 
+/** Conversion entre l'entité TypeORM et l'entité du domaine (paiement). */
 export class PaymentMapper {
+  /**
+   * @param ormEntity - Ligne lue en base.
+   * @returns L'entité du domaine.
+   */
   static toDomain(ormEntity: TypeOrmPaymentEntity): Payment {
     return new Payment({
       id: ormEntity.id,
@@ -16,6 +21,11 @@ export class PaymentMapper {
     });
   }
 
+  /**
+   * Sans identifiant, l'entité TypeORM sera insérée ; avec, mise à jour.
+   * @param domainEntity - Entité du domaine.
+   * @returns L'entité TypeORM à enregistrer.
+   */
   static toOrm(domainEntity: Payment): TypeOrmPaymentEntity {
     const ormEntity = new TypeOrmPaymentEntity();
     if (domainEntity.id) ormEntity.id = domainEntity.id;

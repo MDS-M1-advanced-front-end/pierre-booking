@@ -27,6 +27,9 @@ import {
 } from '../dtos/users.dto.js';
 import { UserExceptionFilter } from '../filters/user-exception.filter.js';
 
+/**
+ * Routes /users : gestion des comptes, réservée aux administrateurs.
+ */
 @Controller('users')
 @Roles(UserRole.ADMINISTRATEUR)
 @UseFilters(UserExceptionFilter)
@@ -38,6 +41,11 @@ export class UsersController {
     private readonly deleteUserUseCase: DeleteUserUseCase,
   ) {}
 
+  /**
+   * GET /users : liste paginée.
+   * @param query - Rôle (facultatif), page et taille de page.
+   * @returns Une page d'utilisateurs.
+   */
   @Get()
   async findAll(@Query() query: UsersQueryDTO): Promise<PaginatedUsersDTO> {
     const { page, pageSize } = toSkipTake(query);
@@ -49,6 +57,11 @@ export class UsersController {
     return { items: items.map(toUserDTO), page, pageSize, total };
   }
 
+  /**
+   * GET /users/{userId}.
+   * @param userId - UUID de l'utilisateur.
+   * @returns L'utilisateur ; 404 s'il n'existe pas.
+   */
   @Get(':userId')
   async findOne(
     @Param('userId', ParseUUIDPipe) userId: string,
@@ -56,6 +69,12 @@ export class UsersController {
     return toUserDTO(await this.getUserUseCase.execute(userId));
   }
 
+  /**
+   * PATCH /users/{userId} : modification, rôle compris.
+   * @param userId - UUID de l'utilisateur.
+   * @param dto - Champs à modifier.
+   * @returns L'utilisateur modifié ; 404 s'il n'existe pas, 409 si l'e-mail est pris.
+   */
   @Patch(':userId')
   async update(
     @Param('userId', ParseUUIDPipe) userId: string,
@@ -70,6 +89,10 @@ export class UsersController {
     return toUserDTO(user);
   }
 
+  /**
+   * DELETE /users/{userId} (204).
+   * @param userId - UUID de l'utilisateur ; 404 s'il n'existe pas, 409 s'il a des réservations.
+   */
   @Delete(':userId')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('userId', ParseUUIDPipe) userId: string): Promise<void> {

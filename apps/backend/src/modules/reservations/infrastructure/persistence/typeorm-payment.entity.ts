@@ -15,6 +15,7 @@ import {
 import { decimalTransformer } from '../../../../common/decimal.transformer.js';
 import { TypeOrmReservationEntity } from './typeorm-reservation.entity.js';
 
+/** Table `payments` (voir docs/Database.md). */
 @Entity('payments')
 @Check(`"amount" >= 0`)
 export class TypeOrmPaymentEntity {

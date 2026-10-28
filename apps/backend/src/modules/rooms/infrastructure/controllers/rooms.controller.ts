@@ -46,7 +46,11 @@ import {
 } from '../dtos/rooms.dto.js';
 import { DomainExceptionFilter } from '../filters/global-exception.filter.js';
 
-// Utilisateur authentifié → acteur du domaine
+/**
+ * Utilisateur authentifié → acteur du domaine.
+ * @param user - Utilisateur de la requête, absent sur une route publique sans jeton.
+ * @returns L'acteur, ou undefined pour un visiteur.
+ */
 function toActor(user: AuthUser): RoomActor;
 function toActor(user?: AuthUser): RoomActor | undefined;
 function toActor(user?: AuthUser): RoomActor | undefined {
@@ -55,6 +59,10 @@ function toActor(user?: AuthUser): RoomActor | undefined {
   );
 }
 
+/**
+ * Routes /rooms et /rooms/{roomId}/availability. Les exceptions du domaine sont traduites en
+ * réponses HTTP par DomainExceptionFilter.
+ */
 @Controller('rooms')
 @UseFilters(DomainExceptionFilter)
 export class RoomsController {
@@ -68,6 +76,12 @@ export class RoomsController {
     private readonly setRoomAvailabilityUseCase: SetRoomAvailabilityUseCase,
   ) {}
 
+  /**
+   * GET /rooms (public) : recherche paginée des salles.
+   * @param query - Filtres et pagination.
+   * @param user - Utilisateur connecté, s'il a envoyé un jeton (voit alors ses salles inactives).
+   * @returns Une page de salles.
+   */
   @Public()
   @Get()
   async findAll(
@@ -93,6 +107,13 @@ export class RoomsController {
     return { items: items.map(toRoomDTO), page, pageSize, total };
   }
 
+  /**
+   * POST /rooms (gestionnaires et administrateurs) : ajoute une salle, active, dont l'utilisateur
+   * connecté est le propriétaire.
+   * @param dto - Salle à créer.
+   * @param user - Utilisateur connecté.
+   * @returns La salle créée.
+   */
   @Post()
   @Roles(UserRole.GESTIONNAIRE, UserRole.ADMINISTRATEUR)
   @HttpCode(HttpStatus.CREATED)
@@ -115,6 +136,12 @@ export class RoomsController {
     return toRoomDTO(room);
   }
 
+  /**
+   * GET /rooms/{roomId} (public) : détails d'une salle.
+   * @param roomId - Identifiant de la salle.
+   * @param user - Utilisateur connecté, s'il a envoyé un jeton.
+   * @returns La salle ; 404 si elle n'existe pas ou est inactive pour cet utilisateur.
+   */
   @Public()
   @Get(':roomId')
   async findOne(
@@ -124,6 +151,13 @@ export class RoomsController {
     return toRoomDTO(await this.getRoomUseCase.execute(roomId, toActor(user)));
   }
 
+  /**
+   * PATCH /rooms/{roomId} : modification partielle, par le propriétaire ou un administrateur.
+   * @param roomId - Identifiant de la salle.
+   * @param dto - Champs à modifier (au moins un).
+   * @param user - Utilisateur connecté.
+   * @returns La salle modifiée.
+   */
   @Patch(':roomId')
   async update(
     @Param('roomId', ParseUUIDPipe) roomId: string,
@@ -138,6 +172,12 @@ export class RoomsController {
     return toRoomDTO(room);
   }
 
+  /**
+   * DELETE /rooms/{roomId} : suppression par le propriétaire ou un administrateur ; 409 si la
+   * salle a des réservations.
+   * @param roomId - Identifiant de la salle.
+   * @param user - Utilisateur connecté.
+   */
   @Delete(':roomId')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
@@ -147,6 +187,12 @@ export class RoomsController {
     return this.deleteRoomUseCase.execute(roomId, toActor(user));
   }
 
+  /**
+   * GET /rooms/{roomId}/availability (public) : créneaux d'une journée et leur disponibilité.
+   * @param roomId - Identifiant de la salle.
+   * @param query - Jour et plage horaire facultative.
+   * @returns Les créneaux de la journée.
+   */
   @Public()
   @Get(':roomId/availability')
   async getAvailability(
@@ -164,6 +210,14 @@ export class RoomsController {
     );
   }
 
+  /**
+   * PUT /rooms/{roomId}/availability : remplace les créneaux d'une journée, par le propriétaire
+   * ou un administrateur.
+   * @param roomId - Identifiant de la salle.
+   * @param dto - Jour et nouveaux créneaux.
+   * @param user - Utilisateur connecté.
+   * @returns Les créneaux enregistrés.
+   */
   @Put(':roomId/availability')
   async setAvailability(
     @Param('roomId', ParseUUIDPipe) roomId: string,
