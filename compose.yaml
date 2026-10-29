@@ -34,6 +34,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-resa_password}
       DB_NAME: ${DB_NAME:-resa_db}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET est obligatoire}
+      PEPPER_SECRET: ${PEPPER_SECRET:?PEPPER_SECRET est obligatoire}
       # Origine du front autorisée par le CORS
       CORS_ORIGIN: ${FRONT_URL:-http://localhost:4321}
     ports:
