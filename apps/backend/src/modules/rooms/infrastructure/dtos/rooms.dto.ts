@@ -1,3 +1,13 @@
+import type {
+  AvailabilitySlot,
+  AvailabilityUpdateRequest,
+  PaginatedRooms,
+  Room,
+  RoomAvailabilityQuery,
+  RoomCreateRequest,
+  RoomUpdateRequest,
+  SearchRoomsQuery,
+} from '@room-booking/core';
 import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -28,7 +38,7 @@ import {
 import { RoomStatus } from '../../domain/entities/room.entity';
 
 /** Salle renvoyée par l'API (schéma Room du contrat). */
-export class RoomDTO {
+export class RoomDTO implements Room {
   @IsUUID()
   @IsNotEmpty()
   id: string;
@@ -77,7 +87,7 @@ export class RoomDTO {
 }
 
 /** Corps de POST /rooms (schéma RoomCreateRequest). */
-export class CreateRoomDTO {
+export class CreateRoomDTO implements RoomCreateRequest {
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
@@ -119,7 +129,7 @@ export class CreateRoomDTO {
  * Corps de PATCH /rooms/{roomId} (schéma RoomUpdateRequest). description et imageUrl acceptent
  * null pour effacer la valeur.
  */
-export class UpdateRoomDTO {
+export class UpdateRoomDTO implements RoomUpdateRequest {
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
@@ -166,7 +176,10 @@ export class UpdateRoomDTO {
 }
 
 /** Paramètres de GET /rooms : recherche, capacité, créneau et pagination. */
-export class RoomsQueryDTO extends PaginationQueryDTO {
+export class RoomsQueryDTO
+  extends PaginationQueryDTO
+  implements SearchRoomsQuery
+{
   @IsString()
   @MaxLength(255)
   @IsOptional()
@@ -211,14 +224,14 @@ export class RoomsQueryDTO extends PaginationQueryDTO {
 }
 
 /** Page de salles renvoyée par GET /rooms. */
-export class PaginatedRoomsDTO extends PaginatedDTO {
+export class PaginatedRoomsDTO extends PaginatedDTO implements PaginatedRooms {
   @ValidateNested({ each: true })
   @Type(() => RoomDTO)
   items: RoomDTO[];
 }
 
 /** Créneau d'une salle (schéma AvailabilitySlot), en réponse ou dans le corps du PUT. */
-export class AvailabilitySlotDTO {
+export class AvailabilitySlotDTO implements AvailabilitySlot {
   @Matches(TIME_REGEX)
   startTime: string;
 
@@ -230,7 +243,7 @@ export class AvailabilitySlotDTO {
 }
 
 /** Paramètres de GET /rooms/{roomId}/availability. */
-export class AvailabilityQueryDTO {
+export class AvailabilityQueryDTO implements RoomAvailabilityQuery {
   @Matches(DATE_REGEX)
   date: string;
 
@@ -244,7 +257,7 @@ export class AvailabilityQueryDTO {
 }
 
 /** Corps de PUT /rooms/{roomId}/availability (schéma AvailabilityUpdateRequest). */
-export class UpdateAvailabilityDTO {
+export class UpdateAvailabilityDTO implements AvailabilityUpdateRequest {
   @Matches(DATE_REGEX)
   date: string;
 

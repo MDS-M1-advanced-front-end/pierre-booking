@@ -1,3 +1,9 @@
+import type {
+  ListUsersQuery,
+  PaginatedUsers,
+  User,
+  UserUpdateRequest,
+} from '@room-booking/core';
 import { Type } from 'class-transformer';
 import {
   IsEmail,
@@ -20,7 +26,7 @@ import {
 /**
  * Utilisateur renvoyé par l'API (User du contrat), sans le hash du mot de passe.
  */
-export class UserDTO {
+export class UserDTO implements User {
   @IsUUID()
   @IsNotEmpty()
   id: string;
@@ -49,7 +55,7 @@ export class UserDTO {
 /**
  * Corps de PATCH /users/{userId} (UserUpdateRequest du contrat).
  */
-export class UpdateUserDTO {
+export class UpdateUserDTO implements UserUpdateRequest {
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
@@ -75,7 +81,10 @@ export class UpdateUserDTO {
 /**
  * Paramètres de GET /users.
  */
-export class UsersQueryDTO extends PaginationQueryDTO {
+export class UsersQueryDTO
+  extends PaginationQueryDTO
+  implements ListUsersQuery
+{
   @IsEnum(UserRole)
   @IsOptional()
   role?: UserRole;
@@ -84,7 +93,7 @@ export class UsersQueryDTO extends PaginationQueryDTO {
 /**
  * Réponse de GET /users (PaginatedUsers du contrat).
  */
-export class PaginatedUsersDTO extends PaginatedDTO {
+export class PaginatedUsersDTO extends PaginatedDTO implements PaginatedUsers {
   @ValidateNested({ each: true })
   @Type(() => UserDTO)
   items: UserDTO[];

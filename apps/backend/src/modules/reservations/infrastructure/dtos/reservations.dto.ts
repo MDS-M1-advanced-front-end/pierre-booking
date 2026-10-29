@@ -1,3 +1,11 @@
+import type {
+  ListReservationsQuery,
+  PaginatedReservations,
+  Reservation,
+  ReservationCreateRequest,
+  ReservationRejectRequest,
+  ReservationUpdateRequest,
+} from '@room-booking/core';
 import { Type } from 'class-transformer';
 import {
   IsEnum,
@@ -22,7 +30,7 @@ import {
 } from '../../../../common/pagination.dto';
 
 /** Réservation renvoyée par l'API (schéma Reservation du contrat). */
-export class ReservationDTO {
+export class ReservationDTO implements Reservation {
   @IsUUID()
   @IsNotEmpty()
   id: string;
@@ -73,7 +81,7 @@ export class ReservationDTO {
  * POST /reservations.
  * startAt < endAt et numberOfParticipants <= capacité : vérifiés dans le domaine.
  */
-export class CreateReservationDTO {
+export class CreateReservationDTO implements ReservationCreateRequest {
   @IsUUID()
   @IsNotEmpty()
   roomId: string;
@@ -98,7 +106,7 @@ export class CreateReservationDTO {
 }
 
 /** PATCH /reservations/{reservationId} : au moins un champ. */
-export class UpdateReservationDTO {
+export class UpdateReservationDTO implements ReservationUpdateRequest {
   @IsISO8601()
   @IsOptionalNotNull()
   startAt?: string;
@@ -119,7 +127,7 @@ export class UpdateReservationDTO {
 }
 
 /** POST /reservations/{reservationId}/reject : corps facultatif. */
-export class RejectReservationDTO {
+export class RejectReservationDTO implements ReservationRejectRequest {
   @IsString()
   @MaxLength(1000)
   @IsOptional()
@@ -127,7 +135,10 @@ export class RejectReservationDTO {
 }
 
 /** GET /reservations : filtres et pagination. */
-export class ReservationsQueryDTO extends PaginationQueryDTO {
+export class ReservationsQueryDTO
+  extends PaginationQueryDTO
+  implements ListReservationsQuery
+{
   @IsEnum(ReservationStatus)
   @IsOptional()
   status?: ReservationStatus;
@@ -142,7 +153,10 @@ export class ReservationsQueryDTO extends PaginationQueryDTO {
 }
 
 /** Page de réservations (schéma PaginatedReservations du contrat). */
-export class PaginatedReservationsDTO extends PaginatedDTO {
+export class PaginatedReservationsDTO
+  extends PaginatedDTO
+  implements PaginatedReservations
+{
   @ValidateNested({ each: true })
   @Type(() => ReservationDTO)
   items: ReservationDTO[];

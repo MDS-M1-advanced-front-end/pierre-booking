@@ -1,3 +1,8 @@
+import type {
+  AdminReservationsQuery,
+  Statistics,
+  StatisticsQuery,
+} from '@room-booking/core';
 import {
   IsEnum,
   IsInt,
@@ -11,7 +16,10 @@ import { PaginationQueryDTO } from '../../../../common/pagination.dto';
 import { ReservationStatus } from '../../domain/entities/reservation.entity';
 
 /** GET /admin/reservations : filtres et pagination (réponse : PaginatedReservationsDTO). */
-export class AdminReservationsQueryDTO extends PaginationQueryDTO {
+export class AdminReservationsQueryDTO
+  extends PaginationQueryDTO
+  implements AdminReservationsQuery
+{
   @IsEnum(ReservationStatus)
   @IsOptional()
   status?: ReservationStatus;
@@ -26,7 +34,7 @@ export class AdminReservationsQueryDTO extends PaginationQueryDTO {
 }
 
 /** GET /admin/statistics : période facultative. */
-export class StatisticsQueryDTO {
+export class StatisticsQueryDTO implements StatisticsQuery {
   @Matches(DATE_REGEX)
   @IsOptional()
   from?: string;
@@ -37,7 +45,7 @@ export class StatisticsQueryDTO {
 }
 
 /** Statistiques renvoyées par l'API (schéma Statistics du contrat). */
-export class StatisticsDTO {
+export class StatisticsDTO implements Statistics {
   @IsInt()
   @IsOptional()
   totalUsers?: number;

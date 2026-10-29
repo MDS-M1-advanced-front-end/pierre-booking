@@ -1,3 +1,4 @@
+import type { Payment, PaymentCreateRequest } from '@room-booking/core';
 import {
   IsEnum,
   IsISO8601,
@@ -14,7 +15,7 @@ import {
 } from '../../domain/entities/payment.entity';
 
 /** Paiement renvoyé par l'API (schéma Payment du contrat). */
-export class PaymentDTO {
+export class PaymentDTO implements Payment {
   @IsUUID()
   @IsNotEmpty()
   id: string;
@@ -44,7 +45,7 @@ export class PaymentDTO {
 }
 
 /** POST /payments. */
-export class CreatePaymentDTO {
+export class CreatePaymentDTO implements PaymentCreateRequest {
   @IsUUID()
   @IsNotEmpty()
   reservationId: string;
