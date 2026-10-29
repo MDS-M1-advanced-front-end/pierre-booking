@@ -26,6 +26,41 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-10-29 — Revue de ma limitation de débit avec @nestjs/throttler (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : faire relire mon ajout de `@nestjs/throttler` (guard global, 10 requêtes par minute) avant de le committer.
+- **Demande** : « check ce que j'ai fait et commit »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : revue et test, commit suspendu en attendant ma décision. Points relevés :
+  - la limite fonctionne (10 × 200 puis 429 avec `Retry-After: 60`) et protège bien `/auth/login` et `/auth/refresh` contre le bruteforce ;
+  - 10 requêtes par minute et par IP sur **toutes** les routes, c'est trop bas : les pages SSR du front (`salles/[id].astro` appelle `getRoom` côté serveur) passent toutes par l'IP du serveur Astro, donc tous les visiteurs partagent le même quota ; un seul utilisateur qui navigue dépasse aussi vite 10 appels ;
+  - la réponse 429 sort en `{"code":"HTTP_ERROR","message":"ThrottlerException: Too Many Requests"}` : code absent du contrat, message en anglais qui expose le nom de la classe ;
+  - `AuthGuard` (enregistré dans `UsersModule`) passe avant `ThrottlerGuard` : une requête sans jeton sur une route protégée reçoit 401 sans être comptée, et chaque requête est vérifiée en base avant d'être limitée ;
+  - `main.ts` : les commentaires utiles ont été supprimés (serveur du contrat, explication du CORS) ;
+  - `app.module.ts` : imports dans le désordre (`APP_GUARD` en dernier).
+- **Suite** : choix « corriger puis commit ». L'IA a :
+  - passé la limite globale à 100 requêtes par minute, avec un commentaire qui explique pourquoi elle est large ;
+  - ajouté `@Throttle` à 5 requêtes par minute sur `register`, `login` et `refresh` ;
+  - mis la réponse 429 au format du contrat : `TOO_MANY_REQUESTS` dans `DEFAULTS` de `api-errors.ts`, et message en français via `errorMessage`, car le filtre remplace le message par la chaîne brute de l'exception ;
+  - remis les commentaires de `main.ts` et rangé les imports de `app.module.ts`.
+  - Non fait : l'ordre `AuthGuard` puis `ThrottlerGuard` ; la réponse 429 n'est pas documentée dans `openapi.yml`.
+  - Commit `d91b204` (`:lock: back : limitation de débit avec @nestjs/throttler (100/min, 5/min sur l'authentification)`), qui contient mon travail et les corrections.
+- **Erreurs de l'IA relevées** : aucune relevée.
+- **Vérification** : `tsc --noEmit`, `oxlint`, `prettier --check`, `vitest` passent ; back lancé sur le port 8099 : 11 appels à `GET /rooms` → 10 × 200 puis 429 ; `GET /auth/me` sans jeton, quota épuisé → 401 ; lecture de `salles/[id].astro` et de `api-errors.ts`. Après correction : 6 appels à `/auth/login` → 5 × 401 puis 429 `{"code":"TOO_MANY_REQUESTS","message":"Trop de requêtes, réessayez dans une minute."}` ; ensuite 100 × 200 sur `GET /rooms` puis 429 au 101ᵉ (le quota de login est séparé du quota global).
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-29 — Où le JWT est-il vérifié ? (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : comprendre si le JWT est contrôlé sur toutes les routes ou seulement par le contrôle des rôles.
+- **Demande** : « est-ce qu'il est actif sur toutes les routes ou appliqué via le guard de rôle ? »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : explication, aucun code modifié. Un seul guard, `AuthGuard`, enregistré globalement (`APP_GUARD` dans `users.module.ts`) : il s'applique à toutes les routes de tous les modules. Il lit le jeton Bearer, puis laisse passer les routes `@Public()` (`GET /`, `POST /auth/register`, `/auth/login`, `/auth/refresh`, `GET /rooms`, `/rooms/:roomId`, `/rooms/:roomId/availability`), exige un utilisateur sinon (401), et contrôle enfin `@Roles()` (403). Il n'y a pas de guard de rôle séparé : authentification et rôles sont dans le même guard. Sur une route publique, un jeton valide remplit quand même `request.user`.
+- **Erreurs de l'IA relevées** : aucune relevée.
+- **Vérification** : lecture de `auth.guard.ts`, `users.module.ts` ; recherche de `APP_GUARD`, `UseGuards` et `@Public()` dans `apps/backend/src`.
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-10-29 — Jeton de rafraîchissement : @nestjs/jwt suffit-il ? (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
