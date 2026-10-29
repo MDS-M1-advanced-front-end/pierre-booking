@@ -8,10 +8,12 @@ import {
   Repository,
   type FindOptionsWhere,
 } from 'typeorm';
+import { isExclusionViolation } from '../../../../common/database-errors.js';
 import {
   ACTIVE_RESERVATION_STATUSES,
   type Reservation,
 } from '../../domain/entities/reservation.entity.js';
+import { ReservationConflictException } from '../../domain/exceptions/reservation-domain.exception.js';
 import type {
   ReservationRepositoryInterface,
   ReservationSearchCriteria,
@@ -94,12 +96,22 @@ export class TypeormReservationRepository implements ReservationRepositoryInterf
 
   /** @inheritdoc */
   async save(reservation: Reservation): Promise<Reservation> {
-    const saved = await this.typeormReservationRepository.save(
-      ReservationMapper.toOrm(reservation),
-    );
-    // save ne relit pas les valeurs par défaut de la base (created_at) à la mise à jour
-    return ReservationMapper.toDomain(
-      await this.typeormReservationRepository.findOneByOrFail({ id: saved.id }),
-    );
+    try {
+      const saved = await this.typeormReservationRepository.save(
+        ReservationMapper.toOrm(reservation),
+      );
+      // save ne relit pas les valeurs par défaut de la base (created_at) à la mise à jour
+      return ReservationMapper.toDomain(
+        await this.typeormReservationRepository.findOneByOrFail({
+          id: saved.id,
+        }),
+      );
+    } catch (error) {
+      // Contrainte d'exclusion : une réservation active chevauche déjà ce créneau (course)
+      if (isExclusionViolation(error)) {
+        throw new ReservationConflictException('Créneau déjà réservé');
+      }
+      throw error;
+    }
   }
 }

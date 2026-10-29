@@ -36,6 +36,13 @@ export class TypeOrmUserEntity {
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
+  @Column({
+    name: 'password_changed_at',
+    type: 'timestamptz',
+    default: () => 'now()',
+  })
+  passwordChangedAt: Date;
+
   @OneToMany(() => TypeOrmRoomEntity, (room) => room.owner)
   rooms: Relation<TypeOrmRoomEntity>[];
 

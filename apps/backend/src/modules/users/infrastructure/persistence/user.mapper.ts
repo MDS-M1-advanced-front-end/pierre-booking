@@ -18,6 +18,7 @@ export class UserMapper {
       passwordHash: ormEntity.passwordHash,
       role: ormEntity.role,
       createdAt: ormEntity.createdAt,
+      passwordChangedAt: ormEntity.passwordChangedAt,
     });
   }
 
@@ -34,6 +35,9 @@ export class UserMapper {
     ormEntity.passwordHash = domainEntity.passwordHash;
     ormEntity.role = domainEntity.role;
     if (domainEntity.createdAt) ormEntity.createdAt = domainEntity.createdAt;
+    if (domainEntity.passwordChangedAt) {
+      ormEntity.passwordChangedAt = domainEntity.passwordChangedAt;
+    }
     return ormEntity;
   }
 }

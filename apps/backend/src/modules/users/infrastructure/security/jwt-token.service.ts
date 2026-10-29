@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { resolveSecret } from '../../../../common/secrets.js';
 import type {
   IssuedToken,
+  TokenPayload,
   TokenPort,
 } from '../../application/ports/token.port.js';
 
@@ -15,17 +17,17 @@ export const TOKEN_TTL_SECONDS = 15 * 60;
  */
 export const TOKEN_TTL_LONG_SECONDS = 7 * 24 * 60 * 60;
 
+/** Émetteur et audience inscrits dans les jetons et vérifiés à la lecture. */
+const JWT_ISSUER = 'room-booking';
+const JWT_AUDIENCE = 'room-booking-api';
+
 /**
  * Secret de signature des jetons, lu dans JWT_SECRET.
  * @returns Le secret ; `dev-secret` hors production.
  * @throws {Error} en production sans JWT_SECRET : le back refuse de démarrer.
  */
 export function jwtSecret(): string {
-  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('JWT_SECRET est obligatoire en production');
-  }
-  return 'dev-secret';
+  return resolveSecret('JWT_SECRET', process.env.JWT_SECRET, 'dev-secret');
 }
 
 /**
@@ -36,11 +38,15 @@ export function jwtSecret(): string {
  * @throws {Error} en production sans JWT_REFRESH_SECRET, au premier jeton émis ou vérifié.
  */
 export function jwtRefreshSecret(): string {
-  if (process.env.JWT_REFRESH_SECRET) return process.env.JWT_REFRESH_SECRET;
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('JWT_REFRESH_SECRET est obligatoire en production');
+  const secret = resolveSecret(
+    'JWT_REFRESH_SECRET',
+    process.env.JWT_REFRESH_SECRET,
+    'dev-refresh-secret',
+  );
+  if (process.env.NODE_ENV === 'production' && secret === jwtSecret()) {
+    throw new Error('JWT_REFRESH_SECRET doit être différent de JWT_SECRET');
   }
-  return 'dev-refresh-secret';
+  return secret;
 }
 
 /**
@@ -56,7 +62,10 @@ export class JwtTokenService implements TokenPort {
    * @returns Le jeton signé et sa durée de vie.
    */
   async issue(userId: string): Promise<IssuedToken> {
-    const accessToken = await this.jwtService.signAsync({ sub: userId });
+    const accessToken = await this.jwtService.signAsync(
+      { sub: userId },
+      { issuer: JWT_ISSUER, audience: JWT_AUDIENCE },
+    );
     return { accessToken, expiresIn: TOKEN_TTL_SECONDS };
   }
 
@@ -67,7 +76,12 @@ export class JwtTokenService implements TokenPort {
   async issueRefresh(userId: string): Promise<IssuedToken> {
     const accessToken = await this.jwtService.signAsync(
       { sub: userId },
-      { secret: jwtRefreshSecret(), expiresIn: TOKEN_TTL_LONG_SECONDS },
+      {
+        secret: jwtRefreshSecret(),
+        expiresIn: TOKEN_TTL_LONG_SECONDS,
+        issuer: JWT_ISSUER,
+        audience: JWT_AUDIENCE,
+      },
     );
     return { accessToken, expiresIn: TOKEN_TTL_LONG_SECONDS };
   }
@@ -76,10 +90,16 @@ export class JwtTokenService implements TokenPort {
    * @param token - Jeton reçu.
    * @returns L'identifiant de l'utilisateur, ou `null` si la signature ou la date d'expiration est invalide.
    */
-  async verify(token: string): Promise<string | null> {
+  async verify(token: string): Promise<TokenPayload | null> {
     try {
-      const payload = await this.jwtService.verifyAsync<{ sub: string }>(token);
-      return payload.sub;
+      const payload = await this.jwtService.verifyAsync<{
+        sub: string;
+        iat: number;
+      }>(token, {
+        issuer: JWT_ISSUER,
+        audience: JWT_AUDIENCE,
+      });
+      return { userId: payload.sub, issuedAt: payload.iat };
     } catch {
       return null;
     }
@@ -89,13 +109,17 @@ export class JwtTokenService implements TokenPort {
    * @param token - Jeton de rafraîchissement reçu.
    * @returns L'identifiant de l'utilisateur, ou `null` si la signature ou la date d'expiration est invalide.
    */
-  async verifyRefresh(token: string): Promise<string | null> {
+  async verifyRefresh(token: string): Promise<TokenPayload | null> {
     try {
-      const payload = await this.jwtService.verifyAsync<{ sub: string }>(
-        token,
-        { secret: jwtRefreshSecret() },
-      );
-      return payload.sub;
+      const payload = await this.jwtService.verifyAsync<{
+        sub: string;
+        iat: number;
+      }>(token, {
+        secret: jwtRefreshSecret(),
+        issuer: JWT_ISSUER,
+        audience: JWT_AUDIENCE,
+      });
+      return { userId: payload.sub, issuedAt: payload.iat };
     } catch {
       return null;
     }

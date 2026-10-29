@@ -1,6 +1,7 @@
 import './env.js';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import helmet from 'helmet';
 import { AppModule } from './app.module.js';
 import {
   ApiExceptionFilter,
@@ -9,6 +10,11 @@ import {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // En-têtes de sécurité HTTP (HSTS, nosniff, frameguard…) et suppression de X-Powered-By.
+  // API JSON sans HTML : la CSP par défaut de helmet n'a pas d'intérêt ici et est désactivée.
+  app.use(helmet({ contentSecurityPolicy: false }));
+  app.getHttpAdapter().getInstance().disable('x-powered-by');
 
   // Serveur du contrat : http://localhost:8080/api
   app.setGlobalPrefix('api');

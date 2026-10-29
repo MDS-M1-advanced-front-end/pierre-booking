@@ -16,6 +16,14 @@ import {
 } from '../ports/token.port.js';
 
 /**
+ * Hash factice, au bon format, vérifié quand l'e-mail est inconnu : le mot de passe est toujours
+ * haché, connu ou non, pour que la réponse prenne le même temps (pas d'énumération des comptes
+ * par le temps de réponse). La vérification échoue toujours.
+ */
+const DUMMY_PASSWORD_HASH =
+  'b93a2d39a3b4070766071bd75792e6be:9ab3416d3d4fe3deed84b75611b29d2d4161aa32be9a41c127ed1f9a330a2f46e3372071b18f0b6a092f4fb0b205f838d3a43f5a3bc0234c3fc56cc6afa6b7f9';
+
+/**
  * Connecte un utilisateur (POST /auth/login).
  */
 @Injectable()
@@ -41,12 +49,13 @@ export class LoginUserUseCase {
     const user = await this.userRepository.findByEmail(
       User.normalizeEmail(email),
     );
+    // Toujours hacher, même sans compte : la réponse prend le même temps dans les deux cas.
+    const passwordOk = await this.passwordHasher.verify(
+      password,
+      user?.passwordHash ?? DUMMY_PASSWORD_HASH,
+    );
     // Même erreur si l'e-mail est inconnu ou le mot de passe faux
-    if (
-      !user ||
-      !user.id ||
-      !(await this.passwordHasher.verify(password, user.passwordHash))
-    ) {
+    if (!user || !user.id || !passwordOk) {
       throw new InvalidCredentialsException();
     }
     return {

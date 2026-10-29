@@ -5,6 +5,7 @@ import {
   type UserRepositoryInterface,
 } from '../../domain/repositories/user.repository.interface.js';
 import { TOKEN_SERVICE, type TokenPort } from '../ports/token.port.js';
+import { isRevoked } from '../token-revocation.js';
 
 /**
  * Identifie l'utilisateur d'un jeton d'accès, pour le guard global.
@@ -24,7 +25,12 @@ export class AuthenticateUseCase {
    * @returns L'utilisateur, ou `null` si le jeton est invalide ou si le compte n'existe plus.
    */
   async execute(token: string): Promise<User | null> {
-    const userId = await this.tokens.verify(token);
-    return userId ? this.userRepository.findById(userId) : null;
+    const payload = await this.tokens.verify(token);
+    if (!payload) return null;
+    const user = await this.userRepository.findById(payload.userId);
+    if (!user) return null;
+    // Jeton émis avant le dernier changement de mot de passe : révoqué
+    if (isRevoked(payload.issuedAt, user.passwordChangedAt)) return null;
+    return user;
   }
 }

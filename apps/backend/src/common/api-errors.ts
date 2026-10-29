@@ -98,7 +98,12 @@ export class ApiExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const response = host.switchToHttp().getResponse<Response>();
     if (!(exception instanceof HttpException)) {
-      this.logger.error(exception);
+      // Message et pile seulement : l'objet complet d'une QueryFailedError contient la requête
+      // et ses paramètres (e-mails, etc.). On ne veut pas écrire ces données dans les journaux.
+      const message =
+        exception instanceof Error ? exception.message : String(exception);
+      const stack = exception instanceof Error ? exception.stack : undefined;
+      this.logger.error(message, stack);
       response
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .json(DEFAULTS[HttpStatus.INTERNAL_SERVER_ERROR]);

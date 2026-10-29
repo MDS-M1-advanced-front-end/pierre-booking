@@ -45,6 +45,8 @@ export class ChangePasswordUseCase {
       throw new WrongCurrentPasswordException();
     }
     user.passwordHash = await this.passwordHasher.hash(newPassword);
+    // Révoque les jetons (accès et rafraîchissement) émis avant ce changement
+    user.markPasswordChanged();
     await this.userRepository.save(user);
   }
 }

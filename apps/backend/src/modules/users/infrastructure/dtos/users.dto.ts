@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  MaxLength,
   ValidateNested,
 } from 'class-validator';
 import { UserRole } from '../../domain/entities/user.entity.js';
@@ -51,15 +52,18 @@ export class UserDTO {
 export class UpdateUserDTO {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   @IsOptionalNotNull()
   firstName?: string;
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   @IsOptionalNotNull()
   lastName?: string;
 
   @IsEmail()
+  @MaxLength(255)
   @IsOptionalNotNull()
   email?: string;
 

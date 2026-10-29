@@ -10,6 +10,7 @@ import {
   type IssuedToken,
   type TokenPort,
 } from '../ports/token.port.js';
+import { isRevoked } from '../token-revocation.js';
 
 /**
  * Renouvelle les jetons à partir d'un jeton de rafraîchissement (POST /auth/refresh).
@@ -33,9 +34,15 @@ export class RefreshTokenUseCase {
   async execute(
     refreshToken: string,
   ): Promise<{ short: IssuedToken; long: IssuedToken } & { user: User }> {
-    const userId = await this.tokens.verifyRefresh(refreshToken);
-    const user = userId ? await this.userRepository.findById(userId) : null;
+    const payload = await this.tokens.verifyRefresh(refreshToken);
+    const user = payload
+      ? await this.userRepository.findById(payload.userId)
+      : null;
     if (!user || !user.id) throw new InvalidRefreshTokenException();
+    // Jeton de rafraîchissement émis avant le dernier changement de mot de passe : révoqué
+    if (payload && isRevoked(payload.issuedAt, user.passwordChangedAt)) {
+      throw new InvalidRefreshTokenException();
+    }
     return {
       short: await this.tokens.issue(user.id),
       long: await this.tokens.issueRefresh(user.id),

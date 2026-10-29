@@ -5,6 +5,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  MaxLength,
   MinLength,
   ValidateNested,
 } from 'class-validator';
@@ -17,18 +18,22 @@ import { UserDTO } from './users.dto.js';
 export class RegisterDTO {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   firstName: string;
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   lastName: string;
 
   @IsEmail()
   @IsNotEmpty()
+  @MaxLength(255)
   email: string;
 
   @IsString()
   @MinLength(8)
+  @MaxLength(128)
   password: string;
 }
 
@@ -81,15 +86,18 @@ export class AuthResponseDTO {
 export class UpdateProfileDTO {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   @IsOptionalNotNull()
   firstName?: string;
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   @IsOptionalNotNull()
   lastName?: string;
 
   @IsEmail()
+  @MaxLength(255)
   @IsOptionalNotNull()
   email?: string;
 }
@@ -104,5 +112,6 @@ export class ChangePasswordDTO {
 
   @IsString()
   @MinLength(8)
+  @MaxLength(128)
   newPassword: string;
 }

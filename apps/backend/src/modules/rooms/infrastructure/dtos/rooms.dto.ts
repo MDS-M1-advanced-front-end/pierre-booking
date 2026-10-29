@@ -1,5 +1,6 @@
 import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   IsArray,
   IsBoolean,
   IsEnum,
@@ -79,9 +80,11 @@ export class RoomDTO {
 export class CreateRoomDTO {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   name: string;
 
   @IsString()
+  @MaxLength(2000)
   @IsOptional()
   description?: string;
 
@@ -91,10 +94,13 @@ export class CreateRoomDTO {
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(255)
   location: string;
 
   @IsArray()
+  @ArrayMaxSize(50)
   @IsString({ each: true })
+  @MaxLength(100, { each: true })
   @IsOptionalNotNull()
   equipment?: string[];
 
@@ -104,6 +110,7 @@ export class CreateRoomDTO {
 
   // URL sans domaine de premier niveau acceptée (localhost), comme format: uri
   @IsUrl({ require_tld: false })
+  @MaxLength(2048)
   @IsOptional()
   imageUrl?: string;
 }
@@ -115,10 +122,12 @@ export class CreateRoomDTO {
 export class UpdateRoomDTO {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   @IsOptionalNotNull()
   name?: string;
 
   @IsString()
+  @MaxLength(2000)
   @IsOptional()
   description?: string | null;
 
@@ -129,11 +138,14 @@ export class UpdateRoomDTO {
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(255)
   @IsOptionalNotNull()
   location?: string;
 
   @IsArray()
+  @ArrayMaxSize(50)
   @IsString({ each: true })
+  @MaxLength(100, { each: true })
   @IsOptionalNotNull()
   equipment?: string[];
 
@@ -144,6 +156,7 @@ export class UpdateRoomDTO {
 
   // URL sans domaine de premier niveau acceptée (localhost), comme format: uri
   @IsUrl({ require_tld: false })
+  @MaxLength(2048)
   @IsOptional()
   imageUrl?: string | null;
 

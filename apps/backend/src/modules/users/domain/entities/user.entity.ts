@@ -19,6 +19,7 @@ export interface UserProps {
   passwordHash: string;
   role: UserRole;
   createdAt?: Date;
+  passwordChangedAt?: Date;
 }
 
 /**
@@ -40,6 +41,8 @@ export class User {
   passwordHash: string;
   role: UserRole;
   readonly createdAt?: Date;
+  /** Instant du dernier changement de mot de passe : les jetons émis avant sont révoqués. */
+  passwordChangedAt?: Date;
 
   /**
    * @param props - Données de l'utilisateur ; l'e-mail est normalisé.
@@ -52,6 +55,7 @@ export class User {
     this.passwordHash = props.passwordHash;
     this.role = props.role;
     this.createdAt = props.createdAt;
+    this.passwordChangedAt = props.passwordChangedAt;
   }
 
   /**
@@ -89,5 +93,12 @@ export class User {
    */
   changeRole(role: UserRole): void {
     this.role = role;
+  }
+
+  /**
+   * Marque un changement de mot de passe : les jetons émis avant cet instant deviennent invalides.
+   */
+  markPasswordChanged(): void {
+    this.passwordChangedAt = new Date();
   }
 }

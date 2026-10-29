@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import type { PasswordHasherPort } from '../../application/ports/password-hasher.port.js';
+import { resolveSecret } from '../../../../common/secrets.js';
 
 /**
  * Poivre des mots de passe, lu dans PEPPER_SECRET : secret commun à tous les comptes,
@@ -11,11 +12,11 @@ import type { PasswordHasherPort } from '../../application/ports/password-hasher
  * vérification (pas au démarrage).
  */
 export function pepperSecret(): string {
-  if (process.env.PEPPER_SECRET) return process.env.PEPPER_SECRET;
-  if (process.env.NODE_ENV !== 'development') {
-    throw new Error('PEPPER_SECRET est obligatoire hors développement');
-  }
-  return 'dev-secret';
+  return resolveSecret(
+    'PEPPER_SECRET',
+    process.env.PEPPER_SECRET,
+    'dev-secret',
+  );
 }
 
 const scryptAsync = promisify(scrypt) as (
@@ -61,7 +62,8 @@ export class ScryptPasswordHasher implements PasswordHasherPort {
   async verify(password: string, stored: string): Promise<boolean> {
     const [salt, hash] = stored.split(':');
     const pepper = pepperSecret();
-    if (!salt || !hash) return false;
+    // Hash stocké mal formé : longueur hexadécimale inattendue → échec, sans RangeError (500)
+    if (!salt || !hash || hash.length !== KEY_LENGTH * 2) return false;
     const saltedCandidate = await scryptAsync(password, salt, KEY_LENGTH);
     const PepperedAndSaltedCandidate = await scryptAsync(
       `${salt}:${saltedCandidate.toString('hex')}`,

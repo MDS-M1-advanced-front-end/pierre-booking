@@ -9,6 +9,7 @@ import {
   IsString,
   IsUUID,
   Matches,
+  MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -91,6 +92,7 @@ export class CreateReservationDTO {
   numberOfParticipants?: number;
 
   @IsString()
+  @MaxLength(1000)
   @IsOptional()
   comment?: string;
 }
@@ -111,6 +113,7 @@ export class UpdateReservationDTO {
   numberOfParticipants?: number;
 
   @IsString()
+  @MaxLength(1000)
   @IsOptional()
   comment?: string;
 }
@@ -118,6 +121,7 @@ export class UpdateReservationDTO {
 /** POST /reservations/{reservationId}/reject : corps facultatif. */
 export class RejectReservationDTO {
   @IsString()
+  @MaxLength(1000)
   @IsOptional()
   reason?: string;
 }

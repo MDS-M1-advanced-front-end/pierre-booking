@@ -3,6 +3,7 @@ import { QueryFailedError } from 'typeorm';
 // Codes d'erreur PostgreSQL
 const UNIQUE_VIOLATION = '23505';
 const FOREIGN_KEY_VIOLATION = '23503';
+const EXCLUSION_VIOLATION = '23P01';
 
 /**
  * L'erreur vient-elle de PostgreSQL avec ce code ?
@@ -30,3 +31,11 @@ export const isUniqueViolation = (error: unknown) =>
  */
 export const isForeignKeyViolation = (error: unknown) =>
   hasCode(error, FOREIGN_KEY_VIOLATION);
+
+/**
+ * Violation d'une contrainte d'exclusion (ex. deux réservations actives qui se chevauchent sur
+ * la même salle).
+ * @param error - Erreur attrapée autour d'une écriture.
+ */
+export const isExclusionViolation = (error: unknown) =>
+  hasCode(error, EXCLUSION_VIOLATION);
