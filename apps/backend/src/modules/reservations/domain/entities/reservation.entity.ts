@@ -1,6 +1,7 @@
 import { addDays, toParis } from '../../../../common/paris-time.js';
 import {
   InvalidReservationException,
+  InvalidStateTransitionException,
   ReservationConflictException,
 } from '../exceptions/reservation-domain.exception.js';
 
@@ -21,6 +22,33 @@ export const ACTIVE_RESERVATION_STATUSES = [
   ReservationStatus.PENDING,
   ReservationStatus.CONFIRMED,
 ];
+
+/**
+ * Machine à états : pour chaque statut, les statuts d'arrivée autorisés.
+ * PENDING → PENDING correspond au déplacement d'une demande encore en attente ;
+ * CONFIRMED → PENDING, au déplacement d'une réservation confirmée, à revalider.
+ * REJECTED, CANCELLED et COMPLETED sont terminaux.
+ */
+const ALLOWED_RESERVATION_TRANSITIONS: Record<
+  ReservationStatus,
+  ReservationStatus[]
+> = {
+  [ReservationStatus.PENDING]: [
+    ReservationStatus.PENDING,
+    ReservationStatus.CONFIRMED,
+    ReservationStatus.REJECTED,
+    ReservationStatus.CANCELLED,
+    ReservationStatus.REJECTED,
+  ],
+  [ReservationStatus.CONFIRMED]: [
+    ReservationStatus.PENDING,
+    ReservationStatus.CANCELLED,
+    ReservationStatus.COMPLETED,
+  ],
+  [ReservationStatus.CANCELLED]: [],
+  [ReservationStatus.REJECTED]: [],
+  [ReservationStatus.COMPLETED]: [],
+};
 
 /**
  * Qui agit : le domaine ne connaît pas l'authentification, seulement ce qui compte pour les droits.
@@ -60,7 +88,7 @@ export class Reservation {
   readonly userId: string;
   startAt: Date;
   endAt: Date;
-  status: ReservationStatus;
+  private _status: ReservationStatus;
   numberOfParticipants: number | null;
   comment: string | null;
   totalAmount: number;
@@ -77,7 +105,7 @@ export class Reservation {
     this.userId = props.userId;
     this.startAt = props.startAt;
     this.endAt = props.endAt;
-    this.status = props.status;
+    this._status = props.status;
     this.numberOfParticipants = props.numberOfParticipants;
     this.comment = props.comment;
     this.totalAmount = props.totalAmount;
@@ -144,6 +172,11 @@ export class Reservation {
     return Math.round(hours * pricePerHour * 100) / 100;
   }
 
+  /** Statut courant, en lecture seule : il ne change que par les transitions (`confirm`, `reject`…). */
+  get status(): ReservationStatus {
+    return this._status;
+  }
+
   /** Vrai si la réservation occupe son créneau (PENDING ou CONFIRMED). */
   get isActive(): boolean {
     return ACTIVE_RESERVATION_STATUSES.includes(this.status);
@@ -167,6 +200,46 @@ export class Reservation {
   }
 
   /**
+   * Passe au statut demandé si la table des transitions l'autorise.
+   * @param newStatus - Statut d'arrivée.
+   * @throws {InvalidStateTransitionException} Transition non autorisée depuis le statut courant.
+   */
+  private transitionTo(newStatus: ReservationStatus): void {
+    if (!ALLOWED_RESERVATION_TRANSITIONS[this.status].includes(newStatus)) {
+      throw new InvalidStateTransitionException(this.status, newStatus);
+    }
+
+    this._status = newStatus;
+  }
+
+  /**
+   * Confirme la réservation (gestionnaire de la salle ou administrateur) : PENDING → CONFIRMED.
+   * @throws {InvalidStateTransitionException} Statut de départ autre que PENDING.
+   */
+  confirm(): void {
+    this.transitionTo(ReservationStatus.CONFIRMED);
+  }
+
+  /**
+   * Refuse la réservation (gestionnaire de la salle ou administrateur) : PENDING → REJECTED.
+   * @param reason - Motif du refus, conservé s'il est donné.
+   * @throws {InvalidStateTransitionException} Statut de départ autre que PENDING.
+   */
+  reject(reason?: string): void {
+    this.transitionTo(ReservationStatus.REJECTED);
+    if (reason) this.rejectionReason = reason;
+  }
+
+  /**
+   * Annulation logique : la réservation reste consultable.
+   * PENDING ou CONFIRMED → CANCELLED.
+   * @throws {InvalidStateTransitionException} Statut de départ REJECTED, CANCELLED ou COMPLETED.
+   */
+  cancel(): void {
+    this.transitionTo(ReservationStatus.CANCELLED);
+  }
+
+  /**
    * Exige une réservation PENDING ou CONFIRMED avant une modification ou une annulation.
    * @param action - Participe passé de l'action, pour le message d'erreur (« modifiée »…).
    * @throws {ReservationConflictException} Réservation REJECTED, CANCELLED ou COMPLETED.
@@ -180,56 +253,18 @@ export class Reservation {
   }
 
   /**
-   * Déplace la réservation sur un nouveau créneau : statut d'arrivée PENDING, quel que soit le
-   * statut de départ. Un nouveau créneau doit être revalidé par le gestionnaire.
-   * La méthode ne contrôle pas le statut de départ : l'appelant exige d'abord `assertActive`
-   * (PENDING ou CONFIRMED), ainsi que la validité et la disponibilité du créneau.
+   * Déplace la réservation sur un nouveau créneau : PENDING ou CONFIRMED → PENDING.
+   * Un nouveau créneau doit être revalidé par le gestionnaire.
+   * L'appelant vérifie la validité et la disponibilité du créneau.
    * @param startAt - Nouveau début.
    * @param endAt - Nouvelle fin.
    * @param totalAmount - Montant recalculé pour le nouveau créneau.
+   * @throws {InvalidStateTransitionException} Statut de départ REJECTED, CANCELLED ou COMPLETED.
    */
   reschedule(startAt: Date, endAt: Date, totalAmount: number): void {
+    this.transitionTo(ReservationStatus.PENDING);
     this.startAt = startAt;
     this.endAt = endAt;
     this.totalAmount = totalAmount;
-    this.status = ReservationStatus.PENDING;
-  }
-
-  /**
-   * Confirme la réservation (gestionnaire de la salle ou administrateur) : PENDING → CONFIRMED.
-   * @throws {ReservationConflictException} Statut de départ autre que PENDING.
-   */
-  confirm(): void {
-    this.assertPending();
-    this.status = ReservationStatus.CONFIRMED;
-  }
-
-  /**
-   * Refuse la réservation (gestionnaire de la salle ou administrateur) : PENDING → REJECTED.
-   * @param reason - Motif du refus, conservé s'il est donné.
-   * @throws {ReservationConflictException} Statut de départ autre que PENDING.
-   */
-  reject(reason?: string): void {
-    this.assertPending();
-    this.status = ReservationStatus.REJECTED;
-    if (reason !== undefined) this.rejectionReason = reason;
-  }
-
-  /**
-   * Annulation logique : la réservation reste consultable.
-   * PENDING ou CONFIRMED → CANCELLED.
-   * @throws {ReservationConflictException} Statut de départ REJECTED, CANCELLED ou COMPLETED.
-   */
-  cancel(): void {
-    this.assertActive('annulée');
-    this.status = ReservationStatus.CANCELLED;
-  }
-
-  private assertPending(): void {
-    if (this.status !== ReservationStatus.PENDING) {
-      throw new ReservationConflictException(
-        `Réservation au statut ${this.status} : seule une réservation PENDING peut être traitée`,
-      );
-    }
   }
 }

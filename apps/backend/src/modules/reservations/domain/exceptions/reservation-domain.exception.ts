@@ -1,3 +1,5 @@
+import type { ReservationStatus } from '../entities/reservation.entity.js';
+
 /**
  * Erreur du domaine des réservations. Traduite en réponse HTTP par `ReservationExceptionFilter`,
  * selon la sous-classe.
@@ -31,3 +33,15 @@ export class InvalidReservationException extends ReservationDomainException {}
 
 /** Conflit avec l'état actuel : statut, créneau pris, salle inactive, paiement existant (409). */
 export class ReservationConflictException extends ReservationDomainException {}
+
+/** Changement de statut non prévu par la machine à états de `Reservation` (409). */
+export class InvalidStateTransitionException extends ReservationConflictException {
+  /**
+   * @param from - Statut courant.
+   * @param to - Statut demandé.
+   */
+  constructor(from: ReservationStatus, to: ReservationStatus) {
+    super(`Transition d'état impossible : de ${from} à ${to}`);
+    this.name = 'InvalidStateTransitionException';
+  }
+}
