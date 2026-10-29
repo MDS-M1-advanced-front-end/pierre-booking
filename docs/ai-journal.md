@@ -26,6 +26,34 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-10-29 — API GraphQL d'administration pour les tableaux de bord (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : ajouter une API GraphQL réservée aux administrateurs, à côté du REST, pour des tableaux de bord plus précis, avec le contrat dans le core.
+- **Demande** : « est-ce que t'as moyen de mettre en place du graphql uniquement pour les interfaces admin ? ça ne remplace pas le rest actuel, c'est juste pour des dashboards plus précis. il faudra donc l'intégrer dans le core ». L'IA a d'abord vérifié la compatibilité (`@nestjs/graphql` 14 et `@nestjs/apollo` 14 avec NestJS 12), relevé que le guard d'auth, le throttler et le filtre global utilisent `switchToHttp()` et ne marchent pas tels quels en GraphQL, puis posé trois questions. Mes choix : schéma d'abord dans le core (comme `openapi.yml`), core + back sans page front, report sur le dépôt `core` en plus de `packages/core`.
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (commits et push à ma demande « ok tu peux commit et push » : `dcc6837` pour le core, avec un lockfile intermédiaire régénéré sans les dépendances du back pour que ce commit s'installe seul, `36977b3` pour le back, puis ce journal ; `CORE_VERSION` pointe sur `c9f9948`, dont le contenu est identique à `packages/core`) :
+  - **core** : `admin.graphql`, le contrat. Une seule requête `dashboard(period)`, dont chaque champ est calculé seulement s'il est demandé : `statistics` (identique à `GET /admin/statistics`), `byStatus`, `timeline(granularity)` (jour, semaine, mois), `rooms(sort, direction, limit)`, `topClients(limit)`. Lecture seule. Types générés par graphql-codegen (`pnpm generate:graphql`) en unions de chaînes, donc aucun code à l'exécution. Client `graphqlRequest` qui renvoie un `Result` comme le client REST, avec le même jeton et les mêmes codes d'erreur ; une réponse partielle est traitée comme une erreur. Requête prête à l'emploi `getAdminDashboard`. Export séparé `@room-booking/core/graphql`, parce que `Statistics` et `ReservationStatus` existent aussi côté REST. Cinq tests Vitest sur le client et une section dans le README ;
+  - **back** : `GraphQLModule` (Apollo, schema-first) sur `POST /api/graphql`. Le schéma est lu depuis le core à travers un lien symbolique `src/graphql/admin.graphql`, copié dans `dist` comme asset. Clean architecture respectée : port `DashboardPort` et `GetDashboardUseCase` dans `application`, requêtes SQL d'agrégat dans `TypeormDashboardQuery`, resolver et DTO d'arguments dans `infrastructure`. Les types de retour du resolver et les DTO viennent du core, donc un écart avec le contrat est une erreur de compilation. Période partagée avec le REST (`application/period.ts`) et scalaire `Date` qui refuse `2027-02-30`. `AuthGuard`, `@CurrentUser` et le throttler lisent la requête en GraphQL (`common/request-context.ts`, `AppThrottlerGuard`). Le filtre global renvoie en GraphQL le même corps d'erreur qu'en REST dans `extensions`, avec `status`. Introspection et GraphiQL coupés en production, jamais de pile d'appels dans les réponses. Script d'installation de `@apollo/protobufjs` refusé dans `pnpm-workspace.yaml` ;
+  - **dépôt `core`** (branche `👨🏻‍🏫pierre`, poussée avec aussi mes deux commits locaux déjà en attente, `cce534c` et `c5751df`) : trois commits. `07a533d` (`PATCH /auth/me`) et `ec9d786` (`imageUrl`/`description` nullables) étaient dans `packages/core` mais n'avaient jamais été reportés : ils auraient été écrasés au prochain `core:sync`. Puis `c9f9948` pour GraphQL.
+- **Erreurs de l'IA relevées** :
+  - les plugins `typescript` et `typescript-operations` de graphql-codegen v6 déclaraient chacun les enums dans le même fichier : génération en double, corrigée en deux fichiers ;
+  - le filtre global ne s'appliquait pas aux `@ResolveField`. Une erreur de validation y sortait en `INTERNAL_SERVER_ERROR` sans code ni détail, et une erreur SQL aurait renvoyé son message brut au client. Repéré au test `topClients(limit: 100)`, corrigé par `fieldResolverEnhancers: ['filters']` ;
+  - premier report sur le dépôt `core` : le patch de `89903d6` ne s'appliquait pas, et celui de `dc33bc2` s'est appliqué **au mauvais endroit**. `git apply` a décalé le hunk `description: nullable` sur `RoomCreateRequest` au lieu de `RoomUpdateRequest`. Repéré en comparant les fichiers avec `packages/core`, puis corrigé par `--amend` du commit local ;
+  - un `pkill -f "node dist/main.js"` a tué le shell lui-même, car sa propre ligne de commande contenait le motif ;
+  - le mot de passe du seed ne fonctionnait pas pour `admin1@salles.example`. Plutôt que d'insister (limite de 5 connexions par minute), l'IA a créé deux comptes jetables (l'un passé administrateur en SQL), puis les a supprimés ;
+  - l'alias SQL `user` (mot réservé de PostgreSQL) et l'alias `date` ont été renommés avant le premier lancement.
+- **Vérification** : `pnpm check` du core (5 tests), `pnpm typecheck`, `pnpm lint` et `pnpm test` à la racine (309 tests) passent. `prettier --check` échoue sur `docs/ai-journal.md` seulement, mais il échouait déjà avant ce travail. `nest build` : 0 erreur, schéma présent dans `dist/graphql`. Back lancé sur le port 8099 contre la base de dev :
+  - tableau de bord complet en admin, avec `statistics` identique à `GET /admin/statistics` ;
+  - semaines qui commencent le lundi, salles sans réservation présentes en tri `ASC` ;
+  - client → `FORBIDDEN` 403, sans jeton → `UNAUTHORIZED` 401 ;
+  - `limit: 100` et `limit: 0` → `VALIDATION_ERROR` avec détail, date `2027-02-30` → 400, champ inconnu → 400 ;
+  - requête `text/plain` bloquée par la protection CSRF d'Apollo, 429 `TOO_MANY_REQUESTS` après 100 requêtes ;
+  - `getAdminDashboard` du core appelé contre le vrai serveur.
+
+  Image Docker construite et lancée en production : schéma présent, introspection refusée, GraphiQL désactivé (400), auth active. Non testé : `pnpm dev` (watch des assets via le lien symbolique) et le lien symbolique sous Windows.
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-10-29 — Audit de sécurité statique du backend (séance 4)
 
 - **Outil** : Claude Code (Opus 4.8, puis Fable 5.1 pour la seconde passe) dans le terminal.
