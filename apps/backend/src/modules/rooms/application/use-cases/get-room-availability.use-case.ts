@@ -1,12 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { normalizeTime } from '../../../../common/paris-time.js';
-import type { AvailabilitySlot } from '../../domain/entities/availability.entity.js';
-import { RoomNotFoundException } from '../../domain/exceptions/room-domain.exception.js';
+import { normalizeTime } from '../../../../common/paris-time';
+import type { AvailabilitySlot } from '../../domain/entities/availability.entity';
+import { RoomNotFoundException } from '../../domain/exceptions/room-domain.exception';
 import {
   ROOM_REPOSITORY,
   type RoomRepositoryInterface,
-} from '../../domain/repositories/room.repository.interface.js';
-import { RoomAvailabilityService } from '../services/room-availability.service.js';
+} from '../../domain/repositories/room.repository.interface';
+import { RoomAvailabilityService } from '../services/room-availability.service';
 
 /** GET /rooms/{roomId}/availability : créneaux d'une salle pour une journée. */
 @Injectable()

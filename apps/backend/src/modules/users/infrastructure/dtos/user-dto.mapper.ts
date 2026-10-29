@@ -1,5 +1,5 @@
-import type { User } from '../../domain/entities/user.entity.js';
-import type { UserDTO } from './users.dto.js';
+import type { User } from '../../domain/entities/user.entity';
+import type { UserDTO } from './users.dto';
 
 /**
  * Convertit un utilisateur du domaine en réponse de l'API. Ne jamais renvoyer passwordHash.

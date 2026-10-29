@@ -1,17 +1,17 @@
 import { Controller, Get, Query, UseFilters } from '@nestjs/common';
-import { toSkipTake } from '../../../../common/pagination.dto.js';
-import { UserRole } from '../../../users/domain/entities/user.entity.js';
-import { Roles } from '../../../users/infrastructure/auth/auth.decorators.js';
-import { GetStatisticsUseCase } from '../../application/use-cases/get-statistics.use-case.js';
-import { ListAllReservationsUseCase } from '../../application/use-cases/list-all-reservations.use-case.js';
+import { toSkipTake } from '../../../../common/pagination.dto';
+import { UserRole } from '../../../users/domain/entities/user.entity';
+import { Roles } from '../../../users/infrastructure/auth/auth.decorators';
+import { GetStatisticsUseCase } from '../../application/use-cases/get-statistics.use-case';
+import { ListAllReservationsUseCase } from '../../application/use-cases/list-all-reservations.use-case';
 import {
   AdminReservationsQueryDTO,
   StatisticsDTO,
   StatisticsQueryDTO,
-} from '../dtos/admin.dto.js';
-import { toReservationDTO } from '../dtos/reservation-dto.mapper.js';
-import { PaginatedReservationsDTO } from '../dtos/reservations.dto.js';
-import { ReservationExceptionFilter } from '../filters/reservation-exception.filter.js';
+} from '../dtos/admin.dto';
+import { toReservationDTO } from '../dtos/reservation-dto.mapper';
+import { PaginatedReservationsDTO } from '../dtos/reservations.dto';
+import { ReservationExceptionFilter } from '../filters/reservation-exception.filter';
 
 /** Routes `/admin`, réservées aux administrateurs. */
 @Controller('admin')

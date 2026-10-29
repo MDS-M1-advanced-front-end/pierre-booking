@@ -1,4 +1,4 @@
-import { InvalidRoomException } from '../exceptions/room-domain.exception.js';
+import { InvalidRoomException } from '../exceptions/room-domain.exception';
 
 /**
  * Créneau d'une salle pour une date. Heures de Paris, au format HH:mm:ss (cf. docs/cadrage.md) :

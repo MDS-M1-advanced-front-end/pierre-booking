@@ -6,9 +6,9 @@ import {
   IsUUID,
   Matches,
 } from 'class-validator';
-import { DATE_REGEX } from '../../../../common/formats.js';
-import { PaginationQueryDTO } from '../../../../common/pagination.dto.js';
-import { ReservationStatus } from '../../domain/entities/reservation.entity.js';
+import { DATE_REGEX } from '../../../../common/formats';
+import { PaginationQueryDTO } from '../../../../common/pagination.dto';
+import { ReservationStatus } from '../../domain/entities/reservation.entity';
 
 /** GET /admin/reservations : filtres et pagination (réponse : PaginatedReservationsDTO). */
 export class AdminReservationsQueryDTO extends PaginationQueryDTO {

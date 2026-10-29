@@ -1,7 +1,7 @@
 import type {
   PaymentMethod,
   PaymentStatus,
-} from '../../domain/entities/payment.entity.js';
+} from '../../domain/entities/payment.entity';
 
 /** Prestataire de paiement externe (simulé par `MockPaymentGateway`). */
 export interface PaymentGatewayPort {

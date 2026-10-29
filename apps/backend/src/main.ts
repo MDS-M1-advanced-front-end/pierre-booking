@@ -1,12 +1,9 @@
-import './env.js';
+import './env';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
-import { AppModule } from './app.module.js';
-import {
-  ApiExceptionFilter,
-  validationException,
-} from './common/api-errors.js';
+import { AppModule } from './app.module';
+import { ApiExceptionFilter, validationException } from './common/api-errors';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

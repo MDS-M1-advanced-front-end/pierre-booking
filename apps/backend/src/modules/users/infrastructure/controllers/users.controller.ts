@@ -11,21 +11,21 @@ import {
   Query,
   UseFilters,
 } from '@nestjs/common';
-import { toSkipTake } from '../../../../common/pagination.dto.js';
-import { DeleteUserUseCase } from '../../application/use-cases/delete-user.use-case.js';
-import { GetUserUseCase } from '../../application/use-cases/get-user.use-case.js';
-import { ListUsersUseCase } from '../../application/use-cases/list-users.use-case.js';
-import { UpdateUserUseCase } from '../../application/use-cases/update-user.use-case.js';
-import { UserRole } from '../../domain/entities/user.entity.js';
-import { Roles } from '../auth/auth.decorators.js';
-import { toUserDTO } from '../dtos/user-dto.mapper.js';
+import { toSkipTake } from '../../../../common/pagination.dto';
+import { DeleteUserUseCase } from '../../application/use-cases/delete-user.use-case';
+import { GetUserUseCase } from '../../application/use-cases/get-user.use-case';
+import { ListUsersUseCase } from '../../application/use-cases/list-users.use-case';
+import { UpdateUserUseCase } from '../../application/use-cases/update-user.use-case';
+import { UserRole } from '../../domain/entities/user.entity';
+import { Roles } from '../auth/auth.decorators';
+import { toUserDTO } from '../dtos/user-dto.mapper';
 import {
   PaginatedUsersDTO,
   UpdateUserDTO,
   UserDTO,
   UsersQueryDTO,
-} from '../dtos/users.dto.js';
-import { UserExceptionFilter } from '../filters/user-exception.filter.js';
+} from '../dtos/users.dto';
+import { UserExceptionFilter } from '../filters/user-exception.filter';
 
 /**
  * Routes /users : gestion des comptes, réservée aux administrateurs.

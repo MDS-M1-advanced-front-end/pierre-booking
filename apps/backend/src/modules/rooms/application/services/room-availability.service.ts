@@ -1,15 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { addDays, fromParis, toParis } from '../../../../common/paris-time.js';
-import { AvailabilitySlot } from '../../domain/entities/availability.entity.js';
+import { addDays, fromParis, toParis } from '../../../../common/paris-time';
+import { AvailabilitySlot } from '../../domain/entities/availability.entity';
 import {
   AVAILABILITY_REPOSITORY,
   type AvailabilityRepositoryInterface,
-} from '../../domain/repositories/availability.repository.interface.js';
+} from '../../domain/repositories/availability.repository.interface';
 import {
   ROOM_OCCUPANCY,
   type Occupancy,
   type RoomOccupancyPort,
-} from '../ports/room-occupancy.port.js';
+} from '../ports/room-occupancy.port';
 
 /**
  * Croise les créneaux ouverts et l'occupation par les réservations (heure de Paris ↔ UTC).

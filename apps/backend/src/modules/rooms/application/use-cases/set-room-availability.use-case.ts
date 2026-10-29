@@ -1,19 +1,19 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { normalizeTime } from '../../../../common/paris-time.js';
-import { AvailabilitySlot } from '../../domain/entities/availability.entity.js';
-import type { RoomActor } from '../../domain/entities/room.entity.js';
+import { normalizeTime } from '../../../../common/paris-time';
+import { AvailabilitySlot } from '../../domain/entities/availability.entity';
+import type { RoomActor } from '../../domain/entities/room.entity';
 import {
   RoomAccessDeniedException,
   RoomNotFoundException,
-} from '../../domain/exceptions/room-domain.exception.js';
+} from '../../domain/exceptions/room-domain.exception';
 import {
   AVAILABILITY_REPOSITORY,
   type AvailabilityRepositoryInterface,
-} from '../../domain/repositories/availability.repository.interface.js';
+} from '../../domain/repositories/availability.repository.interface';
 import {
   ROOM_REPOSITORY,
   type RoomRepositoryInterface,
-} from '../../domain/repositories/room.repository.interface.js';
+} from '../../domain/repositories/room.repository.interface';
 
 /** PUT /rooms/{roomId}/availability : définit les créneaux d'une salle pour une journée. */
 @Injectable()

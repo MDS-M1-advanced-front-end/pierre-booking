@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
-import type { PasswordHasherPort } from '../../application/ports/password-hasher.port.js';
-import { resolveSecret } from '../../../../common/secrets.js';
+import type { PasswordHasherPort } from '../../application/ports/password-hasher.port';
+import { resolveSecret } from '../../../../common/secrets';
 
 /**
  * Poivre des mots de passe, lu dans PEPPER_SECRET : secret commun à tous les comptes,

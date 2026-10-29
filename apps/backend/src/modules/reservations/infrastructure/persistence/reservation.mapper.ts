@@ -1,5 +1,5 @@
-import { Reservation } from '../../domain/entities/reservation.entity.js';
-import { TypeOrmReservationEntity } from './typeorm-reservation.entity.js';
+import { Reservation } from '../../domain/entities/reservation.entity';
+import { TypeOrmReservationEntity } from './typeorm-reservation.entity';
 
 /** Conversion entre l'entité TypeORM et l'entité du domaine (réservation). */
 export class ReservationMapper {

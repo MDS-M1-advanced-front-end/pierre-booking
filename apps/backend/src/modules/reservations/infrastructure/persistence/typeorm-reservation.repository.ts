@@ -8,18 +8,18 @@ import {
   Repository,
   type FindOptionsWhere,
 } from 'typeorm';
-import { isExclusionViolation } from '../../../../common/database-errors.js';
+import { isExclusionViolation } from '../../../../common/database-errors';
 import {
   ACTIVE_RESERVATION_STATUSES,
   type Reservation,
-} from '../../domain/entities/reservation.entity.js';
-import { ReservationConflictException } from '../../domain/exceptions/reservation-domain.exception.js';
+} from '../../domain/entities/reservation.entity';
+import { ReservationConflictException } from '../../domain/exceptions/reservation-domain.exception';
 import type {
   ReservationRepositoryInterface,
   ReservationSearchCriteria,
-} from '../../domain/repositories/reservation.repository.interface.js';
-import { ReservationMapper } from './reservation.mapper.js';
-import { TypeOrmReservationEntity } from './typeorm-reservation.entity.js';
+} from '../../domain/repositories/reservation.repository.interface';
+import { ReservationMapper } from './reservation.mapper';
+import { TypeOrmReservationEntity } from './typeorm-reservation.entity';
 
 /** Implémentation TypeORM de `ReservationRepositoryInterface`. */
 @Injectable()

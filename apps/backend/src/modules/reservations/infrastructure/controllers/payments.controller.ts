@@ -10,13 +10,13 @@ import {
 import {
   CurrentUser,
   type AuthUser,
-} from '../../../users/infrastructure/auth/auth.decorators.js';
-import { CreatePaymentUseCase } from '../../application/use-cases/create-payment.use-case.js';
-import { GetPaymentUseCase } from '../../application/use-cases/get-payment.use-case.js';
-import { toPaymentDTO } from '../dtos/reservation-dto.mapper.js';
-import { CreatePaymentDTO, PaymentDTO } from '../dtos/payments.dto.js';
-import { ReservationExceptionFilter } from '../filters/reservation-exception.filter.js';
-import { toActor } from './actor.js';
+} from '../../../users/infrastructure/auth/auth.decorators';
+import { CreatePaymentUseCase } from '../../application/use-cases/create-payment.use-case';
+import { GetPaymentUseCase } from '../../application/use-cases/get-payment.use-case';
+import { toPaymentDTO } from '../dtos/reservation-dto.mapper';
+import { CreatePaymentDTO, PaymentDTO } from '../dtos/payments.dto';
+import { ReservationExceptionFilter } from '../filters/reservation-exception.filter';
+import { toActor } from './actor';
 
 /** Routes `/payments` : paiement d'une réservation (prestataire simulé). */
 @Controller('payments')

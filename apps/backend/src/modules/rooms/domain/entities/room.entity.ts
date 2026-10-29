@@ -1,4 +1,4 @@
-import { InvalidRoomException } from '../exceptions/room-domain.exception.js';
+import { InvalidRoomException } from '../exceptions/room-domain.exception';
 
 /** Statut d'une salle : une salle INACTIVE n'est ni visible des clients ni réservable. */
 export enum RoomStatus {

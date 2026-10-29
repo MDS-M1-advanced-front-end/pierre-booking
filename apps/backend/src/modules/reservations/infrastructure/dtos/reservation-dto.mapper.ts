@@ -1,7 +1,7 @@
-import type { Payment } from '../../domain/entities/payment.entity.js';
-import type { Reservation } from '../../domain/entities/reservation.entity.js';
-import type { PaymentDTO } from './payments.dto.js';
-import type { ReservationDTO } from './reservations.dto.js';
+import type { Payment } from '../../domain/entities/payment.entity';
+import type { Reservation } from '../../domain/entities/reservation.entity';
+import type { PaymentDTO } from './payments.dto';
+import type { ReservationDTO } from './reservations.dto';
 
 /**
  * Réservation du domaine → réponse de l'API (schéma Reservation du contrat : champs vides omis).

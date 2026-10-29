@@ -1,9 +1,9 @@
-import { addDays, toParis } from '../../../../common/paris-time.js';
+import { addDays, toParis } from '../../../../common/paris-time';
 import {
   InvalidReservationException,
   InvalidStateTransitionException,
   ReservationConflictException,
-} from '../exceptions/reservation-domain.exception.js';
+} from '../exceptions/reservation-domain.exception';
 
 /**
  * Cycle de vie : PENDING à la création, puis CONFIRMED ou REJECTED (gestionnaire/admin).

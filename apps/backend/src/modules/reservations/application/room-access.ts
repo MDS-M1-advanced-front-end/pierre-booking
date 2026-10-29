@@ -1,9 +1,6 @@
-import type { ReservationActor } from '../domain/entities/reservation.entity.js';
-import { ReservationNotFoundException } from '../domain/exceptions/reservation-domain.exception.js';
-import type {
-  BookableRoom,
-  RoomBookingPort,
-} from './ports/room-booking.port.js';
+import type { ReservationActor } from '../domain/entities/reservation.entity';
+import { ReservationNotFoundException } from '../domain/exceptions/reservation-domain.exception';
+import type { BookableRoom, RoomBookingPort } from './ports/room-booking.port';
 
 /**
  * Gestionnaire propriétaire de la salle ou administrateur : peut consulter, confirmer ou refuser

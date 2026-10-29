@@ -1,11 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { User } from '../../domain/entities/user.entity.js';
+import type { User } from '../../domain/entities/user.entity';
 import {
   USER_REPOSITORY,
   type UserRepositoryInterface,
-} from '../../domain/repositories/user.repository.interface.js';
-import { TOKEN_SERVICE, type TokenPort } from '../ports/token.port.js';
-import { isRevoked } from '../token-revocation.js';
+} from '../../domain/repositories/user.repository.interface';
+import { TOKEN_SERVICE, type TokenPort } from '../ports/token.port';
+import { isRevoked } from '../token-revocation';
 
 /**
  * Identifie l'utilisateur d'un jeton d'accès, pour le guard global.

@@ -1,4 +1,4 @@
-import type { Payment } from '../entities/payment.entity.js';
+import type { Payment } from '../entities/payment.entity';
 
 /** Persistance des paiements (implémentée par `TypeormPaymentRepository`). */
 export interface PaymentRepositoryInterface {

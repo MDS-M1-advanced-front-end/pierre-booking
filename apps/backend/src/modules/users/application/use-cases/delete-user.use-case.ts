@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { UserNotFoundException } from '../../domain/exceptions/user-domain.exception.js';
+import { UserNotFoundException } from '../../domain/exceptions/user-domain.exception';
 import {
   USER_REPOSITORY,
   type UserRepositoryInterface,
-} from '../../domain/repositories/user.repository.interface.js';
+} from '../../domain/repositories/user.repository.interface';
 
 /**
  * Supprime un utilisateur (DELETE /users/{userId}, administrateurs).

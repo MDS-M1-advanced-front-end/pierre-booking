@@ -9,8 +9,8 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
-import { IsOptionalNotNull } from '../../../../common/validators.js';
-import { UserDTO } from './users.dto.js';
+import { IsOptionalNotNull } from '../../../../common/validators';
+import { UserDTO } from './users.dto';
 
 /**
  * Corps de POST /auth/register (RegisterRequest du contrat).

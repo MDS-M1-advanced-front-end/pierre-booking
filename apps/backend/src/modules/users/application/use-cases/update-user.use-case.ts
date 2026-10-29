@@ -3,12 +3,12 @@ import type {
   User,
   UserProfileChanges,
   UserRole,
-} from '../../domain/entities/user.entity.js';
-import { UserNotFoundException } from '../../domain/exceptions/user-domain.exception.js';
+} from '../../domain/entities/user.entity';
+import { UserNotFoundException } from '../../domain/exceptions/user-domain.exception';
 import {
   USER_REPOSITORY,
   type UserRepositoryInterface,
-} from '../../domain/repositories/user.repository.interface.js';
+} from '../../domain/repositories/user.repository.interface';
 
 /**
  * Modifie un utilisateur : PATCH /auth/me (sans rôle) et PATCH /users/{userId}

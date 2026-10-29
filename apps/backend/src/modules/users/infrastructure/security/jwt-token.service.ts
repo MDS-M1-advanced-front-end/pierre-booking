@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { resolveSecret } from '../../../../common/secrets.js';
+import { resolveSecret } from '../../../../common/secrets';
 import type {
   IssuedToken,
   TokenPayload,
   TokenPort,
-} from '../../application/ports/token.port.js';
+} from '../../application/ports/token.port';
 
 /**
  * Durée de vie d'un jeton d'accès, en secondes (15 min).

@@ -3,25 +3,25 @@ import {
   Payment,
   PaymentStatus,
   type PaymentMethod,
-} from '../../domain/entities/payment.entity.js';
-import type { ReservationActor } from '../../domain/entities/reservation.entity.js';
+} from '../../domain/entities/payment.entity';
+import type { ReservationActor } from '../../domain/entities/reservation.entity';
 import {
   ReservationAccessDeniedException,
   ReservationConflictException,
   ReservationNotFoundException,
-} from '../../domain/exceptions/reservation-domain.exception.js';
+} from '../../domain/exceptions/reservation-domain.exception';
 import {
   PAYMENT_REPOSITORY,
   type PaymentRepositoryInterface,
-} from '../../domain/repositories/payment.repository.interface.js';
+} from '../../domain/repositories/payment.repository.interface';
 import {
   RESERVATION_REPOSITORY,
   type ReservationRepositoryInterface,
-} from '../../domain/repositories/reservation.repository.interface.js';
+} from '../../domain/repositories/reservation.repository.interface';
 import {
   PAYMENT_GATEWAY,
   type PaymentGatewayPort,
-} from '../ports/payment-gateway.port.js';
+} from '../ports/payment-gateway.port';
 
 /**
  * POST /payments : paie une réservation auprès du prestataire.

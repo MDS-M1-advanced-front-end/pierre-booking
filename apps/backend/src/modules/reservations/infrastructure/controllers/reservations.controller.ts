@@ -12,20 +12,20 @@ import {
   Query,
   UseFilters,
 } from '@nestjs/common';
-import { NonEmptyBodyPipe } from '../../../../common/non-empty-body.pipe.js';
-import { toSkipTake } from '../../../../common/pagination.dto.js';
+import { NonEmptyBodyPipe } from '../../../../common/non-empty-body.pipe';
+import { toSkipTake } from '../../../../common/pagination.dto';
 import {
   CurrentUser,
   type AuthUser,
-} from '../../../users/infrastructure/auth/auth.decorators.js';
-import { CancelReservationUseCase } from '../../application/use-cases/cancel-reservation.use-case.js';
-import { ConfirmReservationUseCase } from '../../application/use-cases/confirm-reservation.use-case.js';
-import { CreateReservationUseCase } from '../../application/use-cases/create-reservation.use-case.js';
-import { GetReservationUseCase } from '../../application/use-cases/get-reservation.use-case.js';
-import { ListReservationsUseCase } from '../../application/use-cases/list-reservations.use-case.js';
-import { RejectReservationUseCase } from '../../application/use-cases/reject-reservation.use-case.js';
-import { UpdateReservationUseCase } from '../../application/use-cases/update-reservation.use-case.js';
-import { toReservationDTO } from '../dtos/reservation-dto.mapper.js';
+} from '../../../users/infrastructure/auth/auth.decorators';
+import { CancelReservationUseCase } from '../../application/use-cases/cancel-reservation.use-case';
+import { ConfirmReservationUseCase } from '../../application/use-cases/confirm-reservation.use-case';
+import { CreateReservationUseCase } from '../../application/use-cases/create-reservation.use-case';
+import { GetReservationUseCase } from '../../application/use-cases/get-reservation.use-case';
+import { ListReservationsUseCase } from '../../application/use-cases/list-reservations.use-case';
+import { RejectReservationUseCase } from '../../application/use-cases/reject-reservation.use-case';
+import { UpdateReservationUseCase } from '../../application/use-cases/update-reservation.use-case';
+import { toReservationDTO } from '../dtos/reservation-dto.mapper';
 import {
   CreateReservationDTO,
   PaginatedReservationsDTO,
@@ -33,9 +33,9 @@ import {
   ReservationDTO,
   ReservationsQueryDTO,
   UpdateReservationDTO,
-} from '../dtos/reservations.dto.js';
-import { ReservationExceptionFilter } from '../filters/reservation-exception.filter.js';
-import { toActor } from './actor.js';
+} from '../dtos/reservations.dto';
+import { ReservationExceptionFilter } from '../filters/reservation-exception.filter';
+import { toActor } from './actor';
 
 /** Routes `/reservations` : consultation, création, modification et traitement des réservations. */
 @Controller('reservations')

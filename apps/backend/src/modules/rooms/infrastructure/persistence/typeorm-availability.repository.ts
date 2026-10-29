@@ -9,9 +9,9 @@ import {
   Repository,
   type FindOptionsWhere,
 } from 'typeorm';
-import { AvailabilitySlot } from '../../domain/entities/availability.entity.js';
-import type { AvailabilityRepositoryInterface } from '../../domain/repositories/availability.repository.interface.js';
-import { TypeOrmAvailabilityEntity } from './typeorm-availability.entity.js';
+import { AvailabilitySlot } from '../../domain/entities/availability.entity';
+import type { AvailabilityRepositoryInterface } from '../../domain/repositories/availability.repository.interface';
+import { TypeOrmAvailabilityEntity } from './typeorm-availability.entity';
 
 /**
  * Ligne de la table availabilities → créneau du domaine.

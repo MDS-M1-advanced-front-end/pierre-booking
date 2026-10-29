@@ -2,11 +2,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import type {
   Reservation,
   ReservationStatus,
-} from '../../domain/entities/reservation.entity.js';
+} from '../../domain/entities/reservation.entity';
 import {
   RESERVATION_REPOSITORY,
   type ReservationRepositoryInterface,
-} from '../../domain/repositories/reservation.repository.interface.js';
+} from '../../domain/repositories/reservation.repository.interface';
 
 /** GET /admin/reservations (administrateurs) : toutes les réservations de la plateforme. */
 @Injectable()

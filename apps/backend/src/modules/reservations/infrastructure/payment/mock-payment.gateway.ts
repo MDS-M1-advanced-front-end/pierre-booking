@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import type { PaymentGatewayPort } from '../../application/ports/payment-gateway.port.js';
-import { PaymentStatus } from '../../domain/entities/payment.entity.js';
+import type { PaymentGatewayPort } from '../../application/ports/payment-gateway.port';
+import { PaymentStatus } from '../../domain/entities/payment.entity';
 
 /** Système de paiement externe simulé : le paiement est accepté immédiatement. */
 @Injectable()

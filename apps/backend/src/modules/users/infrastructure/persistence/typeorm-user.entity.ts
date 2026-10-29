@@ -6,9 +6,9 @@ import {
   PrimaryGeneratedColumn,
   type Relation,
 } from 'typeorm';
-import { TypeOrmReservationEntity } from '../../../reservations/infrastructure/persistence/typeorm-reservation.entity.js';
-import { TypeOrmRoomEntity } from '../../../rooms/infrastructure/persistence/typeorm-room.entity.js';
-import { UserRole } from '../../domain/entities/user.entity.js';
+import { TypeOrmReservationEntity } from '../../../reservations/infrastructure/persistence/typeorm-reservation.entity';
+import { TypeOrmRoomEntity } from '../../../rooms/infrastructure/persistence/typeorm-room.entity';
+import { UserRole } from '../../domain/entities/user.entity';
 
 /**
  * Table `users`. Entité de persistance : le domaine manipule User (domain/entities).

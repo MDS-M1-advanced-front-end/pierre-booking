@@ -1,19 +1,19 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { User } from '../../domain/entities/user.entity.js';
-import { InvalidCredentialsException } from '../../domain/exceptions/user-domain.exception.js';
+import { User } from '../../domain/entities/user.entity';
+import { InvalidCredentialsException } from '../../domain/exceptions/user-domain.exception';
 import {
   USER_REPOSITORY,
   type UserRepositoryInterface,
-} from '../../domain/repositories/user.repository.interface.js';
+} from '../../domain/repositories/user.repository.interface';
 import {
   PASSWORD_HASHER,
   type PasswordHasherPort,
-} from '../ports/password-hasher.port.js';
+} from '../ports/password-hasher.port';
 import {
   TOKEN_SERVICE,
   type IssuedToken,
   type TokenPort,
-} from '../ports/token.port.js';
+} from '../ports/token.port';
 
 /**
  * Hash factice, au bon format, vérifié quand l'e-mail est inconnu : le mot de passe est toujours

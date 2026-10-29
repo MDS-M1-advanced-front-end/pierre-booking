@@ -8,12 +8,12 @@ import {
   Repository,
   type FindOptionsWhere,
 } from 'typeorm';
-import { ACTIVE_RESERVATION_STATUSES } from '../../../reservations/domain/entities/reservation.entity.js';
-import { TypeOrmReservationEntity } from '../../../reservations/infrastructure/persistence/typeorm-reservation.entity.js';
+import { ACTIVE_RESERVATION_STATUSES } from '../../../reservations/domain/entities/reservation.entity';
+import { TypeOrmReservationEntity } from '../../../reservations/infrastructure/persistence/typeorm-reservation.entity';
 import type {
   Occupancy,
   RoomOccupancyPort,
-} from '../../application/ports/room-occupancy.port.js';
+} from '../../application/ports/room-occupancy.port';
 
 /**
  * Implémentation de {@link RoomOccupancyPort}. Lit la table des réservations directement (lecture

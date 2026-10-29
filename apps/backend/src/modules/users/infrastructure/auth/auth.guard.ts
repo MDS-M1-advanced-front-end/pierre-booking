@@ -7,9 +7,9 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
-import { AuthenticateUseCase } from '../../application/use-cases/authenticate.use-case.js';
-import type { UserRole } from '../../domain/entities/user.entity.js';
-import { IS_PUBLIC_KEY, ROLES_KEY, type AuthUser } from './auth.decorators.js';
+import { AuthenticateUseCase } from '../../application/use-cases/authenticate.use-case';
+import type { UserRole } from '../../domain/entities/user.entity';
+import { IS_PUBLIC_KEY, ROLES_KEY, type AuthUser } from './auth.decorators';
 
 /**
  * Guard global : jeton Bearer obligatoire sauf sur les routes @Public(), puis contrôle @Roles().

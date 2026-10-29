@@ -10,12 +10,12 @@ import {
   MaxLength,
   ValidateNested,
 } from 'class-validator';
-import { UserRole } from '../../domain/entities/user.entity.js';
-import { IsOptionalNotNull } from '../../../../common/validators.js';
+import { UserRole } from '../../domain/entities/user.entity';
+import { IsOptionalNotNull } from '../../../../common/validators';
 import {
   PaginatedDTO,
   PaginationQueryDTO,
-} from '../../../../common/pagination.dto.js';
+} from '../../../../common/pagination.dto';
 
 /**
  * Utilisateur renvoyé par l'API (User du contrat), sans le hash du mot de passe.

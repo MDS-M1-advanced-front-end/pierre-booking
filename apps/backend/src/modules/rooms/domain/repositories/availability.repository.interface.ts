@@ -1,4 +1,4 @@
-import type { AvailabilitySlot } from '../entities/availability.entity.js';
+import type { AvailabilitySlot } from '../entities/availability.entity';
 
 /** Accès aux créneaux de disponibilité des salles. */
 export interface AvailabilityRepositoryInterface {

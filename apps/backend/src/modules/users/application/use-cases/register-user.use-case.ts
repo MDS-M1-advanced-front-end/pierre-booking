@@ -1,13 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { User, UserRole } from '../../domain/entities/user.entity.js';
+import { User, UserRole } from '../../domain/entities/user.entity';
 import {
   USER_REPOSITORY,
   type UserRepositoryInterface,
-} from '../../domain/repositories/user.repository.interface.js';
+} from '../../domain/repositories/user.repository.interface';
 import {
   PASSWORD_HASHER,
   type PasswordHasherPort,
-} from '../ports/password-hasher.port.js';
+} from '../ports/password-hasher.port';
 
 /**
  * Crée un compte (POST /auth/register).

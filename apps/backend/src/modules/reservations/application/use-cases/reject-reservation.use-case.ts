@@ -2,20 +2,17 @@ import { Inject, Injectable } from '@nestjs/common';
 import type {
   Reservation,
   ReservationActor,
-} from '../../domain/entities/reservation.entity.js';
+} from '../../domain/entities/reservation.entity';
 import {
   ReservationAccessDeniedException,
   ReservationNotFoundException,
-} from '../../domain/exceptions/reservation-domain.exception.js';
+} from '../../domain/exceptions/reservation-domain.exception';
 import {
   RESERVATION_REPOSITORY,
   type ReservationRepositoryInterface,
-} from '../../domain/repositories/reservation.repository.interface.js';
-import {
-  ROOM_BOOKING,
-  type RoomBookingPort,
-} from '../ports/room-booking.port.js';
-import { findRoomOrFail, managesRoom } from '../room-access.js';
+} from '../../domain/repositories/reservation.repository.interface';
+import { ROOM_BOOKING, type RoomBookingPort } from '../ports/room-booking.port';
+import { findRoomOrFail, managesRoom } from '../room-access';
 
 /**
  * POST /reservations/{reservationId}/reject : refuse une demande.

@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Room, type RoomActor } from '../../domain/entities/room.entity.js';
-import { RoomNotFoundException } from '../../domain/exceptions/room-domain.exception.js';
+import { Room, type RoomActor } from '../../domain/entities/room.entity';
+import { RoomNotFoundException } from '../../domain/exceptions/room-domain.exception';
 import {
   ROOM_REPOSITORY,
   type RoomRepositoryInterface,
-} from '../../domain/repositories/room.repository.interface.js';
+} from '../../domain/repositories/room.repository.interface';
 
 /** GET /rooms/{roomId} : détails d'une salle. */
 @Injectable()

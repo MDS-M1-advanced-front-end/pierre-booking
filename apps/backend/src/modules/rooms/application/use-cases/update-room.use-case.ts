@@ -3,15 +3,15 @@ import {
   Room,
   type RoomActor,
   type RoomChanges,
-} from '../../domain/entities/room.entity.js';
+} from '../../domain/entities/room.entity';
 import {
   RoomAccessDeniedException,
   RoomNotFoundException,
-} from '../../domain/exceptions/room-domain.exception.js';
+} from '../../domain/exceptions/room-domain.exception';
 import {
   ROOM_REPOSITORY,
   type RoomRepositoryInterface,
-} from '../../domain/repositories/room.repository.interface.js';
+} from '../../domain/repositories/room.repository.interface';
 
 /** PATCH /rooms/{roomId} : modification partielle d'une salle. */
 @Injectable()

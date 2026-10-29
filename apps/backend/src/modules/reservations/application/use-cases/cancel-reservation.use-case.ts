@@ -1,13 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { ReservationActor } from '../../domain/entities/reservation.entity.js';
+import type { ReservationActor } from '../../domain/entities/reservation.entity';
 import {
   ReservationAccessDeniedException,
   ReservationNotFoundException,
-} from '../../domain/exceptions/reservation-domain.exception.js';
+} from '../../domain/exceptions/reservation-domain.exception';
 import {
   RESERVATION_REPOSITORY,
   type ReservationRepositoryInterface,
-} from '../../domain/repositories/reservation.repository.interface.js';
+} from '../../domain/repositories/reservation.repository.interface';
 
 /**
  * DELETE /reservations/{reservationId}. Annulation logique : la réservation passe à CANCELLED et

@@ -3,17 +3,14 @@ import {
   Reservation,
   ReservationStatus,
   type ReservationActor,
-} from '../../domain/entities/reservation.entity.js';
-import { ReservationConflictException } from '../../domain/exceptions/reservation-domain.exception.js';
+} from '../../domain/entities/reservation.entity';
+import { ReservationConflictException } from '../../domain/exceptions/reservation-domain.exception';
 import {
   RESERVATION_REPOSITORY,
   type ReservationRepositoryInterface,
-} from '../../domain/repositories/reservation.repository.interface.js';
-import {
-  ROOM_BOOKING,
-  type RoomBookingPort,
-} from '../ports/room-booking.port.js';
-import { findRoomOrFail } from '../room-access.js';
+} from '../../domain/repositories/reservation.repository.interface';
+import { ROOM_BOOKING, type RoomBookingPort } from '../ports/room-booking.port';
+import { findRoomOrFail } from '../room-access';
 
 /**
  * POST /reservations : réserve une salle. La réservation est créée au statut PENDING, en attente

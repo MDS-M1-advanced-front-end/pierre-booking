@@ -1,5 +1,5 @@
-import { Payment } from '../../domain/entities/payment.entity.js';
-import { TypeOrmPaymentEntity } from './typeorm-payment.entity.js';
+import { Payment } from '../../domain/entities/payment.entity';
+import { TypeOrmPaymentEntity } from './typeorm-payment.entity';
 
 /** Conversion entre l'entité TypeORM et l'entité du domaine (paiement). */
 export class PaymentMapper {

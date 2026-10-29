@@ -1,14 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { addDays, fromParis } from '../../../../common/paris-time.js';
+import { addDays, fromParis } from '../../../../common/paris-time';
 import type {
   Reservation,
   ReservationActor,
   ReservationStatus,
-} from '../../domain/entities/reservation.entity.js';
+} from '../../domain/entities/reservation.entity';
 import {
   RESERVATION_REPOSITORY,
   type ReservationRepositoryInterface,
-} from '../../domain/repositories/reservation.repository.interface.js';
+} from '../../domain/repositories/reservation.repository.interface';
 
 /**
  * GET /reservations : celles de l'utilisateur connecté, ou, pour un gestionnaire,

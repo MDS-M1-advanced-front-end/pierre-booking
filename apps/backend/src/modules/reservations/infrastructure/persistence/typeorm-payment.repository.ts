@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { isUniqueViolation } from '../../../../common/database-errors.js';
-import type { Payment } from '../../domain/entities/payment.entity.js';
-import { ReservationConflictException } from '../../domain/exceptions/reservation-domain.exception.js';
-import type { PaymentRepositoryInterface } from '../../domain/repositories/payment.repository.interface.js';
-import { PaymentMapper } from './payment.mapper.js';
-import { TypeOrmPaymentEntity } from './typeorm-payment.entity.js';
+import { isUniqueViolation } from '../../../../common/database-errors';
+import type { Payment } from '../../domain/entities/payment.entity';
+import { ReservationConflictException } from '../../domain/exceptions/reservation-domain.exception';
+import type { PaymentRepositoryInterface } from '../../domain/repositories/payment.repository.interface';
+import { PaymentMapper } from './payment.mapper';
+import { TypeOrmPaymentEntity } from './typeorm-payment.entity';
 
 /** Implémentation TypeORM de `PaymentRepositoryInterface`. */
 @Injectable()

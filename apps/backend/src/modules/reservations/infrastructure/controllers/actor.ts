@@ -1,6 +1,6 @@
-import type { AuthUser } from '../../../users/infrastructure/auth/auth.decorators.js';
-import { UserRole } from '../../../users/domain/entities/user.entity.js';
-import type { ReservationActor } from '../../domain/entities/reservation.entity.js';
+import type { AuthUser } from '../../../users/infrastructure/auth/auth.decorators';
+import { UserRole } from '../../../users/domain/entities/user.entity';
+import type { ReservationActor } from '../../domain/entities/reservation.entity';
 
 /**
  * Utilisateur authentifié → acteur du domaine.

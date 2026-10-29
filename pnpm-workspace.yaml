@@ -2,9 +2,11 @@ packages:
   - packages/*
   - apps/*
 
-# Scripts d'installation : @scarf/scarf (télémétrie tirée par Prism) est refusé
+# Scripts d'installation : @scarf/scarf (télémétrie tirée par Prism) est refusé ;
+# @swc/core et esbuild n'en ont pas besoin (binaire fourni par une dépendance optionnelle)
 allowBuilds:
   '@scarf/scarf': false
+  '@swc/core': false
   esbuild: false
 
 minimumReleaseAgeExclude:

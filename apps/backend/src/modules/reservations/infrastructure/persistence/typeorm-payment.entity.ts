@@ -11,9 +11,9 @@ import {
 import {
   PaymentMethod,
   PaymentStatus,
-} from '../../domain/entities/payment.entity.js';
-import { decimalTransformer } from '../../../../common/decimal.transformer.js';
-import { TypeOrmReservationEntity } from './typeorm-reservation.entity.js';
+} from '../../domain/entities/payment.entity';
+import { decimalTransformer } from '../../../../common/decimal.transformer';
+import { TypeOrmReservationEntity } from './typeorm-reservation.entity';
 
 /** Table `payments` (voir docs/Database.md). */
 @Entity('payments')

@@ -1,5 +1,5 @@
-import { User } from '../../domain/entities/user.entity.js';
-import { TypeOrmUserEntity } from './typeorm-user.entity.js';
+import { User } from '../../domain/entities/user.entity';
+import { TypeOrmUserEntity } from './typeorm-user.entity';
 
 /**
  * Conversion entre l'entité TypeORM et l'entité du domaine.

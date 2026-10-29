@@ -10,11 +10,11 @@ import {
   PrimaryGeneratedColumn,
   type Relation,
 } from 'typeorm';
-import { decimalTransformer } from '../../../../common/decimal.transformer.js';
-import { TypeOrmRoomEntity } from '../../../rooms/infrastructure/persistence/typeorm-room.entity.js';
-import { TypeOrmUserEntity } from '../../../users/infrastructure/persistence/typeorm-user.entity.js';
-import { ReservationStatus } from '../../domain/entities/reservation.entity.js';
-import { TypeOrmPaymentEntity } from './typeorm-payment.entity.js';
+import { decimalTransformer } from '../../../../common/decimal.transformer';
+import { TypeOrmRoomEntity } from '../../../rooms/infrastructure/persistence/typeorm-room.entity';
+import { TypeOrmUserEntity } from '../../../users/infrastructure/persistence/typeorm-user.entity';
+import { ReservationStatus } from '../../domain/entities/reservation.entity';
+import { TypeOrmPaymentEntity } from './typeorm-payment.entity';
 
 /** Table `reservations` (voir docs/Database.md). */
 @Entity('reservations')

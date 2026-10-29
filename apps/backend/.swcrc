@@ -1,0 +1,5 @@
+{
+  "$schema": "https://swc.rs/schema.json",
+  // nest build demande à SWC de compléter les imports en .js (resolveFully) ; sans baseUrl, il les laisse tels quels
+  "jsc": { "baseUrl": "./" }
+}

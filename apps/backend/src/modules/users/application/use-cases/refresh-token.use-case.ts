@@ -1,16 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { User } from '../../domain/entities/user.entity.js';
-import { InvalidRefreshTokenException } from '../../domain/exceptions/user-domain.exception.js';
+import type { User } from '../../domain/entities/user.entity';
+import { InvalidRefreshTokenException } from '../../domain/exceptions/user-domain.exception';
 import {
   USER_REPOSITORY,
   type UserRepositoryInterface,
-} from '../../domain/repositories/user.repository.interface.js';
+} from '../../domain/repositories/user.repository.interface';
 import {
   TOKEN_SERVICE,
   type IssuedToken,
   type TokenPort,
-} from '../ports/token.port.js';
-import { isRevoked } from '../token-revocation.js';
+} from '../ports/token.port';
+import { isRevoked } from '../token-revocation';
 
 /**
  * Renouvelle les jetons à partir d'un jeton de rafraîchissement (POST /auth/refresh).

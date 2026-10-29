@@ -1,4 +1,4 @@
-import type { ReservationStatus } from '../entities/reservation.entity.js';
+import type { ReservationStatus } from '../entities/reservation.entity';
 
 /**
  * Erreur du domaine des réservations. Traduite en réponse HTTP par `ReservationExceptionFilter`,

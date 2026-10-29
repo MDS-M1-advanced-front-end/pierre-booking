@@ -8,7 +8,7 @@ import {
   PrimaryGeneratedColumn,
   type Relation,
 } from 'typeorm';
-import { TypeOrmRoomEntity } from './typeorm-room.entity.js';
+import { TypeOrmRoomEntity } from './typeorm-room.entity';
 
 /** Table availabilities. Heures sans fuseau : heure de Paris (cf. docs/cadrage.md). */
 @Entity('availabilities')

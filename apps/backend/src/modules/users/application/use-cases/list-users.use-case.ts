@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { User, UserRole } from '../../domain/entities/user.entity.js';
+import type { User, UserRole } from '../../domain/entities/user.entity';
 import {
   USER_REPOSITORY,
   type UserRepositoryInterface,
-} from '../../domain/repositories/user.repository.interface.js';
+} from '../../domain/repositories/user.repository.interface';
 
 /**
  * Liste paginée des utilisateurs (GET /users, administrateurs).

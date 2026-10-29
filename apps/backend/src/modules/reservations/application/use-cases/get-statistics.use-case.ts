@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { addDays, fromParis } from '../../../../common/paris-time.js';
+import { addDays, fromParis } from '../../../../common/paris-time';
 import {
   STATISTICS,
   type Statistics,
   type StatisticsPort,
-} from '../ports/statistics.port.js';
+} from '../ports/statistics.port';
 
 /** GET /admin/statistics (administrateurs) : statistiques de la plateforme. */
 @Injectable()

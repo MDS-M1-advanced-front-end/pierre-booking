@@ -13,13 +13,13 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { ReservationStatus } from '../../domain/entities/reservation.entity.js';
-import { IsOptionalNotNull } from '../../../../common/validators.js';
-import { DATE_REGEX } from '../../../../common/formats.js';
+import { ReservationStatus } from '../../domain/entities/reservation.entity';
+import { IsOptionalNotNull } from '../../../../common/validators';
+import { DATE_REGEX } from '../../../../common/formats';
 import {
   PaginatedDTO,
   PaginationQueryDTO,
-} from '../../../../common/pagination.dto.js';
+} from '../../../../common/pagination.dto';
 
 /** Réservation renvoyée par l'API (schéma Reservation du contrat). */
 export class ReservationDTO {

@@ -11,7 +11,7 @@ import {
   ReservationConflictException,
   ReservationDomainException,
   ReservationNotFoundException,
-} from '../../domain/exceptions/reservation-domain.exception.js';
+} from '../../domain/exceptions/reservation-domain.exception';
 
 /**
  * Exception du domaine → statut HTTP et code du schéma Error du contrat.

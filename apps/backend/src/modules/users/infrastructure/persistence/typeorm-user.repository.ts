@@ -4,15 +4,15 @@ import { Repository } from 'typeorm';
 import {
   isForeignKeyViolation,
   isUniqueViolation,
-} from '../../../../common/database-errors.js';
-import type { User, UserRole } from '../../domain/entities/user.entity.js';
+} from '../../../../common/database-errors';
+import type { User, UserRole } from '../../domain/entities/user.entity';
 import {
   EmailAlreadyUsedException,
   UserHasReservationsException,
-} from '../../domain/exceptions/user-domain.exception.js';
-import type { UserRepositoryInterface } from '../../domain/repositories/user.repository.interface.js';
-import { TypeOrmUserEntity } from './typeorm-user.entity.js';
-import { UserMapper } from './user.mapper.js';
+} from '../../domain/exceptions/user-domain.exception';
+import type { UserRepositoryInterface } from '../../domain/repositories/user.repository.interface';
+import { TypeOrmUserEntity } from './typeorm-user.entity';
+import { UserMapper } from './user.mapper';
 
 /**
  * Implémentation TypeORM de UserRepositoryInterface. Les erreurs PostgreSQL (unicité,

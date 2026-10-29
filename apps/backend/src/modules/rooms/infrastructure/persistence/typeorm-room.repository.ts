@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
-import { isForeignKeyViolation } from '../../../../common/database-errors.js';
-import { Room, RoomStatus } from '../../domain/entities/room.entity.js';
-import { RoomHasReservationsException } from '../../domain/exceptions/room-domain.exception.js';
+import { isForeignKeyViolation } from '../../../../common/database-errors';
+import { Room, RoomStatus } from '../../domain/entities/room.entity';
+import { RoomHasReservationsException } from '../../domain/exceptions/room-domain.exception';
 import type {
   RoomRepositoryInterface,
   RoomSearchCriteria,
-} from '../../domain/repositories/room.repository.interface.js';
-import { RoomMapper } from './room.mapper.js';
-import { TypeOrmRoomEntity } from './typeorm-room.entity.js';
+} from '../../domain/repositories/room.repository.interface';
+import { RoomMapper } from './room.mapper';
+import { TypeOrmRoomEntity } from './typeorm-room.entity';
 
 /** Implémentation TypeORM de {@link RoomRepositoryInterface}. */
 @Injectable()

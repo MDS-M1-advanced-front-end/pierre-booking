@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { User } from '../../domain/entities/user.entity.js';
-import { UserNotFoundException } from '../../domain/exceptions/user-domain.exception.js';
+import type { User } from '../../domain/entities/user.entity';
+import { UserNotFoundException } from '../../domain/exceptions/user-domain.exception';
 import {
   USER_REPOSITORY,
   type UserRepositoryInterface,
-} from '../../domain/repositories/user.repository.interface.js';
+} from '../../domain/repositories/user.repository.interface';
 
 /**
  * Lit un utilisateur : GET /auth/me (utilisateur connecté) et GET /users/{userId} (administrateurs).

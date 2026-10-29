@@ -3,7 +3,7 @@ import {
   SetMetadata,
   type ExecutionContext,
 } from '@nestjs/common';
-import type { UserRole } from '../../domain/entities/user.entity.js';
+import type { UserRole } from '../../domain/entities/user.entity';
 
 /**
  * Utilisateur connecté, déposé dans `request.user` par AuthGuard (rôle relu en base).

@@ -1,4 +1,4 @@
-import type { User, UserRole } from '../entities/user.entity.js';
+import type { User, UserRole } from '../entities/user.entity';
 
 /**
  * Persistance des utilisateurs. Implémenté par TypeormUserRepository.

@@ -2,8 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   ROOM_REPOSITORY,
   type RoomRepositoryInterface,
-} from '../../domain/repositories/room.repository.interface.js';
-import { Room, RoomStatus } from '../../domain/entities/room.entity.js';
+} from '../../domain/repositories/room.repository.interface';
+import { Room, RoomStatus } from '../../domain/entities/room.entity';
 
 /** POST /rooms : ajoute une salle, au nom du gestionnaire ou de l'administrateur connecté. */
 @Injectable()

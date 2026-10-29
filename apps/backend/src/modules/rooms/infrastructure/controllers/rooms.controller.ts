@@ -13,27 +13,24 @@ import {
   Query,
   UseFilters,
 } from '@nestjs/common';
-import { NonEmptyBodyPipe } from '../../../../common/non-empty-body.pipe.js';
-import { toSkipTake } from '../../../../common/pagination.dto.js';
+import { NonEmptyBodyPipe } from '../../../../common/non-empty-body.pipe';
+import { toSkipTake } from '../../../../common/pagination.dto';
 import {
   CurrentUser,
   Public,
   Roles,
   type AuthUser,
-} from '../../../users/infrastructure/auth/auth.decorators.js';
-import { UserRole } from '../../../users/domain/entities/user.entity.js';
-import { GetRoomAvailabilityUseCase } from '../../application/use-cases/get-room-availability.use-case.js';
-import { SetRoomAvailabilityUseCase } from '../../application/use-cases/set-room-availability.use-case.js';
-import { CreateRoomUseCase } from '../../application/use-cases/create-room.use-case.js';
-import { DeleteRoomUseCase } from '../../application/use-cases/delete-room.use-case.js';
-import { GetRoomUseCase } from '../../application/use-cases/get-room.use-case.js';
-import { GetRoomsUseCase } from '../../application/use-cases/get-rooms.use-case.js';
-import { UpdateRoomUseCase } from '../../application/use-cases/update-room.use-case.js';
-import {
-  RoomStatus,
-  type RoomActor,
-} from '../../domain/entities/room.entity.js';
-import { toAvailabilitySlotDTO, toRoomDTO } from '../dtos/room-dto.mapper.js';
+} from '../../../users/infrastructure/auth/auth.decorators';
+import { UserRole } from '../../../users/domain/entities/user.entity';
+import { GetRoomAvailabilityUseCase } from '../../application/use-cases/get-room-availability.use-case';
+import { SetRoomAvailabilityUseCase } from '../../application/use-cases/set-room-availability.use-case';
+import { CreateRoomUseCase } from '../../application/use-cases/create-room.use-case';
+import { DeleteRoomUseCase } from '../../application/use-cases/delete-room.use-case';
+import { GetRoomUseCase } from '../../application/use-cases/get-room.use-case';
+import { GetRoomsUseCase } from '../../application/use-cases/get-rooms.use-case';
+import { UpdateRoomUseCase } from '../../application/use-cases/update-room.use-case';
+import { RoomStatus, type RoomActor } from '../../domain/entities/room.entity';
+import { toAvailabilitySlotDTO, toRoomDTO } from '../dtos/room-dto.mapper';
 import {
   AvailabilityQueryDTO,
   AvailabilitySlotDTO,
@@ -43,8 +40,8 @@ import {
   RoomsQueryDTO,
   UpdateAvailabilityDTO,
   UpdateRoomDTO,
-} from '../dtos/rooms.dto.js';
-import { DomainExceptionFilter } from '../filters/global-exception.filter.js';
+} from '../dtos/rooms.dto';
+import { DomainExceptionFilter } from '../filters/global-exception.filter';
 
 /**
  * Utilisateur authentifié → acteur du domaine.

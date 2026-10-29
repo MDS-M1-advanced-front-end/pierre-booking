@@ -1,13 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { RoomActor } from '../../domain/entities/room.entity.js';
+import type { RoomActor } from '../../domain/entities/room.entity';
 import {
   RoomAccessDeniedException,
   RoomNotFoundException,
-} from '../../domain/exceptions/room-domain.exception.js';
+} from '../../domain/exceptions/room-domain.exception';
 import {
   ROOM_REPOSITORY,
   type RoomRepositoryInterface,
-} from '../../domain/repositories/room.repository.interface.js';
+} from '../../domain/repositories/room.repository.interface';
 
 /** DELETE /rooms/{roomId} : supprime une salle sans réservation. */
 @Injectable()

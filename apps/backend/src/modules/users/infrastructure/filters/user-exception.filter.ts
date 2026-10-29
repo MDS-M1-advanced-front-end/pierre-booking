@@ -13,7 +13,7 @@ import {
   UserHasReservationsException,
   UserNotFoundException,
   WrongCurrentPasswordException,
-} from '../../domain/exceptions/user-domain.exception.js';
+} from '../../domain/exceptions/user-domain.exception';
 
 /**
  * Exception du domaine → statut HTTP et code du schéma Error du contrat.

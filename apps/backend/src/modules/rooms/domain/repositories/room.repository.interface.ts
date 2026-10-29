@@ -1,4 +1,4 @@
-import { Room } from '../entities/room.entity.js';
+import { Room } from '../entities/room.entity';
 
 /** Critères de recherche des salles (GET /rooms), déjà traduits par le cas d'usage. */
 export interface RoomSearchCriteria {

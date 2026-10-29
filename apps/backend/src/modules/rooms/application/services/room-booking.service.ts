@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { RoomStatus } from '../../domain/entities/room.entity.js';
+import { RoomStatus } from '../../domain/entities/room.entity';
 import {
   ROOM_REPOSITORY,
   type RoomRepositoryInterface,
-} from '../../domain/repositories/room.repository.interface.js';
-import { RoomAvailabilityService } from './room-availability.service.js';
+} from '../../domain/repositories/room.repository.interface';
+import { RoomAvailabilityService } from './room-availability.service';
 
 /**
  * Ce que le module reservations lit des salles : exporté par RoomsModule et branché sur le port

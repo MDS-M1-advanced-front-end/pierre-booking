@@ -1,6 +1,6 @@
-import type { AvailabilitySlot } from '../../domain/entities/availability.entity.js';
-import type { Room } from '../../domain/entities/room.entity.js';
-import type { AvailabilitySlotDTO, RoomDTO } from './rooms.dto.js';
+import type { AvailabilitySlot } from '../../domain/entities/availability.entity';
+import type { Room } from '../../domain/entities/room.entity';
+import type { AvailabilitySlotDTO, RoomDTO } from './rooms.dto';
 
 /**
  * Salle du domaine → réponse de l'API (schéma Room du contrat : champs vides omis).

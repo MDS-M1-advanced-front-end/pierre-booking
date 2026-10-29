@@ -1,5 +1,5 @@
-import { Room } from '../../domain/entities/room.entity.js';
-import { TypeOrmRoomEntity } from './typeorm-room.entity.js';
+import { Room } from '../../domain/entities/room.entity';
+import { TypeOrmRoomEntity } from './typeorm-room.entity';
 
 /** Conversion entre l'entité TypeORM et l'entité du domaine. */
 export class RoomMapper {

@@ -1,12 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { normalizeTime } from '../../../../common/paris-time.js';
-import { Room, type RoomActor } from '../../domain/entities/room.entity.js';
+import { normalizeTime } from '../../../../common/paris-time';
+import { Room, type RoomActor } from '../../domain/entities/room.entity';
 import {
   ROOM_REPOSITORY,
   type RoomRepositoryInterface,
   type RoomSearchCriteria,
-} from '../../domain/repositories/room.repository.interface.js';
-import { RoomAvailabilityService } from '../services/room-availability.service.js';
+} from '../../domain/repositories/room.repository.interface';
+import { RoomAvailabilityService } from '../services/room-availability.service';
 
 /** Filtres de GET /rooms, déjà validés par le DTO. */
 export interface GetRoomsFilters {

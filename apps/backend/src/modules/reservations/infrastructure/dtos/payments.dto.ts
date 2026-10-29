@@ -11,7 +11,7 @@ import {
 import {
   PaymentMethod,
   PaymentStatus,
-} from '../../domain/entities/payment.entity.js';
+} from '../../domain/entities/payment.entity';
 
 /** Paiement renvoyé par l'API (schéma Payment du contrat). */
 export class PaymentDTO {

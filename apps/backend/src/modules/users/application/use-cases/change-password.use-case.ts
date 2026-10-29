@@ -2,15 +2,15 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   UserNotFoundException,
   WrongCurrentPasswordException,
-} from '../../domain/exceptions/user-domain.exception.js';
+} from '../../domain/exceptions/user-domain.exception';
 import {
   USER_REPOSITORY,
   type UserRepositoryInterface,
-} from '../../domain/repositories/user.repository.interface.js';
+} from '../../domain/repositories/user.repository.interface';
 import {
   PASSWORD_HASHER,
   type PasswordHasherPort,
-} from '../ports/password-hasher.port.js';
+} from '../ports/password-hasher.port';
 
 /**
  * Change le mot de passe de l'utilisateur connecté (PATCH /auth/password).

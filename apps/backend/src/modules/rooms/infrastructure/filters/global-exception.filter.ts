@@ -11,7 +11,7 @@ import {
   RoomDomainException,
   RoomHasReservationsException,
   RoomNotFoundException,
-} from '../../domain/exceptions/room-domain.exception.js';
+} from '../../domain/exceptions/room-domain.exception';
 
 /**
  * Exception du domaine → statut HTTP et code du schéma Error du contrat.

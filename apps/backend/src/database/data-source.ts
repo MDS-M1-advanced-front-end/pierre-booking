@@ -1,11 +1,11 @@
-import '../env.js';
+import '../env';
 import { join } from 'node:path';
 import { DataSource, type DataSourceOptions } from 'typeorm';
-import { TypeOrmReservationEntity } from '../modules/reservations/infrastructure/persistence/typeorm-reservation.entity.js';
-import { TypeOrmPaymentEntity } from '../modules/reservations/infrastructure/persistence/typeorm-payment.entity.js';
-import { TypeOrmAvailabilityEntity } from '../modules/rooms/infrastructure/persistence/typeorm-availability.entity.js';
-import { TypeOrmRoomEntity } from '../modules/rooms/infrastructure/persistence/typeorm-room.entity.js';
-import { TypeOrmUserEntity } from '../modules/users/infrastructure/persistence/typeorm-user.entity.js';
+import { TypeOrmReservationEntity } from '../modules/reservations/infrastructure/persistence/typeorm-reservation.entity';
+import { TypeOrmPaymentEntity } from '../modules/reservations/infrastructure/persistence/typeorm-payment.entity';
+import { TypeOrmAvailabilityEntity } from '../modules/rooms/infrastructure/persistence/typeorm-availability.entity';
+import { TypeOrmRoomEntity } from '../modules/rooms/infrastructure/persistence/typeorm-room.entity';
+import { TypeOrmUserEntity } from '../modules/users/infrastructure/persistence/typeorm-user.entity';
 
 // Partagée par l'application (app.module.ts) et la CLI TypeORM (scripts migration:*)
 export const dataSourceOptions: DataSourceOptions = {

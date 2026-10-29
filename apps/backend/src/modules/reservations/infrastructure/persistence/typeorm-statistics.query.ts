@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { TypeOrmRoomEntity } from '../../../rooms/infrastructure/persistence/typeorm-room.entity.js';
-import { TypeOrmUserEntity } from '../../../users/infrastructure/persistence/typeorm-user.entity.js';
+import { TypeOrmRoomEntity } from '../../../rooms/infrastructure/persistence/typeorm-room.entity';
+import { TypeOrmUserEntity } from '../../../users/infrastructure/persistence/typeorm-user.entity';
 import type {
   Statistics,
   StatisticsPort,
-} from '../../application/ports/statistics.port.js';
-import { ReservationStatus } from '../../domain/entities/reservation.entity.js';
-import { TypeOrmReservationEntity } from './typeorm-reservation.entity.js';
+} from '../../application/ports/statistics.port';
+import { ReservationStatus } from '../../domain/entities/reservation.entity';
+import { TypeOrmReservationEntity } from './typeorm-reservation.entity';
 
 /** Une réservation COMPLETED a été confirmée : elle compte comme confirmée et dans le chiffre d'affaires. */
 const CONFIRMED_STATUSES = [

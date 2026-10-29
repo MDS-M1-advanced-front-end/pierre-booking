@@ -1,7 +1,7 @@
 import type {
   Reservation,
   ReservationStatus,
-} from '../entities/reservation.entity.js';
+} from '../entities/reservation.entity';
 
 /** Filtres et pagination d'une liste de réservations ; les filtres absents sont ignorés. */
 export interface ReservationSearchCriteria {

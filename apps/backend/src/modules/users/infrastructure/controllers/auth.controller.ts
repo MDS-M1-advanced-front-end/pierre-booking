@@ -9,14 +9,14 @@ import {
   UseFilters,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { NonEmptyBodyPipe } from '../../../../common/non-empty-body.pipe.js';
-import { ChangePasswordUseCase } from '../../application/use-cases/change-password.use-case.js';
-import { GetUserUseCase } from '../../application/use-cases/get-user.use-case.js';
-import { LoginUserUseCase } from '../../application/use-cases/login-user.use-case.js';
-import { RefreshTokenUseCase } from '../../application/use-cases/refresh-token.use-case.js';
-import { RegisterUserUseCase } from '../../application/use-cases/register-user.use-case.js';
-import { UpdateUserUseCase } from '../../application/use-cases/update-user.use-case.js';
-import { CurrentUser, Public, type AuthUser } from '../auth/auth.decorators.js';
+import { NonEmptyBodyPipe } from '../../../../common/non-empty-body.pipe';
+import { ChangePasswordUseCase } from '../../application/use-cases/change-password.use-case';
+import { GetUserUseCase } from '../../application/use-cases/get-user.use-case';
+import { LoginUserUseCase } from '../../application/use-cases/login-user.use-case';
+import { RefreshTokenUseCase } from '../../application/use-cases/refresh-token.use-case';
+import { RegisterUserUseCase } from '../../application/use-cases/register-user.use-case';
+import { UpdateUserUseCase } from '../../application/use-cases/update-user.use-case';
+import { CurrentUser, Public, type AuthUser } from '../auth/auth.decorators';
 import {
   AuthResponseDTO,
   ChangePasswordDTO,
@@ -24,10 +24,10 @@ import {
   RefreshDTO,
   RegisterDTO,
   UpdateProfileDTO,
-} from '../dtos/auth.dto.js';
-import { toUserDTO } from '../dtos/user-dto.mapper.js';
-import { UserDTO } from '../dtos/users.dto.js';
-import { UserExceptionFilter } from '../filters/user-exception.filter.js';
+} from '../dtos/auth.dto';
+import { toUserDTO } from '../dtos/user-dto.mapper';
+import { UserDTO } from '../dtos/users.dto';
+import { UserExceptionFilter } from '../filters/user-exception.filter';
 
 /**
  * Limite des routes publiques d'authentification, contre le bruteforce des mots de passe

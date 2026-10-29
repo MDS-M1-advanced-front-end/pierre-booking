@@ -18,14 +18,14 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { DATE_REGEX, TIME_REGEX } from '../../../../common/formats.js';
-import { IsOptionalNotNull } from '../../../../common/validators.js';
+import { DATE_REGEX, TIME_REGEX } from '../../../../common/formats';
+import { IsOptionalNotNull } from '../../../../common/validators';
 import {
   PaginatedDTO,
   PaginationQueryDTO,
-} from '../../../../common/pagination.dto.js';
+} from '../../../../common/pagination.dto';
 
-import { RoomStatus } from '../../domain/entities/room.entity.js';
+import { RoomStatus } from '../../domain/entities/room.entity';
 
 /** Salle renvoyée par l'API (schéma Room du contrat). */
 export class RoomDTO {

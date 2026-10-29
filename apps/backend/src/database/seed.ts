@@ -2,17 +2,17 @@
 // Vide d'abord toutes les tables : à réserver au développement. Usage : pnpm seed
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { addDays } from '../common/paris-time.js';
-import type { ReservationStatus } from '../modules/reservations/domain/entities/reservation.entity.js';
-import type { RoomStatus } from '../modules/rooms/domain/entities/room.entity.js';
-import type { UserRole } from '../modules/users/domain/entities/user.entity.js';
-import { ScryptPasswordHasher } from '../modules/users/infrastructure/security/scrypt-password-hasher.js';
-import { TypeOrmReservationEntity } from '../modules/reservations/infrastructure/persistence/typeorm-reservation.entity.js';
-import { TypeOrmPaymentEntity } from '../modules/reservations/infrastructure/persistence/typeorm-payment.entity.js';
-import { TypeOrmAvailabilityEntity } from '../modules/rooms/infrastructure/persistence/typeorm-availability.entity.js';
-import { TypeOrmRoomEntity } from '../modules/rooms/infrastructure/persistence/typeorm-room.entity.js';
-import { TypeOrmUserEntity } from '../modules/users/infrastructure/persistence/typeorm-user.entity.js';
-import dataSource from './data-source.js';
+import { addDays } from '../common/paris-time';
+import type { ReservationStatus } from '../modules/reservations/domain/entities/reservation.entity';
+import type { RoomStatus } from '../modules/rooms/domain/entities/room.entity';
+import type { UserRole } from '../modules/users/domain/entities/user.entity';
+import { ScryptPasswordHasher } from '../modules/users/infrastructure/security/scrypt-password-hasher';
+import { TypeOrmReservationEntity } from '../modules/reservations/infrastructure/persistence/typeorm-reservation.entity';
+import { TypeOrmPaymentEntity } from '../modules/reservations/infrastructure/persistence/typeorm-payment.entity';
+import { TypeOrmAvailabilityEntity } from '../modules/rooms/infrastructure/persistence/typeorm-availability.entity';
+import { TypeOrmRoomEntity } from '../modules/rooms/infrastructure/persistence/typeorm-room.entity';
+import { TypeOrmUserEntity } from '../modules/users/infrastructure/persistence/typeorm-user.entity';
+import dataSource from './data-source';
 
 interface MockUser {
   id: string;

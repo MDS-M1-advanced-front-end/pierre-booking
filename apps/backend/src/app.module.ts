@@ -2,12 +2,12 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
-import { ReservationsModule } from './modules/reservations/reservations.module.js';
-import { RoomsModule } from './modules/rooms/rooms.module.js';
-import { UsersModule } from './modules/users/users.module.js';
-import { dataSourceOptions } from './database/data-source.js';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { ReservationsModule } from './modules/reservations/reservations.module';
+import { RoomsModule } from './modules/rooms/rooms.module';
+import { UsersModule } from './modules/users/users.module';
+import { dataSourceOptions } from './database/data-source';
 
 @Module({
   imports: [

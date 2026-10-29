@@ -9,11 +9,11 @@ import {
   PrimaryGeneratedColumn,
   type Relation,
 } from 'typeorm';
-import { RoomStatus } from '../../domain/entities/room.entity.js';
-import { decimalTransformer } from '../../../../common/decimal.transformer.js';
-import { TypeOrmReservationEntity } from '../../../reservations/infrastructure/persistence/typeorm-reservation.entity.js';
-import { TypeOrmUserEntity } from '../../../users/infrastructure/persistence/typeorm-user.entity.js';
-import { TypeOrmAvailabilityEntity } from './typeorm-availability.entity.js';
+import { RoomStatus } from '../../domain/entities/room.entity';
+import { decimalTransformer } from '../../../../common/decimal.transformer';
+import { TypeOrmReservationEntity } from '../../../reservations/infrastructure/persistence/typeorm-reservation.entity';
+import { TypeOrmUserEntity } from '../../../users/infrastructure/persistence/typeorm-user.entity';
+import { TypeOrmAvailabilityEntity } from './typeorm-availability.entity';
 
 /** Table rooms. */
 @Entity('rooms')
