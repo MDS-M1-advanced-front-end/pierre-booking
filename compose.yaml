@@ -1,7 +1,7 @@
 # Production : base, API et front, construits depuis les Dockerfile des apps. Depuis ce dossier :
 #   JWT_SECRET=<secret> docker compose up -d --build
 #   front : http://localhost:4321   API : http://localhost:8080/api
-# Variables (shell ou .env à la racine) : JWT_SECRET (obligatoire), DB_PASSWORD,
+# Variables (shell ou .env à la racine) : JWT_SECRET, JWT_REFRESH_SECRET (obligatoires), DB_PASSWORD,
 # FRONT_URL et PUBLIC_API_BASE_URL (adresses publiques, si autres que localhost).
 # Développement : compose.dev.yaml (base seule) et `pnpm dev`.
 name: room-booking
@@ -34,6 +34,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-resa_password}
       DB_NAME: ${DB_NAME:-resa_db}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET est obligatoire}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET est obligatoire}
       PEPPER_SECRET: ${PEPPER_SECRET:?PEPPER_SECRET est obligatoire}
       # Origine du front autorisée par le CORS
       CORS_ORIGIN: ${FRONT_URL:-http://localhost:4321}

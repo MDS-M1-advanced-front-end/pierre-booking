@@ -31,23 +31,28 @@ export class LoginUserUseCase {
   /**
    * @param email - E-mail saisi, quelle que soit sa casse.
    * @param password - Mot de passe en clair.
-   * @returns Le jeton d'accès, sa durée de vie et l'utilisateur.
+   * @returns Le jeton d'accès (`short`), le jeton de rafraîchissement (`long`) et l'utilisateur.
    * @throws {InvalidCredentialsException} si l'e-mail est inconnu ou le mot de passe faux.
    */
   async execute(
     email: string,
     password: string,
-  ): Promise<IssuedToken & { user: User }> {
+  ): Promise<{ short: IssuedToken; long: IssuedToken } & { user: User }> {
     const user = await this.userRepository.findByEmail(
       User.normalizeEmail(email),
     );
     // Même erreur si l'e-mail est inconnu ou le mot de passe faux
     if (
       !user ||
+      !user.id ||
       !(await this.passwordHasher.verify(password, user.passwordHash))
     ) {
       throw new InvalidCredentialsException();
     }
-    return { ...(await this.tokens.issue(user.id!)), user };
+    return {
+      short: await this.tokens.issue(user.id),
+      long: await this.tokens.issueRefresh(user.id),
+      user,
+    };
   }
 }

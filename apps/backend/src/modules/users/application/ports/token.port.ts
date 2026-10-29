@@ -7,7 +7,8 @@ export interface IssuedToken {
 }
 
 /**
- * Émission et vérification des jetons d'accès. Implémenté par JwtTokenService.
+ * Émission et vérification des jetons d'accès (courts) et de rafraîchissement (longs).
+ * Implémenté par JwtTokenService.
  */
 export interface TokenPort {
   /**
@@ -22,6 +23,18 @@ export interface TokenPort {
    * @returns L'identifiant de l'utilisateur, ou `null` si le jeton est invalide ou expiré.
    */
   verify(token: string): Promise<string | null>;
+  /**
+   * Émet un jeton de rafraîchissement, qui ne donne pas accès aux routes protégées.
+   * @param userId - UUID de l'utilisateur.
+   * @returns Le jeton et sa durée de vie en secondes.
+   */
+  issueRefresh(userId: string): Promise<IssuedToken>;
+  /**
+   * Vérifie un jeton de rafraîchissement.
+   * @param token - Jeton reçu dans le corps de POST /auth/refresh.
+   * @returns L'identifiant de l'utilisateur, ou `null` si le jeton est invalide ou expiré.
+   */
+  verifyRefresh(token: string): Promise<string | null>;
 }
 
 /**

@@ -8,6 +8,7 @@ import type { Response } from 'express';
 import {
   EmailAlreadyUsedException,
   InvalidCredentialsException,
+  InvalidRefreshTokenException,
   UserDomainException,
   UserHasReservationsException,
   UserNotFoundException,
@@ -23,7 +24,10 @@ function toHttp(exception: UserDomainException): [HttpStatus, string] {
   if (exception instanceof UserNotFoundException) {
     return [HttpStatus.NOT_FOUND, 'NOT_FOUND'];
   }
-  if (exception instanceof InvalidCredentialsException) {
+  if (
+    exception instanceof InvalidCredentialsException ||
+    exception instanceof InvalidRefreshTokenException
+  ) {
     return [HttpStatus.UNAUTHORIZED, 'UNAUTHORIZED'];
   }
   if (

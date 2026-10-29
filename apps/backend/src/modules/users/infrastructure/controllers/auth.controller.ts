@@ -12,6 +12,7 @@ import { NonEmptyBodyPipe } from '../../../../common/non-empty-body.pipe.js';
 import { ChangePasswordUseCase } from '../../application/use-cases/change-password.use-case.js';
 import { GetUserUseCase } from '../../application/use-cases/get-user.use-case.js';
 import { LoginUserUseCase } from '../../application/use-cases/login-user.use-case.js';
+import { RefreshTokenUseCase } from '../../application/use-cases/refresh-token.use-case.js';
 import { RegisterUserUseCase } from '../../application/use-cases/register-user.use-case.js';
 import { UpdateUserUseCase } from '../../application/use-cases/update-user.use-case.js';
 import { CurrentUser, Public, type AuthUser } from '../auth/auth.decorators.js';
@@ -19,6 +20,7 @@ import {
   AuthResponseDTO,
   ChangePasswordDTO,
   LoginDTO,
+  RefreshDTO,
   RegisterDTO,
   UpdateProfileDTO,
 } from '../dtos/auth.dto.js';
@@ -35,6 +37,7 @@ export class AuthController {
   constructor(
     private readonly registerUserUseCase: RegisterUserUseCase,
     private readonly loginUserUseCase: LoginUserUseCase,
+    private readonly refreshTokenUseCase: RefreshTokenUseCase,
     private readonly getUserUseCase: GetUserUseCase,
     private readonly updateUserUseCase: UpdateUserUseCase,
     private readonly changePasswordUseCase: ChangePasswordUseCase,
@@ -60,15 +63,44 @@ export class AuthController {
   /**
    * POST /auth/login : connexion. Route publique.
    * @param dto - E-mail et mot de passe.
-   * @returns Le jeton d'accès et l'utilisateur (200) ; 401 si les identifiants sont faux.
+   * @returns Les jetons d'accès et de rafraîchissement et l'utilisateur (200) ; 401 si les identifiants sont faux.
    */
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginDTO): Promise<AuthResponseDTO> {
-    const { accessToken, expiresIn, user } =
-      await this.loginUserUseCase.execute(dto.email, dto.password);
-    return { accessToken, expiresIn, user: toUserDTO(user) };
+    const { short, long, user } = await this.loginUserUseCase.execute(
+      dto.email,
+      dto.password,
+    );
+    return {
+      accessToken: short.accessToken,
+      expiresIn: short.expiresIn,
+      refreshToken: long.accessToken,
+      user: toUserDTO(user),
+    };
+  }
+
+  /**
+   * POST /auth/refresh : nouveaux jetons à partir d'un jeton de rafraîchissement. Route publique
+   * (le jeton d'accès est justement expiré).
+   * @param dto - Jeton de rafraîchissement remis à la connexion.
+   * @returns Un nouveau jeton d'accès, un nouveau jeton de rafraîchissement et l'utilisateur (200) ;
+   * 401 si le jeton est invalide, expiré ou si le compte n'existe plus.
+   */
+  @Public()
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh(@Body() dto: RefreshDTO): Promise<AuthResponseDTO> {
+    const { short, long, user } = await this.refreshTokenUseCase.execute(
+      dto.refreshToken,
+    );
+    return {
+      accessToken: short.accessToken,
+      expiresIn: short.expiresIn,
+      refreshToken: long.accessToken,
+      user: toUserDTO(user),
+    };
   }
 
   /**

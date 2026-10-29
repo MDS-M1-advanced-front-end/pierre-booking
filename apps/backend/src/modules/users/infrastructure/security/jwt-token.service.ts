@@ -6,9 +6,14 @@ import type {
 } from '../../application/ports/token.port.js';
 
 /**
- * Durée de vie d'un jeton d'accès, en secondes (pas de jeton de rafraîchissement).
+ * Durée de vie d'un jeton d'accès, en secondes (15 min).
  */
-export const TOKEN_TTL_SECONDS = 3600;
+export const TOKEN_TTL_SECONDS = 15 * 60;
+
+/**
+ * Durée de vie d'un jeton de rafraîchissement, en secondes (7 jours).
+ */
+export const TOKEN_TTL_LONG_SECONDS = 7 * 24 * 60 * 60;
 
 /**
  * Secret de signature des jetons, lu dans JWT_SECRET.
@@ -21,6 +26,21 @@ export function jwtSecret(): string {
     throw new Error('JWT_SECRET est obligatoire en production');
   }
   return 'dev-secret';
+}
+
+/**
+ * Secret de signature des jetons de rafraîchissement, lu dans JWT_REFRESH_SECRET.
+ * Distinct de JWT_SECRET : sinon le guard accepterait un jeton de rafraîchissement
+ * comme jeton d'accès, valable 7 jours.
+ * @returns Le secret ; `dev-refresh-secret` hors production.
+ * @throws {Error} en production sans JWT_REFRESH_SECRET, au premier jeton émis ou vérifié.
+ */
+export function jwtRefreshSecret(): string {
+  if (process.env.JWT_REFRESH_SECRET) return process.env.JWT_REFRESH_SECRET;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_REFRESH_SECRET est obligatoire en production');
+  }
+  return 'dev-refresh-secret';
 }
 
 /**
@@ -41,12 +61,40 @@ export class JwtTokenService implements TokenPort {
   }
 
   /**
+   * @param userId - UUID de l'utilisateur.
+   * @returns Le jeton de rafraîchissement signé et sa durée de vie.
+   */
+  async issueRefresh(userId: string): Promise<IssuedToken> {
+    const accessToken = await this.jwtService.signAsync(
+      { sub: userId },
+      { secret: jwtRefreshSecret(), expiresIn: TOKEN_TTL_LONG_SECONDS },
+    );
+    return { accessToken, expiresIn: TOKEN_TTL_LONG_SECONDS };
+  }
+
+  /**
    * @param token - Jeton reçu.
    * @returns L'identifiant de l'utilisateur, ou `null` si la signature ou la date d'expiration est invalide.
    */
   async verify(token: string): Promise<string | null> {
     try {
       const payload = await this.jwtService.verifyAsync<{ sub: string }>(token);
+      return payload.sub;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * @param token - Jeton de rafraîchissement reçu.
+   * @returns L'identifiant de l'utilisateur, ou `null` si la signature ou la date d'expiration est invalide.
+   */
+  async verifyRefresh(token: string): Promise<string | null> {
+    try {
+      const payload = await this.jwtService.verifyAsync<{ sub: string }>(
+        token,
+        { secret: jwtRefreshSecret() },
+      );
       return payload.sub;
     } catch {
       return null;

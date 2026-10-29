@@ -10,6 +10,7 @@ import { DeleteUserUseCase } from './application/use-cases/delete-user.use-case.
 import { GetUserUseCase } from './application/use-cases/get-user.use-case.js';
 import { ListUsersUseCase } from './application/use-cases/list-users.use-case.js';
 import { LoginUserUseCase } from './application/use-cases/login-user.use-case.js';
+import { RefreshTokenUseCase } from './application/use-cases/refresh-token.use-case.js';
 import { RegisterUserUseCase } from './application/use-cases/register-user.use-case.js';
 import { UpdateUserUseCase } from './application/use-cases/update-user.use-case.js';
 import { USER_REPOSITORY } from './domain/repositories/user.repository.interface.js';
@@ -41,6 +42,7 @@ import { ScryptPasswordHasher } from './infrastructure/security/scrypt-password-
   providers: [
     RegisterUserUseCase,
     LoginUserUseCase,
+    RefreshTokenUseCase,
     AuthenticateUseCase,
     GetUserUseCase,
     ListUsersUseCase,

@@ -37,6 +37,15 @@ export class InvalidCredentialsException extends UserDomainException {
 }
 
 /**
+ * Jeton de rafraîchissement invalide, expiré, ou dont le compte n'existe plus (401).
+ */
+export class InvalidRefreshTokenException extends UserDomainException {
+  constructor() {
+    super('Jeton de rafraîchissement invalide');
+  }
+}
+
+/**
  * Mot de passe actuel incorrect au changement de mot de passe (400, et non 401 : le front
  * ne doit pas déconnecter l'utilisateur).
  */

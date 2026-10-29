@@ -46,7 +46,16 @@ export class LoginDTO {
 }
 
 /**
- * Réponse de POST /auth/login (AuthResponse du contrat).
+ * Corps de POST /auth/refresh (RefreshRequest du contrat).
+ */
+export class RefreshDTO {
+  @IsString()
+  @IsNotEmpty()
+  refreshToken: string;
+}
+
+/**
+ * Réponse de POST /auth/login et POST /auth/refresh (AuthResponse du contrat).
  */
 export class AuthResponseDTO {
   @IsString()
