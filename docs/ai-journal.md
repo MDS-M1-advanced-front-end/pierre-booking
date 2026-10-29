@@ -26,6 +26,42 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-10-29 — Revue de mon ajout d'un poivre dans le hachage des mots de passe (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : faire relire ma modification de `scrypt-password-hasher.ts` (poivre ajouté après le sel, non commitée).
+- **Demande** : « J'ai tenté de sécuriser scrypt-password-hasher.ts en rajoutant un pepper après le salt. Review ce que j'ai fait. »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : revue seule, sans modifier le code. Points relevés :
+  - `hash` renvoie le hash final décodé en UTF-8 (`toString()` sans `'hex'`) et sans le sel : la valeur est corrompue et le sel est perdu, donc aucune connexion ne peut réussir ;
+  - `verify` interpole un `Buffer` (`${saltedCandidate}`), donc en UTF-8, alors que `hash` utilise l'hexadécimal : les deux calculs ne donnent jamais la même chose ;
+  - `timingSafeEqual` lève une exception si les longueurs diffèrent (erreur 500 au lieu de `false`) ;
+  - `pepperSecret()` lève une exception dès que `NODE_ENV` n'est pas `development`, or rien ne le fixe dans le projet : `pnpm dev`, `pnpm seed` et les tests échouent sans `PEPPER_SECRET` ; message et JSDoc parlent de `JWT_SECRET` ; l'erreur survient à la première inscription, pas au démarrage ;
+  - comptes existants (seed) invalidés, `PEPPER_SECRET` absent de `.env.example` et `compose.yaml`, pas de rotation possible du poivre ; le contrôle `!pepper` ne sert à rien ;
+  - le principe (un second scrypt avec le poivre comme clé) tient : sans le poivre, un essai ne peut pas être vérifié.
+- **Suite** : « comment faire pour ne pas perdre le sel si on double encrypté ? ». Explication sans modifier le fichier : stocker `<sel>:<hash final en hex>`, le sel n'étant pas secret, le poivre restant seul dans l'environnement ; refaire dans `verify` exactement les mêmes étapes que `hash` (même encodage hex). Précision de vocabulaire : il s'agit de hachage, pas de chiffrement (pas de déchiffrement possible).
+- **Suite 2** : « normalement j'ai réussi à corriger ». Relecture de ma correction : le sel est bien conservé, mais le hash final est encore interpolé sans `.toString('hex')` dans `hash`, et `verify` interpole toujours `saltedCandidate` sans `.toString('hex')`. Copie de la logique exécutée sur 20 hachages : `verify` lève une exception 20 fois sur 20 (longueurs différentes dans `timingSafeEqual`). `pepperSecret()` et la JSDoc sont inchangés.
+- **Suite 3** : « c'est bon j'ai corrigé, revérifie ». Les deux `.toString('hex')` sont en place. Copie de la logique exécutée : bon mot de passe → `true` 20 fois sur 20, format stocké `<32 hex>:<128 hex>`, mauvais mot de passe → `false`, autre poivre → `false`, ancien hash sans poivre → `false` (comptes existants à migrer), valeur stockée tronquée → exception de `timingSafeEqual` (déjà le cas avant le poivre). `tsc` et `vitest` passent. Restent inchangés : condition `NODE_ENV !== 'development'`, mentions de `JWT_SECRET`, `PEPPER_SECRET` absent de `.env.example` et `compose.yaml`, pas de test du hasher.
+- **Suite 4** : « corriges la jsdoc et commit ». L'IA a réécrit seulement la JSDoc pour décrire le comportement réel : rôle du poivre, `dev-secret` uniquement si `NODE_ENV=development`, erreur au premier hachage et pas au démarrage, deux passes, format stocké, `false` pour un ancien hash, `RangeError` si la longueur stockée est fausse. Le code et le message d'erreur (qui cite encore `JWT_SECRET`) n'ont pas été modifiés. Commit `cc11748` (`:lock: back : poivre dans le hachage des mots de passe`), qui contient aussi ma correction du code.
+- **Suite 5** : « corriges le message de l'exception et amend le commit ». Message remplacé par `PEPPER_SECRET est obligatoire hors développement` (il citait `JWT_SECRET` et parlait de production alors que la condition est `NODE_ENV !== 'development'`). Le commit du code n'était plus le dernier (le journal était committé après) : un simple `--amend` aurait mis le code dans le commit du journal, donc correction intégrée par `git commit --fixup` + `rebase --autosquash` (branche non poussée). Le commit `d1b5356` est devenu `cc11748`.
+- **Erreurs de l'IA relevées** : un premier essai d'exécution du vrai fichier avec `tsx` a échoué (décorateurs non pris en charge) ; vérification refaite sur une copie de la logique en JavaScript.
+- **Vérification** : `tsc --noEmit` passe (les bugs ne sont pas des erreurs de type) ; `vitest` passe (aucun test ne couvre le hasher) ; copie exécutée sur 20 hachages : 0 vérification réussie, 4 exceptions levées par `verify`, valeur stockée illisible.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-29 — Questions sur le hachage des mots de passe et le JWT (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : vérifier ma compréhension de `scrypt-password-hasher.ts` et `jwt-token.service.ts`.
+- **Demande** : « De ce que je comprends, [le hasher] stocke le sel utilisé pour hasher ce qui est une faille de sécurité […] ; [le service JWT] génère et vérifie le jwt […] avec une validité d'une heure. Je suis bon ? » Explication seule, sans correction.
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : explication, aucun code modifié. Le JWT : compréhension juste (durée fixée par `signOptions.expiresIn` dans `users.module.ts`, pas de rafraîchissement, le jeton ne porte que `sub`, rôle relu en base). Le sel : correction de mon hypothèse, stocker le sel en clair à côté du hash est la pratique normale ; il n'est pas secret, il sert à rendre chaque hash unique (pas de tables arc-en-ciel, deux mots de passe identiques donnent des hash différents). Un secret supplémentaire non stocké en base s'appelle un « poivre » (pepper).
+- **Suite** : « fais-moi une estimation du temps que ça prend entre un mdp faible (azerty123) et un mdp fort (gdz!df)dsqzr3h2;) pour le bruteforce à partir d'un sel connu ». Estimation avec les paramètres scrypt par défaut de Node (N=16384, r=8, p=1) : `azerty123` tombe en quelques secondes à quelques minutes par dictionnaire de fuites ; le mot de passe de 16 caractères demande de l'ordre de 10^20 ans sur un GPU. Sans le dictionnaire, `azerty123` coûterait quand même ~230 ans par GPU en force brute pure, ce qui montre que c'est sa présence dans les listes qui le rend faible, pas seulement sa longueur.
+- **Suite 2** : « les gens mettent un mdp de 8 char, avec maj min chiffre et char spéciaux. fais moi une estimation du temps de bruteforce en cas de fuite de db (avec et sans fuite de env) ». 95^8 ≈ 6,6×10^15 combinaisons : ~15 000 ans pour 1 GPU si le mot de passe est vraiment aléatoire, mais le motif humain courant (`Majuscule + 5 minuscules + chiffre + spécial`) ramène à ~3 mois pour 1 GPU, ~1 jour pour 100, et minutes à heures avec dictionnaire + règles. Fuite du `.env` : aucun effet sur le cassage (le hachage n'utilise aucun secret), mais `JWT_SECRET` permet de forger un jeton pour n'importe quel compte sans casser de mot de passe ; `SEED_PASSWORD` donne celui des comptes créés par `pnpm seed`. Un poivre rendrait le cassage impossible tant que le `.env` ne fuit pas.
+- **Suite 3** (précision de ma question) : comparaison des trois cas pour un mot de passe de 8 caractères. Sel seul : minutes à mois (motif humain), ~15 000 ans par GPU (aléatoire). Sel + poivre, `.env` non fuité : il faut aussi deviner le poivre (2^256 si 32 octets aléatoires), ~10^65 ans, même avec un compte dont l'attaquant connaît le mot de passe. Sel + poivre, `.env` fuité : identique au sel seul. Le poivre ne protège que s'il est aléatoire et long : un poivre comme `dev-secret` se devine par dictionnaire.
+- **Erreurs de l'IA relevées** : aucune dans le code examiné ; l'erreur était dans ma lecture. Le débit GPU (~7 000 H/s sur une RTX 4090) vient de la mémoire de l'IA, pas d'une mesure : c'est un ordre de grandeur à vérifier.
+- **Vérification** : relecture des deux fichiers et de `users.module.ts` ; mesure locale de scrypt avec les paramètres du projet : 45 ms par hash, soit ~22 essais/s par cœur.
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-10-28 — Revue de ma table de transitions des réservations (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
