@@ -26,6 +26,48 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-10-28 — Revue de ma table de transitions des réservations (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : faire relire ma première version de la machine à états de `Reservation` (non commitée).
+- **Demande** : « J'ai essayé de faire la gestion de transition. J'aimerais que tu reviews ce que j'ai fait. »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : revue seule, sans modifier le code. Points relevés :
+  - le build est cassé : `confirm`, `reject` et `cancel` sont supprimés mais encore appelés par 3 cas d'usage, et `ReservationStatus.PENDING` est toujours le défaut de l'entité TypeORM ;
+  - `assertValidSlot` dans le constructeur s'exécute aussi au rechargement depuis la base (mapper), donc toute réservation passée devient illisible ;
+  - le renommage `PENDING` → `PENDING_PAYMENT` sort du contrat `openapi.yml`, demande une migration de l'enum et casse le front et le mock ;
+  - `REJECTED` n'est accessible depuis aucun statut, `PENDING_PAYMENT → COMPLETED` saute la confirmation, et `reschedule` contourne la table ;
+  - `InvalidStateTransitionException` n'est pas traduite par le filtre, ce qui renvoie 400 au lieu du 409 du contrat ;
+  - points mineurs : import circulaire exception ↔ entité, `status` toujours public, constante à nommer en `UPPER_SNAKE`, JSDoc manquante.
+- **Deuxième passe** (« j'ai normalement tout corrigé, je te laisse vérifier ») :
+  - corrigés : `PENDING` conservé, `confirm`, `reject`, `cancel` et `reschedule` passent par `transitionTo`, `status` est privé avec un getter, l'exception hérite de `ReservationConflictException`, `import type`, constante en `UPPER_SNAKE` ;
+  - encore à reprendre :
+    - le build est toujours cassé : `transitionTo` utilise l'ancien nom `allowedReservationTransitions` ;
+    - `PENDING → REJECTED` manque toujours, donc tout refus renvoie 409 ;
+    - `assertValidSlot(startAt, endAt, createdAt)` reste dans le constructeur. Une réservation du seed (`…300000000005`, `createdAt` après `startAt`) lève donc une exception au chargement. Mieux vaut ne pas valider au rechargement ;
+    - JSDoc : `reschedule` affirme encore ne pas contrôler le statut, et `transitionTo`, la table et l'exception n'ont pas de JSDoc.
+- **Petites corrections faites par l'IA** (« je te laisse faire les petites corrections puis commit ») ; j'avais déjà corrigé le nom de la constante dans `transitionTo` :
+  - ajout de `PENDING → REJECTED` dans la table ;
+  - suppression de `assertValidSlot` dans le constructeur (les cas d'usage de création et de modification la font déjà) ;
+  - JSDoc de la table, du getter `status`, de `transitionTo` et de l'exception ; `@throws` mis à jour (`InvalidStateTransitionException`) et JSDoc de `reschedule` corrigée ;
+  - commit `8c31c81`.
+- **Erreurs de l'IA relevées** :
+  - le script de scénario de non-régression (123 vérifications) était resté dans le dossier temporaire de session et a été effacé : il n'a pas pu être relancé et a été remplacé par un test HTTP ciblé ;
+  - une requête du test (`/admin/reservations?limit=50`) a renvoyé 400 : erreur de l'IA dans la requête (limite au-dessus du maximum), pas du code ; relancée sans `limit`.
+- **Vérification** :
+  - `git diff`, puis `tsc --noEmit` dans `apps/backend` : 4 erreurs à la première passe, 1 à la deuxième ;
+  - recherche des usages de `PENDING` dans le contrat, le front, la migration et le mock ;
+  - lecture du mapper et du filtre d'exceptions ;
+  - script comparant `startAt` et `createdAt` dans `mock/data/reservations.json` ;
+  - après les corrections : `pnpm check` vert à la racine (dont 304 tests) ; back lancé sur une base `resa_test` migrée et seedée.
+  - Le test HTTP sur `resa_test` a donné :
+    - les listes client et admin, ainsi que la réservation `…05`, se chargent (200) ;
+    - refuser une réservation PENDING renvoie 200, la refuser à nouveau 409 ;
+    - confirmer une réservation REJECTED renvoie 409, annuler une réservation CANCELLED aussi ;
+    - le cycle création → déplacement PENDING → confirmation → déplacement CONFIRMED → annulation passe ;
+    - modifier une réservation annulée renvoie 409, et les statistiques 200.
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-10-28 — JSDoc du back et question sur la machine à états des réservations (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal, avec 3 sous-agents en parallèle (un par module) ; `common/` fait par l'agent principal.
