@@ -35,6 +35,10 @@ const DEFAULTS: Record<number, ApiErrorBody> = {
     code: 'CONFLICT',
     message: "Conflit avec l'état actuel de la ressource.",
   },
+  [HttpStatus.TOO_MANY_REQUESTS]: {
+    code: 'TOO_MANY_REQUESTS',
+    message: 'Trop de requêtes, réessayez dans une minute.',
+  },
   [HttpStatus.INTERNAL_SERVER_ERROR]: {
     code: 'INTERNAL_ERROR',
     message: 'Erreur interne du serveur.',

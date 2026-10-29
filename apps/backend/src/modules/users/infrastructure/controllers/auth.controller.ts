@@ -8,6 +8,7 @@ import {
   Post,
   UseFilters,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { NonEmptyBodyPipe } from '../../../../common/non-empty-body.pipe.js';
 import { ChangePasswordUseCase } from '../../application/use-cases/change-password.use-case.js';
 import { GetUserUseCase } from '../../application/use-cases/get-user.use-case.js';
@@ -27,6 +28,12 @@ import {
 import { toUserDTO } from '../dtos/user-dto.mapper.js';
 import { UserDTO } from '../dtos/users.dto.js';
 import { UserExceptionFilter } from '../filters/user-exception.filter.js';
+
+/**
+ * Limite des routes publiques d'authentification, contre le bruteforce des mots de passe
+ * et des jetons : 5 requêtes par minute et par IP.
+ */
+const AUTH_THROTTLE = { default: { limit: 5, ttl: 60_000 } };
 
 /**
  * Routes /auth : inscription, connexion, profil et mot de passe de l'utilisateur connecté.
@@ -49,6 +56,7 @@ export class AuthController {
    * @returns L'utilisateur créé (201) ; 409 si l'e-mail est pris.
    */
   @Public()
+  @Throttle(AUTH_THROTTLE)
   @Post('register')
   async register(@Body() dto: RegisterDTO): Promise<UserDTO> {
     const user = await this.registerUserUseCase.execute(
@@ -66,6 +74,7 @@ export class AuthController {
    * @returns Les jetons d'accès et de rafraîchissement et l'utilisateur (200) ; 401 si les identifiants sont faux.
    */
   @Public()
+  @Throttle(AUTH_THROTTLE)
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginDTO): Promise<AuthResponseDTO> {
@@ -89,6 +98,7 @@ export class AuthController {
    * 401 si le jeton est invalide, expiré ou si le compte n'existe plus.
    */
   @Public()
+  @Throttle(AUTH_THROTTLE)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refresh(@Body() dto: RefreshDTO): Promise<AuthResponseDTO> {
