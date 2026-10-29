@@ -7,8 +7,10 @@ import {
   type ArgumentsHost,
   type ExceptionFilter,
 } from '@nestjs/common';
+import type { GqlContextType } from '@nestjs/graphql';
 import type { ValidationError } from 'class-validator';
 import type { Response } from 'express';
+import { GraphQLError } from 'graphql';
 
 // Corps d'erreur du contrat (schéma Error de openapi.yml)
 interface ApiErrorBody {
@@ -85,18 +87,31 @@ export function validationException(
  * Filtre global : toutes les erreurs au format `{ code, message, details }` du schéma `Error`
  * du contrat. Une erreur inattendue donne `INTERNAL_ERROR`, sans détail, et elle est journalisée.
  * Les exceptions du domaine sont traduites avant, par le filtre de chaque module.
+ * En GraphQL, le même corps est renvoyé dans `errors[].extensions`, avec le statut HTTP (voir
+ * admin.graphql dans le core) : la réponse est écrite par le serveur GraphQL, pas par le filtre.
  */
 @Catch()
 export class ApiExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(ApiExceptionFilter.name);
 
   /**
-   * Écrit la réponse d'erreur.
+   * Écrit la réponse d'erreur (REST) ou renvoie l'erreur GraphQL.
    * @param exception - Exception levée pendant la requête.
    * @param host - Contexte de la requête, pour accéder à la réponse Express.
+   * @returns L'erreur à placer dans `errors` en GraphQL ; rien en REST.
    */
-  catch(exception: unknown, host: ArgumentsHost): void {
-    const response = host.switchToHttp().getResponse<Response>();
+  catch(exception: unknown, host: ArgumentsHost): GraphQLError | void {
+    const [status, body] = this.toErrorBody(exception);
+    if (host.getType<GqlContextType>() === 'graphql') {
+      const { message, ...extensions } = body;
+      return new GraphQLError(message, {
+        extensions: { ...extensions, status },
+      });
+    }
+    host.switchToHttp().getResponse<Response>().status(status).json(body);
+  }
+
+  private toErrorBody(exception: unknown): [number, ApiErrorBody] {
     if (!(exception instanceof HttpException)) {
       // Message et pile seulement : l'objet complet d'une QueryFailedError contient la requête
       // et ses paramètres (e-mails, etc.). On ne veut pas écrire ces données dans les journaux.
@@ -104,10 +119,10 @@ export class ApiExceptionFilter implements ExceptionFilter {
         exception instanceof Error ? exception.message : String(exception);
       const stack = exception instanceof Error ? exception.stack : undefined;
       this.logger.error(message, stack);
-      response
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json(DEFAULTS[HttpStatus.INTERNAL_SERVER_ERROR]);
-      return;
+      return [
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        DEFAULTS[HttpStatus.INTERNAL_SERVER_ERROR],
+      ];
     }
 
     const status = exception.getStatus();
@@ -128,6 +143,6 @@ export class ApiExceptionFilter implements ExceptionFilter {
       // new XxxException('message') : Nest ajoute `error` seulement quand un message est donné
       body.message = raw.message;
     }
-    response.status(status).json(body);
+    return [status, body];
   }
 }

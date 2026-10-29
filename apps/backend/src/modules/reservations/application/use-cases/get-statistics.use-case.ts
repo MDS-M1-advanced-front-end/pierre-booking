@@ -1,12 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { addDays, fromParis } from '../../../../common/paris-time';
 import {
   STATISTICS,
   type Statistics,
   type StatisticsPort,
 } from '../ports/statistics.port';
+import { toPeriod } from '../period';
 
-/** GET /admin/statistics (administrateurs) : statistiques de la plateforme. */
+/** GET /admin/statistics et `statistics` du tableau de bord GraphQL (administrateurs). */
 @Injectable()
 export class GetStatisticsUseCase {
   constructor(
@@ -20,9 +20,6 @@ export class GetStatisticsUseCase {
    * @returns Les statistiques ; utilisateurs et salles comptés sans tenir compte de la période.
    */
   execute(from?: string, to?: string): Promise<Statistics> {
-    return this.statistics.compute({
-      from: from ? fromParis(from) : undefined,
-      before: to ? fromParis(addDays(to, 1)) : undefined,
-    });
+    return this.statistics.compute(toPeriod(from, to));
   }
 }

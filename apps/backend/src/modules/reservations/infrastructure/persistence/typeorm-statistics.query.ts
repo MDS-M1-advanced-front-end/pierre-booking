@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TypeOrmRoomEntity } from '../../../rooms/infrastructure/persistence/typeorm-room.entity';
 import { TypeOrmUserEntity } from '../../../users/infrastructure/persistence/typeorm-user.entity';
+import type { Period } from '../../application/period';
 import type {
   Statistics,
   StatisticsPort,
@@ -32,7 +33,7 @@ export class TypeormStatisticsQuery implements StatisticsPort {
   ) {}
 
   /** @inheritdoc */
-  async compute(period: { from?: Date; before?: Date }): Promise<Statistics> {
+  async compute(period: Period): Promise<Statistics> {
     const qb = this.reservations
       .createQueryBuilder('reservation')
       .select('COUNT(*)', 'total')

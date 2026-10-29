@@ -7,13 +7,15 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
+import { httpOf } from '../../../../common/request-context';
 import { AuthenticateUseCase } from '../../application/use-cases/authenticate.use-case';
 import type { UserRole } from '../../domain/entities/user.entity';
 import { IS_PUBLIC_KEY, ROLES_KEY, type AuthUser } from './auth.decorators';
 
 /**
  * Guard global : jeton Bearer obligatoire sauf sur les routes @Public(), puis contrôle @Roles().
- * Enregistré par UsersModule (APP_GUARD), il s'applique à tous les modules.
+ * Enregistré par UsersModule (APP_GUARD), il s'applique à tous les modules, et aux requêtes
+ * GraphQL (resolvers @Query ; pas aux @ResolveField, atteints seulement à travers eux).
  */
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -23,7 +25,7 @@ export class AuthGuard implements CanActivate {
   ) {}
 
   /**
-   * @param context - Contexte de la requête HTTP.
+   * @param context - Contexte de la requête HTTP ou GraphQL.
    * @returns `true` si la requête peut continuer.
    * @throws {UnauthorizedException} sans jeton valide sur une route protégée (401).
    * @throws {ForbiddenException} si le rôle n'est pas dans @Roles() (403).
@@ -34,9 +36,7 @@ export class AuthGuard implements CanActivate {
       IS_PUBLIC_KEY,
       targets,
     );
-    const request = context
-      .switchToHttp()
-      .getRequest<Request & { user?: AuthUser }>();
+    const request: Request & { user?: AuthUser } = httpOf(context).req;
 
     request.user = await this.readUser(request);
     if (isPublic) return true;

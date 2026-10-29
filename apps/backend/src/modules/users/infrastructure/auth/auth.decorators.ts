@@ -3,6 +3,7 @@ import {
   SetMetadata,
   type ExecutionContext,
 } from '@nestjs/common';
+import { httpOf } from '../../../../common/request-context';
 import type { UserRole } from '../../domain/entities/user.entity';
 
 /**
@@ -40,5 +41,5 @@ export const Roles = (...roles: UserRole[]) => SetMetadata(ROLES_KEY, roles);
  */
 export const CurrentUser = createParamDecorator(
   (_data: unknown, context: ExecutionContext) =>
-    context.switchToHttp().getRequest<{ user?: AuthUser }>().user,
+    (httpOf(context).req as { user?: AuthUser }).user,
 );
