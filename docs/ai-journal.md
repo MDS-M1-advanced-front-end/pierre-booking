@@ -26,6 +26,37 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-11-16 — Écran « Demandes » en une seule requête GraphQL (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : charger l'écran 11 « Demandes » (`/gestion/demandes`) en une requête GraphQL au lieu de plusieurs appels REST.
+- **Demande** : « ok dans ce cas on va faire sur gestion/demandes. actuellement elle fait 2 requêtes. essaies d'utiliser les nouvelles routes graphql pour n'en faire qu'une ». En lisant le code, l'IA a relevé que l'écran fait en fait plus de deux requêtes : `GET /reservations`, toutes les pages de `GET /rooms` (pour filtrer les salles du gestionnaire, anomalie 5), puis un `GET /rooms/{id}` par salle inconnue et un `GET /users/{id}` par demandeur (anomalie 8). Le schéma GraphQL existant était réservé aux administrateurs : il a fallu l'ouvrir aux gestionnaires pour cette requête.
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (commits à ma demande « commit tout », non poussés : `c642c90` core, `c83aef0` back, `0a6b04e` front, puis ce journal ; dépôt `core` : `a95f587` sur `👨🏻‍🏫pierre`, `CORE_VERSION` mis à jour) :
+  - **core** (`packages/core`, reporté sur le dépôt `core`) : nouvelle requête `reservationRequests` dans `admin.graphql`, pour les gestionnaires (leurs salles) et les administrateurs (toutes les salles). Elle a deux champs, `pending(limit = 100)` et `handled(limit = 10)`, et chaque `ReservationRequest` porte les champs du `Reservation` REST, avec `room` et `requester` à la place de `roomId` et `userId`. Ajout d'un scalaire `DateTime` (ISO 8601 UTC, comme en REST), de la requête prête à l'emploi `getReservationRequests` et de la section README. Le contrat parle maintenant du « back-office » et non plus de la seule administration ; le nom du fichier `admin.graphql` est conservé pour ne pas casser le lien symbolique du back ;
+  - **back** : `ReservationRequestsResolver` (`@Roles(GESTIONNAIRE, ADMINISTRATEUR)`), `ListReservationRequestsUseCase` (périmètre : salles du gestionnaire, ou toutes pour l'administrateur ; statuts traités CONFIRMED, REJECTED, COMPLETED), port `ReservationRequestsPort` et `TypeormReservationRequestsQuery` (une requête SQL par liste, avec jointure sur la salle et le demandeur), `DateTimeScalar` ;
+  - **front** : `listReservationRequests` dans `reservations.queries.ts` remplace, dans `RequestList.svelte`, `listMyReservations`, `listRoomsOfOwner`, `getRoomsByIds` et `getUsersByIds`. `requests.ts` : `splitRequests` (filtre, tri et limite côté client) est remplacé par `toRequestLists`, qui ramène la réponse au type `Reservation` du REST pour garder `ReservationItem` et les actions Confirmer / Refuser inchangés. `RequestList` n'a plus de prop `user` ;
+  - **e2e** : le mock Prism ne sert pas `/graphql`. `e2e/graphql.ts` simule donc la réponse (données du seed vues par Nadia Benali), utilisée par `gestion-planning.spec.ts` et `a11y.spec.ts`. Nouveau test : l'écran n'envoie qu'un `POST /graphql`, hors `GET /auth/me` et hors compteur de l'en-tête.
+- **Erreurs de l'IA relevées** :
+  - l'hypothèse « 2 requêtes » n'a pas été reprise telle quelle : le décompte réel a été établi en lisant le code ;
+  - les mots de passe du seed sont inconnus de l'IA (déjà le cas à la séance précédente) : pour tester en vrai, elle a signé des jetons de test avec le secret de développement de `.env`. Ce n'est possible qu'en développement, et aucune donnée n'a été modifiée ;
+  - une première tentative de signature passait par `jsonwebtoken`, introuvable depuis le scratchpad : réécrite avec `node:crypto` ;
+  - lint : un `{#snippet children(user)}` devenu inutile dans `RequestsPage.svelte` (`svelte/no-useless-children-snippet`), corrigé ;
+  - une première exécution des e2e a été tuée (code 137) sans résultat ; la seconde a été arrêtée à ma demande.
+- **Vérification** : `pnpm check` du core (5 tests) ; à la racine, `pnpm typecheck`, `pnpm lint` et `pnpm test` (309 tests) ; `nest build` sans erreur. Test réel sur le back (port 8099) : la réponse de `gestionnaire1` correspond à `GET /reservations` (1 en attente, 3 traitées) ; l'administrateur voit toutes les salles (2 en attente) ; un client reçoit 403, sans jeton 401, `limit: 0` 400 ; `dashboard` reste interdit au gestionnaire (403). E2E **non lancés** (à ma demande, ils le seront au déploiement) : `e2e/graphql.ts` et le nouveau test n'ont donc jamais tourné.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-10-29 — Requêtes de l'écran « détail d'une salle » côté gestionnaire (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : savoir combien de requêtes le front envoie pour afficher le détail d'une salle dans l'interface gestionnaire, avant d'envisager de les regrouper.
+- **Demande** : « regardes côté front, il y a normalement une interface de gestionnaire des salles. sur le détail d'une salle, actuellement il fait probablement 3 requêtes (room detail, availabilities et reservations). tu peux me confirmer ce premier point ? »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : lecture des pages `gestion/` et des îlots Svelte, sans modification. Il n'y a pas d'écran « détail d'une salle » côté gestionnaire. L'écran le plus proche, `gestion/salles/[id]/disponibilites` (`AvailabilityEditor.svelte`), envoie **deux** requêtes en parallèle au montage : `getRoom` (`GET /rooms/{id}`) et `getRoomAvailability` (`GET /rooms/{id}/availability?date=…`). Ce dernier est renvoyé à chaque changement de date. Aucune réservation n'y est chargée. « Modifier » (`RoomForm.svelte`) ne fait que `getRoom`. Les réservations des salles ne sont chargées que dans « Demandes » (`RequestList.svelte` : `listRoomsOfOwner` puis `GET /reservations`). Hypothèse de départ (trois requêtes) non confirmée.
+- **Erreurs de l'IA relevées** : aucune trouvée.
+- **Vérification** : lecture du code (`grep` des appels à `rooms.queries` et `reservations.queries` dans `src/partials`), pas d'observation réseau dans le navigateur.
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-10-29 — API GraphQL d'administration pour les tableaux de bord (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
