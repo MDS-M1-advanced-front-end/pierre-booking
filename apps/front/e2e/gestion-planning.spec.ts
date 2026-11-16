@@ -1,6 +1,7 @@
 // Parcours gestionnaire : disponibilités (écran 10), demandes (écran 11) et compteur de l'en-tête.
 // Le mock Prism est sans état : on vérifie les requêtes envoyées et l'affichage des réponses.
 import { expect, test, type Page } from '@playwright/test';
+import { mockReservationRequests } from './graphql';
 
 const VOLTAIRE = '00000000-0000-4000-8000-100000000001'; // salle de Nadia Benali
 const FOURVIERE = '00000000-0000-4000-8000-100000000006'; // salle d'un autre gestionnaire
@@ -139,6 +140,27 @@ test.describe('Disponibilités', () => {
 });
 
 test.describe('Demandes', () => {
+  test.beforeEach(async ({ page }) => {
+    await mockReservationRequests(page);
+  });
+
+  test('charge les demandes en une seule requête GraphQL', async ({ page }) => {
+    const calls: string[] = [];
+    page.on('request', (req) => {
+      const { pathname } = new URL(req.url());
+      // Hors compteur de l'en-tête (GET /reservations?status=PENDING, sur toutes les pages)
+      if (req.url().startsWith('http://localhost:4010/') && !req.url().includes('status=PENDING')) {
+        calls.push(`${req.method()} ${pathname}`);
+      }
+    });
+    const graphql = page.waitForRequest((req) => req.url().endsWith('/graphql'));
+    await page.goto('/gestion/demandes');
+
+    expect((await graphql).postDataJSON()).toMatchObject({ variables: { handledLimit: 10 } });
+    await expect(page.getByRole('region', { name: /En attente/ })).toBeVisible();
+    expect(calls.filter((call) => call !== 'GET /auth/me')).toEqual(['POST /graphql']);
+  });
+
   test('affiche les demandes en attente et traitées des salles du gestionnaire', async ({
     page,
   }) => {
@@ -148,7 +170,7 @@ test.describe('Demandes', () => {
     const pending = page.getByRole('region', { name: /En attente/ });
     await expect(pending.getByRole('heading', { level: 2 })).toHaveText('En attente 1');
     await expect(pending.getByRole('heading', { name: 'Auditorium Bastille' })).toBeVisible();
-    await expect(pending.getByText('Demande de')).toBeVisible();
+    await expect(pending.getByText('Demande de Léa Martin')).toBeVisible();
     const handled = page.getByRole('region', { name: 'Traitées récemment' });
     await expect(handled.getByRole('listitem')).toHaveCount(3);
   });
