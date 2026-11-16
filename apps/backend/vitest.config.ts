@@ -5,8 +5,10 @@ export default defineConfig({
   // added by `nest g library`. Requires Vite 8, which ships this option.
   resolve: { tsconfigPaths: true },
   test: {
+    name: 'backend',
     globals: true,
-    root: './',
-    include: ['**/*.spec.ts'],
+    // Dossier de ce fichier : la configuration est aussi chargée depuis la racine du dépôt
+    root: import.meta.dirname,
+    include: ['src/**/*.spec.ts'],
   },
 });

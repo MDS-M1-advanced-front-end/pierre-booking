@@ -10,6 +10,8 @@ const front = 'apps/front';
 export default defineConfig({
   test: {
     projects: [
+      // Back : sa propre configuration (globals, fichiers *.spec.ts)
+      'apps/backend/vitest.config.ts',
       {
         test: {
           name: 'core',
