@@ -1,6 +1,7 @@
 // Normalisation des erreurs renvoyées par les fonctions de `core` (cadrage.md § 2.4 et § 2.6).
 import type { ApiError, Result } from '@room-booking/core';
 import { ensureFreshSession, expireSession, refreshSession } from './auth/session.svelte';
+import { isOffline } from './offline/network.svelte';
 
 /** Erreur exploitable par l'interface : `status` HTTP (0 = réseau), `code` et `message` de l'API. */
 export type DataError = ApiError;
@@ -22,6 +23,8 @@ const DEFAULT_MESSAGES: ErrorMessages = {
 };
 
 const SERVER_ERROR = 'Le serveur a rencontré une erreur, réessayez plus tard.';
+const OFFLINE_ERROR =
+  'Vous êtes hors ligne : cette action sera possible au retour de la connexion.';
 const UNKNOWN_ERROR = 'Une erreur inattendue est survenue.';
 
 /**
@@ -32,6 +35,9 @@ const UNKNOWN_ERROR = 'Une erreur inattendue est survenue.';
  */
 export function errorMessage(error: DataError, messages: ErrorMessages = {}): string {
   const { status } = error;
+  // Erreur réseau alors que le navigateur se sait hors ligne : on le dit plutôt que « serveur
+  // injoignable »
+  if (status === 0 && isOffline()) return OFFLINE_ERROR;
   const specific = messages[status];
   if (specific !== undefined) return specific;
   const generic = DEFAULT_MESSAGES[status];

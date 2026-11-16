@@ -359,6 +359,7 @@
         >
           <Button variant="secondary" href="/gestion/salles">Annuler</Button>
           <Button
+            needsNetwork
             type="submit"
             aria-disabled={saving || slotsState.type !== 'ready'}
             aria-busy={saving}

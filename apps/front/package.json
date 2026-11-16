@@ -12,7 +12,8 @@
     "astro": "astro",
     "typecheck": "astro check && svelte-check --tsconfig ./tsconfig.json --threshold error",
     "lint": "eslint .",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "generate:pwa-assets": "pwa-assets-generator"
   },
   "dependencies": {
     "@astrojs/node": "11.1.7",
@@ -31,12 +32,20 @@
     "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.63.0",
+    "@vite-pwa/assets-generator": "^2.0.0",
+    "@vite-pwa/astro": "^2.0.2",
     "eslint": "10.11.0",
     "eslint-plugin-astro": "3.2.1",
     "eslint-plugin-svelte": "3.23.0",
     "globals": "17.12.0",
     "svelte-check": "4.7.6",
     "typescript": "^6.0.3",
-    "typescript-eslint": "8.70.1"
+    "typescript-eslint": "8.70.1",
+    "workbox-cacheable-response": "^7.4.1",
+    "workbox-expiration": "^7.4.1",
+    "workbox-precaching": "^7.4.1",
+    "workbox-routing": "^7.4.1",
+    "workbox-strategies": "^7.4.1",
+    "workbox-window": "^7.4.1"
   }
 }

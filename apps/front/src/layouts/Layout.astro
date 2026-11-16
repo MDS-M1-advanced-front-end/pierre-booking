@@ -1,4 +1,5 @@
 ---
+import AppStatus from '../components/AppStatus.svelte';
 import Head from '../components/Head.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import SiteHeader from '../components/SiteHeader.svelte';
@@ -48,6 +49,9 @@ const { title, description } = Astro.props;
         </div>
       </div>
     </SiteHeader>
+
+    <!-- Bandeaux « hors ligne » et « nouvelle version » (PWA), dans le navigateur seulement. -->
+    <AppStatus client:only="svelte" />
 
     <main
       id="main"

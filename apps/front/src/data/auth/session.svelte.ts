@@ -5,6 +5,7 @@
 import type { AuthResponse, User, UserRole } from '@room-booking/core';
 import { buildLoginUrl } from '../../utils/redirect';
 import { getAccessToken, refresh, setAccessToken } from '../client';
+import { clearPrivateCaches } from '../offline/serviceWorker';
 
 /** Clé du localStorage. */
 export const SESSION_KEY = 'quorum.session';
@@ -115,12 +116,16 @@ export function restoreSession(): User | null {
  */
 export function saveSession(auth: AuthResponse): void {
   if (!isBrowser) return;
+  // Autre compte que celui de la session enregistrée : les réponses de l'API gardées hors ligne
+  // sont les siennes
+  const previous = parse(readStorage());
+  if (previous && previous.user.id !== auth.user.id) void clearPrivateCaches();
   const expiresIn = auth.expiresIn ?? DEFAULT_EXPIRES_IN;
   writeStorage({
     accessToken: auth.accessToken,
     user: auth.user,
     expiresAt: Date.now() + expiresIn * 1000,
-    refreshToken: auth.refreshToken ?? parse(readStorage())?.refreshToken ?? null,
+    refreshToken: auth.refreshToken ?? previous?.refreshToken ?? null,
   });
   setAccessToken(auth.accessToken);
   session.user = auth.user;
@@ -178,10 +183,14 @@ export async function ensureFreshSession(): Promise<void> {
   }
 }
 
-/** Efface la session : stockage, jeton du client de `core` et `session.user`. */
+/**
+ * Efface la session : stockage, jeton du client de `core`, `session.user`, et les réponses de
+ * l'API gardées pour la consultation hors ligne (données personnelles).
+ */
 export function clearSession(): void {
   if (!isBrowser) return;
   removeStorage();
+  void clearPrivateCaches();
   setAccessToken(null);
   session.user = null;
 }

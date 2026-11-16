@@ -242,7 +242,7 @@
           />
         {/snippet}
       </Field>
-      <Button type="submit" block aria-busy={submitting} aria-disabled={submitting}>
+      <Button needsNetwork type="submit" block aria-busy={submitting} aria-disabled={submitting}>
         Créer mon compte
       </Button>
     </form>

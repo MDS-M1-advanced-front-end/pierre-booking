@@ -9,6 +9,8 @@ const { setAccessToken, getAccessToken, refresh } = vi.hoisted(() => {
 });
 
 vi.mock('../client', () => ({ setAccessToken, getAccessToken, refresh }));
+const clearPrivateCaches = vi.hoisted(() => vi.fn(() => Promise.resolve()));
+vi.mock('../offline/serviceWorker', () => ({ clearPrivateCaches }));
 
 const {
   SESSION_KEY,
@@ -47,6 +49,7 @@ beforeEach(() => {
   setAccessToken.mockClear();
   getAccessToken.mockReset();
   refresh.mockReset();
+  clearPrivateCaches.mockClear();
 });
 
 afterEach(() => {
@@ -273,7 +276,28 @@ describe('ensureFreshSession', () => {
   });
 });
 
+describe('cache hors ligne des réponses de l’API', () => {
+  it('est vidé quand un autre compte se connecte', () => {
+    saveSession(auth);
+    expect(clearPrivateCaches).not.toHaveBeenCalled();
+
+    saveSession({ ...auth, user: { ...lea, id: 'u-9' } });
+    expect(clearPrivateCaches).toHaveBeenCalledOnce();
+  });
+
+  it('est gardé quand le même compte renouvelle sa session', () => {
+    saveSession(auth);
+    saveSession({ ...auth, accessToken: 'jeton-2' });
+    expect(clearPrivateCaches).not.toHaveBeenCalled();
+  });
+});
+
 describe('clearSession', () => {
+  it('vide le cache hors ligne des réponses de l’API', () => {
+    clearSession();
+    expect(clearPrivateCaches).toHaveBeenCalledOnce();
+  });
+
   it('vide le stockage, le jeton et l’utilisateur', () => {
     saveSession(auth);
     setAccessToken.mockClear();

@@ -193,6 +193,7 @@
             >
               {#snippet actions()}
                 <Button
+                  needsNetwork
                   size="sm"
                   aria-disabled={confirmingId !== null}
                   aria-busy={confirmingId === reservation.id}
@@ -265,6 +266,7 @@
       Conserver la demande
     </Button>
     <Button
+      needsNetwork
       variant="danger"
       aria-disabled={rejecting}
       aria-busy={rejecting}

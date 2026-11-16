@@ -285,7 +285,7 @@
   {/if}
   {#snippet footer()}
     <Button variant="secondary" onclick={() => (deleteOpen = false)}>Conserver</Button>
-    <Button variant="danger" aria-busy={deleting} onclick={confirmDelete}>
+    <Button needsNetwork variant="danger" aria-busy={deleting} onclick={confirmDelete}>
       Supprimer la salle
     </Button>
   {/snippet}

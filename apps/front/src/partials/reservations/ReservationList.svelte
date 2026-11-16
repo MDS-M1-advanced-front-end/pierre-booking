@@ -288,6 +288,7 @@
   {#snippet footer()}
     <Button variant="secondary" onclick={() => (modalOpen = false)}>Conserver</Button>
     <Button
+      needsNetwork
       variant="danger"
       aria-disabled={cancelling}
       aria-busy={cancelling}

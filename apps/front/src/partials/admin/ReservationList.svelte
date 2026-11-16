@@ -302,6 +302,7 @@
               <span class="flex flex-wrap items-center justify-end gap-(--space-2)">
                 {#if reservation.status === 'PENDING'}
                   <Button
+                    needsNetwork
                     size="sm"
                     aria-disabled={confirmingId !== null}
                     aria-busy={confirmingId === reservation.id}
@@ -370,6 +371,7 @@
   {#snippet footer()}
     <Button variant="secondary" onclick={() => (actionOpen = false)}>Conserver</Button>
     <Button
+      needsNetwork
       variant="danger"
       aria-disabled={acting}
       aria-busy={acting}

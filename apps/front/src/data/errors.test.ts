@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { errorMessage, withSession } from './errors';
 import { ensureFreshSession, expireSession, refreshSession } from './auth/session.svelte';
+import { isOffline } from './offline/network.svelte';
 
+vi.mock('./offline/network.svelte', () => ({ isOffline: vi.fn(() => false) }));
 vi.mock('./auth/session.svelte', () => ({
   ensureFreshSession: vi.fn(),
   refreshSession: vi.fn(),
@@ -23,6 +25,13 @@ describe('errorMessage', () => {
     [418, 'Une erreur inattendue est survenue.'],
   ])('statut %i', (status, message) => {
     expect(errorMessage(error(status))).toBe(message);
+  });
+
+  it('dit « hors ligne » sur une erreur réseau quand le navigateur est hors ligne', () => {
+    vi.mocked(isOffline).mockReturnValueOnce(true);
+    expect(errorMessage(error(0))).toBe(
+      'Vous êtes hors ligne : cette action sera possible au retour de la connexion.',
+    );
   });
 
   it('accepte un message propre au cas', () => {

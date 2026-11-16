@@ -427,7 +427,13 @@
         {/if}
 
         <div class="flex flex-col gap-(--space-2)">
-          <Button type="submit" block aria-busy={submitting} aria-disabled={submitting}>
+          <Button
+            needsNetwork
+            type="submit"
+            block
+            aria-busy={submitting}
+            aria-disabled={submitting}
+          >
             {submitting ? 'Enregistrement…' : 'Enregistrer les modifications'}
           </Button>
           <Button variant="ghost" block href="/reservations">Abandonner</Button>
