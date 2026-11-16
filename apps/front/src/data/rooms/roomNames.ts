@@ -1,4 +1,4 @@
-// Salles des listes de réservations (écrans 06 et 11, anomalie 8 du cadrage) : `Reservation` ne
+// Salles de la liste de réservations (écran 06, anomalie 8 du cadrage) : `Reservation` ne
 // contient que `roomId`, il faut donc un `GET /rooms/{id}` par salle pour afficher son nom.
 // Un seul appel par identifiant distinct, mis en cache en mémoire le temps de la page (le module
 // est rechargé à chaque navigation, les pages connectées étant des pages Astro distinctes).

@@ -8,7 +8,13 @@ import type {
 } from '@room-booking/core';
 import * as api from '../client';
 import { withSession } from '../errors';
-import { clearSession, saveSession, updateSessionUser } from './session.svelte';
+import {
+  clearSession,
+  expireSession,
+  saveSession,
+  session,
+  updateSessionUser,
+} from './session.svelte';
 
 /**
  * Connecte l'utilisateur et enregistre la session. Un `401` ici signifie « identifiants
@@ -49,7 +55,16 @@ export async function getMe(): Promise<Result<User>> {
  * Pas de `withSession` : sur cette route, un `401` signifie le plus probablement « mot de passe
  * actuel incorrect » (le contrat ne le précise pas) ; l'écran l'affiche au lieu de déconnecter.
  * Une session réellement expirée sera rattrapée par la requête suivante.
+ *
+ * Le back révoque tous les jetons émis avant le changement, y compris celui de la session en
+ * cours : on se reconnecte donc aussitôt avec le nouveau mot de passe, pour rester connecté. Si
+ * cette reconnexion échoue, la session est expirée (retour à la connexion).
  */
-export function changePassword(body: ChangePasswordRequest): Promise<Result<void>> {
-  return api.changePassword(body);
+export async function changePassword(body: ChangePasswordRequest): Promise<Result<void>> {
+  const result = await api.changePassword(body);
+  const email = session.user?.email;
+  if (!result.ok || !email) return result;
+  const relogin = await login({ email, password: body.newPassword });
+  if (!relogin.ok) expireSession();
+  return result;
 }

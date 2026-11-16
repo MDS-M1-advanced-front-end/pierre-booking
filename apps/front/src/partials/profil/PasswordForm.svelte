@@ -4,7 +4,8 @@
 
   `changePassword({ currentPassword, newPassword })` (`PATCH /auth/password`, 204).
   - Confirmation vérifiée côté client (`setCustomValidity`, message dédié).
-  - Succès : `role="status"` « Votre mot de passe a été modifié. » et champs vidés.
+  - Succès : `role="status"` « Votre mot de passe a été modifié. » et champs vidés ; la session est
+    renouvelée avec le nouveau mot de passe (`changePassword`, le back révoque les anciens jetons).
   - `400` (et `401`, hypothèse du cadrage) : « Le mot de passe actuel est incorrect. » sous le
     champ concerné. `changePassword` ne passe pas par `withSession` : un `401` n'entraîne donc
     pas de déconnexion sur cet écran.

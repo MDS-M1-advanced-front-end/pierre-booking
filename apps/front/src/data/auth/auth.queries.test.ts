@@ -1,13 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as api from '../client';
-import { login, logout, register } from './auth.queries';
-import { clearSession, saveSession } from './session.svelte';
+import { changePassword, login, logout, register } from './auth.queries';
+import { clearSession, expireSession, saveSession, session } from './session.svelte';
 
-vi.mock('../client', () => ({ login: vi.fn(), register: vi.fn(), logout: vi.fn() }));
+vi.mock('../client', () => ({
+  login: vi.fn(),
+  register: vi.fn(),
+  logout: vi.fn(),
+  changePassword: vi.fn(),
+}));
 vi.mock('./session.svelte', () => ({
   saveSession: vi.fn(),
   clearSession: vi.fn(),
   updateSessionUser: vi.fn(),
+  expireSession: vi.fn(),
+  session: { user: null },
 }));
 
 const user = {
@@ -71,5 +78,39 @@ describe('logout', () => {
     logout();
     expect(api.logout).toHaveBeenCalledOnce();
     expect(clearSession).toHaveBeenCalledOnce();
+  });
+});
+
+describe('changePassword', () => {
+  const passwords = { currentPassword: 'ancien123', newPassword: 'nouveau123' };
+
+  beforeEach(() => {
+    session.user = user;
+  });
+
+  it('se reconnecte avec le nouveau mot de passe (le back révoque les anciens jetons)', async () => {
+    vi.mocked(api.changePassword).mockResolvedValue({ ok: true, data: undefined });
+    vi.mocked(api.login).mockResolvedValue({ ok: true, data: auth });
+    expect(await changePassword(passwords)).toEqual({ ok: true, data: undefined });
+    expect(api.login).toHaveBeenCalledWith({ email: user.email, password: 'nouveau123' });
+    expect(saveSession).toHaveBeenCalledWith(auth);
+    expect(expireSession).not.toHaveBeenCalled();
+  });
+
+  it('expire la session si la reconnexion échoue', async () => {
+    vi.mocked(api.changePassword).mockResolvedValue({ ok: true, data: undefined });
+    vi.mocked(api.login).mockResolvedValue({
+      ok: false,
+      error: { status: 0, code: 'NETWORK_ERROR', message: 'x' },
+    });
+    expect((await changePassword(passwords)).ok).toBe(true);
+    expect(expireSession).toHaveBeenCalled();
+  });
+
+  it('ne se reconnecte pas si le changement échoue', async () => {
+    const error = { status: 400, code: 'VALIDATION_ERROR', message: 'x' };
+    vi.mocked(api.changePassword).mockResolvedValue({ ok: false, error });
+    expect(await changePassword(passwords)).toEqual({ ok: false, error });
+    expect(api.login).not.toHaveBeenCalled();
   });
 });
