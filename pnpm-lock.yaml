@@ -362,6 +362,9 @@ importers:
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
+      workbox-window:
+        specifier: ^7.4.1
+        version: 7.4.1
     devDependencies:
       '@astrojs/check':
         specifier: ^0.9.10
@@ -415,9 +418,6 @@ importers:
         specifier: ^7.4.1
         version: 7.4.1
       workbox-strategies:
-        specifier: ^7.4.1
-        version: 7.4.1
-      workbox-window:
         specifier: ^7.4.1
         version: 7.4.1
 
