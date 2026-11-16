@@ -26,6 +26,26 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-11-16 — PWA : installable et consultable hors ligne (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : mettre en place la PWA expliquée juste avant, avec les recommandations retenues : consultation hors ligne, actions en ligne, salles et « Mes réservations » gardées hors ligne.
+- **Demande** : « ok pour tes recommandations, génère les icônes depuis le favicon ». En cours de route : « t'avais pas commit la partie admin + graphql, fais ça avant » (fait : voir l'entrée « Espace d'administration en GraphQL »). Puis : « commit, push et pr vers main ».
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (`a0cdab6` mise au format de `tokens.css`, `3cd0401` front, `12819c4` docs ; branche `dev` poussée et PR vers `main`) :
+  - **icônes** : `public/favicon.svg` était encore le logo d'Astro du gabarit de départ. L'IA l'a signalé et l'a remplacé par le logo Quorum de l'en-tête (mêmes formes, couleurs des tokens), puis a généré favicon, icônes 64/192/512, icône « maskable » et icône Apple avec `@vite-pwa/assets-generator` (`pnpm generate:pwa-assets`) ;
+  - **manifeste et service worker** avec `@vite-pwa/astro` 2.0.2 (seule version compatible Astro 7) : `src/sw.ts` (Workbox) précache le site, sert les pages rendues par le serveur et les lectures de l'API en « réseau d'abord » avec la dernière version vue hors ligne, et la page `/hors-ligne` pour une page jamais visitée ;
+  - **interface** : bandeau « Vous êtes hors ligne » et bandeau « Nouvelle version disponible » (`AppStatus`), option `needsNetwork` du bouton posée sur les actions (formulaires et confirmations), message d'erreur « hors ligne » ;
+  - **confidentialité** : cache des réponses de l'API vidé à la déconnexion et quand un autre compte se connecte ;
+  - docs : `cadrage.md` § 2.10, `architecture.md`, `AGENTS.md`, `pistes.md`.
+- **Erreurs de l'IA relevées** :
+  - première configuration écrite d'après l'API de la v1 (`injectManifest`) : la v2 refuse un service worker en TypeScript avec cette stratégie, il fallait `buildSW`. Message d'erreur du build, corrigé après lecture des types de la v2 ;
+  - service worker d'abord généré au mauvais endroit (`dist/sw.js`, adresses en `client/…`, non servi) : vu en inspectant le build. Cause trouvée dans le code de l'intégration (elle ne vise `dist/client` qu'avec `output: 'server'`), contournée dans `astro.config.mjs` et documentée ;
+  - manifeste et icônes précachés deux fois (avertissement du build), corrigé ;
+  - page « hors ligne » sans `<h1>`, vue au test dans le navigateur ; une erreur de lint dans un test ; un test « formulaire non envoyé hors ligne » qui ne prouvait rien seul, complété par le cas en ligne.
+- **Vérification** : `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test` (402 tests, dont 14 nouveaux : bouton hors ligne, état du réseau, vidage du cache, message d'erreur). En vrai, front buildé et back en local, Chromium piloté par Playwright avec une session de test : en ligne, le service worker prend la main et remplit ses caches ; hors ligne, le catalogue (12 salles), « Mes réservations » et une fiche déjà vue s'affichent avec le bandeau, une fiche jamais vue affiche la page « hors ligne » ; de retour en ligne, la déconnexion supprime le cache de l'API. Nouvelle version simulée (modification de `sw.js` sur le serveur, fichier restauré ensuite) : bandeau affiché, « Recharger » active la nouvelle version. Chrome ne signale aucune erreur d'installabilité ni de manifeste. Non vérifié : l'installation réelle sur un téléphone, et les e2e (prévus au déploiement ; ils tournent en `astro dev`, sans service worker).
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-11-16 — Explication : faire de Quorum une PWA utilisable hors ligne (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
