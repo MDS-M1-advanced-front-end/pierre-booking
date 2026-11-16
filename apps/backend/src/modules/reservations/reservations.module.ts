@@ -6,6 +6,7 @@ import { RoomsModule } from '../rooms/rooms.module';
 import { TypeOrmUserEntity } from '../users/infrastructure/persistence/typeorm-user.entity';
 import { DASHBOARD } from './application/ports/dashboard.port';
 import { PAYMENT_GATEWAY } from './application/ports/payment-gateway.port';
+import { RESERVATION_REQUESTS } from './application/ports/reservation-requests.port';
 import { ROOM_BOOKING } from './application/ports/room-booking.port';
 import { STATISTICS } from './application/ports/statistics.port';
 import { CancelReservationUseCase } from './application/use-cases/cancel-reservation.use-case';
@@ -16,6 +17,7 @@ import { GetDashboardUseCase } from './application/use-cases/get-dashboard.use-c
 import { GetPaymentUseCase } from './application/use-cases/get-payment.use-case';
 import { GetReservationUseCase } from './application/use-cases/get-reservation.use-case';
 import { GetStatisticsUseCase } from './application/use-cases/get-statistics.use-case';
+import { ListReservationRequestsUseCase } from './application/use-cases/list-reservation-requests.use-case';
 import { ListAllReservationsUseCase } from './application/use-cases/list-all-reservations.use-case';
 import { ListReservationsUseCase } from './application/use-cases/list-reservations.use-case';
 import { RejectReservationUseCase } from './application/use-cases/reject-reservation.use-case';
@@ -30,13 +32,15 @@ import { TypeormDashboardQuery } from './infrastructure/persistence/typeorm-dash
 import { TypeOrmPaymentEntity } from './infrastructure/persistence/typeorm-payment.entity';
 import { TypeormPaymentRepository } from './infrastructure/persistence/typeorm-payment.repository';
 import { TypeOrmReservationEntity } from './infrastructure/persistence/typeorm-reservation.entity';
+import { TypeormReservationRequestsQuery } from './infrastructure/persistence/typeorm-reservation-requests.query';
 import { TypeormReservationRepository } from './infrastructure/persistence/typeorm-reservation.repository';
 import { TypeormStatisticsQuery } from './infrastructure/persistence/typeorm-statistics.query';
 import { DashboardResolver } from './infrastructure/resolvers/dashboard.resolver';
+import { ReservationRequestsResolver } from './infrastructure/resolvers/reservation-requests.resolver';
 
 /**
- * Réservations, paiements et administration (liste de toutes les réservations, statistiques,
- * tableau de bord GraphQL).
+ * Réservations, paiements et administration (liste de toutes les réservations, statistiques).
+ * En GraphQL : tableau de bord et demandes de réservation (écran « Demandes » des gestionnaires).
  * Lit les salles à travers le port ROOM_BOOKING, branché sur RoomBookingService (module rooms).
  */
 @Module({
@@ -66,12 +70,18 @@ import { DashboardResolver } from './infrastructure/resolvers/dashboard.resolver
     GetStatisticsUseCase,
     GetDashboardUseCase,
     DashboardResolver,
+    ListReservationRequestsUseCase,
+    ReservationRequestsResolver,
     { provide: RESERVATION_REPOSITORY, useClass: TypeormReservationRepository },
     { provide: PAYMENT_REPOSITORY, useClass: TypeormPaymentRepository },
     { provide: ROOM_BOOKING, useExisting: RoomBookingService },
     { provide: PAYMENT_GATEWAY, useClass: MockPaymentGateway },
     { provide: STATISTICS, useClass: TypeormStatisticsQuery },
     { provide: DASHBOARD, useClass: TypeormDashboardQuery },
+    {
+      provide: RESERVATION_REQUESTS,
+      useClass: TypeormReservationRequestsQuery,
+    },
   ],
 })
 export class ReservationsModule {}

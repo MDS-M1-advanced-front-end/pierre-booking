@@ -8,6 +8,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DateScalar } from './common/date.scalar';
+import { DateTimeScalar } from './common/date-time.scalar';
 import { AppThrottlerGuard } from './common/throttler.guard';
 import { ReservationsModule } from './modules/reservations/reservations.module';
 import { RoomsModule } from './modules/rooms/rooms.module';
@@ -27,7 +28,8 @@ import { dataSourceOptions } from './database/data-source';
       throttlers: [{ ttl: 60_000, limit: 100 }],
       errorMessage: 'Trop de requêtes, réessayez dans une minute.',
     }),
-    // API GraphQL de l'administration (tableaux de bord), à côté du REST : POST /api/graphql.
+    // API GraphQL du back-office (tableaux de bord, demandes de réservation), à côté du REST :
+    // POST /api/graphql.
     // Schéma : admin.graphql du core, copié dans dist/graphql au build (lien src/graphql).
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
@@ -53,6 +55,7 @@ import { dataSourceOptions } from './database/data-source';
   providers: [
     AppService,
     DateScalar,
+    DateTimeScalar,
     {
       provide: APP_GUARD,
       useClass: AppThrottlerGuard,
