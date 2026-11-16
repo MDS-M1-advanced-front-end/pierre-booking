@@ -1,0 +1,32 @@
+---
+// Onglets de l'administration, communs aux trois pages. Rendus côté serveur : ils ne dépendent
+// pas de la session (la garde d'accès est dans l'îlot de chaque page).
+interface Props {
+  /** Chemin de la page courante. */
+  current: string;
+}
+
+const { current } = Astro.props;
+
+const tabs = [
+  { href: '/admin', label: 'Tableau de bord' },
+  { href: '/admin/utilisateurs', label: 'Utilisateurs' },
+  { href: '/admin/reservations', label: 'Réservations' },
+];
+---
+
+<nav aria-label="Administration" class="mb-(--space-5) border-b border-border">
+  <ul class="m-0 flex list-none gap-(--space-1) overflow-x-auto p-0">
+    {tabs.map((tab) => (
+      <li>
+        <a
+          href={tab.href}
+          aria-current={tab.href === current ? 'page' : undefined}
+          class="inline-flex min-h-(--size-control) items-center border-b-2 border-transparent px-(--space-3) font-semibold whitespace-nowrap text-text-muted no-underline hover:text-action aria-[current=page]:border-action aria-[current=page]:text-action"
+        >
+          {tab.label}
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>

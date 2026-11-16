@@ -56,6 +56,10 @@ describe('homePathForRole', () => {
     expect(homePathForRole('CLIENT')).toBe('/reservations');
     expect(homePathForRole('GESTIONNAIRE')).toBe('/gestion/salles');
   });
+
+  it('envoie un administrateur vers le tableau de bord', () => {
+    expect(homePathForRole('ADMINISTRATEUR')).toBe('/admin');
+  });
 });
 
 describe('resolveRedirect', () => {

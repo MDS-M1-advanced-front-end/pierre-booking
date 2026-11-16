@@ -127,6 +127,31 @@ describe('SiteHeader', () => {
     );
   });
 
+  it('ajoute l’administration pour un administrateur', async () => {
+    storeSession({
+      ...nadia,
+      id: 'u-7',
+      firstName: 'Karim',
+      lastName: 'Admin',
+      role: 'ADMINISTRATEUR',
+    });
+    render(SiteHeader, { currentPath: '/admin/utilisateurs' });
+    const nav = desktopNav();
+
+    await within(nav).findByRole('link', { name: 'Karim Admin' });
+    expect(linkTexts(nav)).toEqual([
+      'Catalogue',
+      'Mes salles',
+      'Demandes',
+      'Administration',
+      'KA Karim Admin',
+    ]);
+    expect(within(nav).getByRole('link', { name: 'Administration' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+  });
+
   it('annonce le nombre de demandes en attente', async () => {
     storeSession(nadia);
     render(SiteHeader, { currentPath: '/', pendingCount: 3 });
