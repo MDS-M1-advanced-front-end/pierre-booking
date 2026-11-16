@@ -26,6 +26,35 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-11-16 — Pistes de fonctionnalités à ajouter ou améliorer (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : repérer ce qui manque ou peut être amélioré dans l'application.
+- **Demande** : « cherches des fonctionnalités que je pourrais ajouter/améliorer ».
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : analyse seulement, sans modification du code. Comparaison du contrat (`openapi.yml`, `admin.graphql`), des cas d'usage (`docs/use-cases.md`), du périmètre (`docs/cadrage.md`, `docs/plan.md`) et des pages du front. Principaux constats : routes du back sans écran (`/auth/refresh`, `/payments`, routes administrateur, requête GraphQL `dashboard`) ; statut COMPLETED annoncé mais jamais atteint (aucune méthode ni tâche planifiée) ; pas de notifications ni de mot de passe oublié.
+- **Erreurs de l'IA relevées** : aucune trouvée.
+- **Vérification** : recherches `grep` dans `apps/front/src` et `apps/backend/src` pour chaque constat.
+- **Suite** : « ok notes toi ça dans un md, ppuis implémentes le 1 sur une nouvelle branche dev ». Pistes notées dans `docs/pistes.md`. Branche `dev` créée depuis `refactor/to-clean-archi` (la PR #19 n'est pas encore fusionnée). Renouvellement de la session côté front, committé et poussé à ma demande « commit push » (`2b4d6e5`, pistes : `f8bd862`) :
+  - la session garde le jeton de rafraîchissement (`refreshToken`, `null` pour une session enregistrée avant ce changement) ; une session expirée qui peut être renouvelée n'est plus effacée à la relecture ;
+  - `refreshSession` appelle `POST /auth/refresh` ; les appels simultanés partagent une seule requête, et le jeton est relu dans le `localStorage` (un autre onglet a pu le renouveler) ;
+  - `ensureFreshSession`, avant chaque appel authentifié, reprend le jeton d'un autre onglet et renouvelle s'il expire dans moins d'une minute ;
+  - `withSession` prend désormais une fonction (pour pouvoir rejouer l'appel) : sur un `401`, renouvellement puis un seul nouvel essai ; échec → `expireSession` comme avant ;
+  - `cadrage.md` § 2.3 et le commentaire de `TOKEN_TTL_SECONDS` mis à jour.
+- **Vérification de la suite** : `pnpm typecheck`, `pnpm lint`, `pnpm format:check` ; tests du front (315, dont 14 nouveaux ou réécrits sur `refreshSession`, `ensureFreshSession` et `withSession`). En vrai, back et front lancés en local, avec des jetons de test signés par l'IA avec les secrets de développement : jeton d'accès expiré → `POST /auth/refresh` 200 puis `GET /reservations` 200, sans passer par la connexion ; jeton refusé (401) → renouvellement puis nouvel essai réussi ; jeton de rafraîchissement refusé → retour à `/connexion?redirect=%2Freservations`. Dans ce dernier cas, la réponse a été un 429 et non un 401 : la limite de 5 appels par minute et par IP sur les routes d'authentification, épuisée par les essais précédents de l'IA. E2E non lancés (prévus au déploiement).
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-11-16 — Diagnostic d'un 502 Bad Gateway sur le site déployé (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal, `curl` depuis le poste.
+- **Objectif** : comprendre pourquoi `https://booking.pierre-gaillard.dev/` répond 502 alors que le domaine est enregistré sur le service dans Dokploy.
+- **Demande** : « je me prends un 502 bad gateway sur le site en ligne […] l'erreur provient probablement de dokploy pourtant j'ai bien enregistré le domain sur le service ».
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : diagnostic seulement, sans accès à l'interface Dokploy ni au serveur. Le domaine répond `502 Bad Gateway` (réponse du proxy Traefik de Dokploy), y compris sur `/api`, alors que le front répond 200 en direct sur le port 4321 du serveur : le conteneur tourne, c'est le routage Traefik → conteneur qui échoue. Causes probables, à vérifier dans Dokploy : port du domaine différent de 4321, service non redéployé après l'ajout du domaine, ou conteneur hors du réseau `dokploy-network`.
+- **Erreurs de l'IA relevées** : aucune trouvée ; cause non confirmée faute d'accès à la configuration Dokploy.
+- **Vérification** : `curl` sur le domaine (502) et sur l'IP aux ports 4321 (200), 8080 (404 hors `/api`) et 3000 (interface Dokploy).
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-11-16 — Installation du skill pre-review et pré-relecture de la PR #19 (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal, skill `pre-review` et trois sous-agents de relecture.
