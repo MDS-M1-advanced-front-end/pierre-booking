@@ -19,6 +19,7 @@ import { AuthController } from './infrastructure/controllers/auth.controller';
 import { UsersController } from './infrastructure/controllers/users.controller';
 import { TypeOrmUserEntity } from './infrastructure/persistence/typeorm-user.entity';
 import { TypeormUserRepository } from './infrastructure/persistence/typeorm-user.repository';
+import { UsersResolver } from './infrastructure/resolvers/users.resolver';
 import {
   JwtTokenService,
   TOKEN_TTL_SECONDS,
@@ -27,7 +28,8 @@ import {
 import { ScryptPasswordHasher } from './infrastructure/security/scrypt-password-hasher';
 
 /**
- * Utilisateurs et authentification. Le guard est global (APP_GUARD) : les décorateurs
+ * Utilisateurs et authentification ; en GraphQL, gestion des utilisateurs (administrateurs).
+ * Le guard est global (APP_GUARD) : les décorateurs
  * @Public(), @Roles() et @CurrentUser() de infrastructure/auth servent à tous les modules.
  */
 @Module({
@@ -49,6 +51,7 @@ import { ScryptPasswordHasher } from './infrastructure/security/scrypt-password-
     UpdateUserUseCase,
     ChangePasswordUseCase,
     DeleteUserUseCase,
+    UsersResolver,
     { provide: USER_REPOSITORY, useClass: TypeormUserRepository },
     { provide: PASSWORD_HASHER, useClass: ScryptPasswordHasher },
     { provide: TOKEN_SERVICE, useClass: JwtTokenService },

@@ -63,3 +63,13 @@ export class UserHasReservationsException extends UserDomainException {
     super("L'utilisateur a des réservations, il ne peut pas être supprimé");
   }
 }
+
+/**
+ * Un administrateur ne peut ni changer son propre rôle ni supprimer son propre compte (409) : il
+ * perdrait l'accès à l'administration, peut-être sans autre administrateur pour le lui rendre.
+ */
+export class SelfAdministrationException extends UserDomainException {
+  constructor() {
+    super('Action impossible sur votre propre compte');
+  }
+}

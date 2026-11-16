@@ -84,6 +84,31 @@ export function validationException(
 }
 
 /**
+ * Réponse d'une erreur du domaine, pour les filtres de chaque module : corps `{ code, message }`
+ * en REST, erreur GraphQL avec `code` et `status` dans `extensions` (comme ApiExceptionFilter).
+ * @param host - Contexte de la requête.
+ * @param status - Statut HTTP.
+ * @param code - Code d'erreur du contrat.
+ * @param message - Message de l'exception.
+ * @returns L'erreur à placer dans `errors` en GraphQL ; rien en REST (réponse déjà écrite).
+ */
+export function respondDomainError(
+  host: ArgumentsHost,
+  status: number,
+  code: string,
+  message: string,
+): GraphQLError | void {
+  if (host.getType<GqlContextType>() === 'graphql') {
+    return new GraphQLError(message, { extensions: { code, status } });
+  }
+  host
+    .switchToHttp()
+    .getResponse<Response>()
+    .status(status)
+    .json({ code, message });
+}
+
+/**
  * Filtre global : toutes les erreurs au format `{ code, message, details }` du schéma `Error`
  * du contrat. Une erreur inattendue donne `INTERNAL_ERROR`, sans détail, et elle est journalisée.
  * Les exceptions du domaine sont traduites avant, par le filtre de chaque module.

@@ -4,7 +4,8 @@ import {
   type ArgumentsHost,
   type ExceptionFilter,
 } from '@nestjs/common';
-import type { Response } from 'express';
+import type { GraphQLError } from 'graphql';
+import { respondDomainError } from '../../../../common/api-errors';
 import {
   InvalidReservationException,
   ReservationAccessDeniedException,
@@ -36,17 +37,21 @@ function toHttp(exception: ReservationDomainException): [HttpStatus, string] {
 
 /**
  * Traduit les exceptions du domaine des réservations en réponses HTTP.
- * Même format que ApiExceptionFilter (common/api-errors.ts) : { code, message }.
+ * Même format que ApiExceptionFilter (common/api-errors.ts) : { code, message } en REST,
+ * `extensions.code` et `extensions.status` en GraphQL.
  */
 @Catch(ReservationDomainException)
 export class ReservationExceptionFilter implements ExceptionFilter {
   /**
    * @param exception - Exception du domaine.
    * @param host - Contexte de la requête, pour écrire la réponse.
+   * @returns L'erreur GraphQL ; rien en REST.
    */
-  catch(exception: ReservationDomainException, host: ArgumentsHost): void {
-    const response = host.switchToHttp().getResponse<Response>();
+  catch(
+    exception: ReservationDomainException,
+    host: ArgumentsHost,
+  ): GraphQLError | void {
     const [status, code] = toHttp(exception);
-    response.status(status).json({ code, message: exception.message });
+    return respondDomainError(host, status, code, exception.message);
   }
 }

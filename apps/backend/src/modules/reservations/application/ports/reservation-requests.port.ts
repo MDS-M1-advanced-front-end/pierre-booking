@@ -1,7 +1,7 @@
 import type { RoomStatus } from '../../../rooms/domain/entities/room.entity';
 import type { ReservationStatus } from '../../domain/entities/reservation.entity';
 
-/** Réservation vue par le gestionnaire de la salle, avec la salle et le demandeur. */
+/** Réservation avec sa salle et son demandeur (écran « Demandes », administration). */
 export interface ReservationRequestView {
   id: string;
   room: {
@@ -18,6 +18,7 @@ export interface ReservationRequestView {
   status: ReservationStatus;
   numberOfParticipants: number | null;
   comment: string | null;
+  rejectionReason: string | null;
   totalAmount: number;
   currency: string;
   createdAt: Date;
@@ -33,9 +34,19 @@ export interface ReservationRequestCriteria {
   limit: number;
 }
 
+/** Filtres et pagination de la liste de toutes les réservations (administration). */
+export interface ReservationPageCriteria {
+  status?: ReservationStatus;
+  roomId?: string;
+  userId?: string;
+  /** Page, à partir de 1. */
+  page: number;
+  pageSize: number;
+}
+
 /**
- * Lecture des demandes de réservation de l'écran « Demandes » (jointure réservations, salles,
- * utilisateurs), pour l'API GraphQL du back-office.
+ * Lecture des réservations avec leur salle et leur demandeur (jointure réservations, salles,
+ * utilisateurs), pour l'API GraphQL du back-office : écran « Demandes » et administration.
  */
 export interface ReservationRequestsPort {
   /**
@@ -43,6 +54,20 @@ export interface ReservationRequestsPort {
    * @returns Les demandes, avec leur salle et leur demandeur.
    */
   find(criteria: ReservationRequestCriteria): Promise<ReservationRequestView[]>;
+
+  /**
+   * @param criteria - Filtres facultatifs et pagination.
+   * @returns Les réservations de la page, la plus récente (date de début) d'abord, et le total.
+   */
+  findPage(
+    criteria: ReservationPageCriteria,
+  ): Promise<{ items: ReservationRequestView[]; total: number }>;
+
+  /**
+   * @param id - UUID de la réservation.
+   * @returns La réservation, ou `null` si elle n'existe pas.
+   */
+  findById(id: string): Promise<ReservationRequestView | null>;
 }
 
 /** Jeton d'injection de `ReservationRequestsPort`. */
