@@ -38,8 +38,48 @@ pnpm typecheck     # tsc strict
 pnpm lint          # ESLint + typescript-eslint (strictTypeChecked)
 pnpm test          # Vitest
 pnpm format        # Prettier
+pnpm generate:api      # src/api/schema.ts depuis openapi.yml
+pnpm generate:graphql  # src/graphql/schema.ts et operations.generated.ts depuis admin.graphql
 ```
 
 ## Contrat d'API
 
 `openapi.yml` est le contrat OpenAPI de l'API de réservation de salles. Il contient des anomalies connues, relevées en séance 1 : ne pas les corriger en silence dans le code, mais documenter le contournement choisi.
+
+## Contrat GraphQL du back-office
+
+`admin.graphql` décrit une API GraphQL **en lecture seule** (`POST /api/graphql`), pour les écrans qui croisent plusieurs ressources. Elle complète l'API REST sans la remplacer : les écritures et les autres écrans restent en REST.
+
+Deux requêtes :
+
+- `dashboard(period)`, **réservée aux administrateurs** : tableaux de bord. Chaque champ (`statistics`, `byStatus`, `timeline`, `rooms`, `topClients`) n'est calculé que s'il est demandé, et prend ses propres arguments (pas de la série, critère de classement, nombre de lignes) ;
+- `reservationRequests`, **pour les gestionnaires et les administrateurs** : demandes de réservation de l'écran « Demandes », en attente (`pending`) et traitées (`handled`), avec la salle et le demandeur. Un gestionnaire ne voit que ses salles, un administrateur toutes. Elle remplace `GET /reservations`, la lecture de toutes les salles et un appel par salle et par demandeur (anomalies 4, 5 et 8).
+
+Import depuis `@room-booking/core/graphql`, séparé de l'index principal parce que certains types portent les mêmes noms qu'en REST (`Statistics`, `ReservationStatus`…) :
+
+```ts
+import {
+  getAdminDashboard,
+  getReservationRequests,
+  graphqlRequest,
+} from '@room-booking/core/graphql';
+
+// Requêtes prêtes à l'emploi (src/graphql/operations.ts)
+const requests = await getReservationRequests({ handledLimit: 10 });
+const result = await getAdminDashboard({
+  granularity: 'WEEK',
+  limit: 5,
+  period: { from: '2026-10-01' },
+});
+
+// Requête sur mesure : seuls les champs demandés sont calculés
+const custom = await graphqlRequest<{
+  dashboard: { rooms: { room: { name: string }; bookedHours: number }[] };
+}>(
+  `{ dashboard { rooms(sort: BOOKED_HOURS, direction: ASC, limit: 3) { room { name } bookedHours } } }`,
+);
+```
+
+Comme le client REST, les deux renvoient un `Result` et utilisent le jeton de `setAccessToken`. Les erreurs reprennent les codes du REST (`UNAUTHORIZED`, `FORBIDDEN`, `VALIDATION_ERROR`…), avec le statut HTTP correspondant dans `error.status`, même si la réponse GraphQL est en HTTP 200. Une réponse partielle (données et erreurs) est traitée comme une erreur.
+
+Après une modification de `admin.graphql` ou d'une requête de `operations.ts`, relancer `pnpm generate:graphql`. Le back doit charger ce fichier, pas une copie (par exemple à travers un lien symbolique), pour ne pas dériver du contrat.

@@ -8,7 +8,5 @@
 </script>
 
 <RequireAuth roles={['GESTIONNAIRE', 'ADMINISTRATEUR']}>
-  {#snippet children(user)}
-    <RequestList {user} />
-  {/snippet}
+  <RequestList />
 </RequireAuth>

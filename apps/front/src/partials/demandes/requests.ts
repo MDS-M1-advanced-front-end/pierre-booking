@@ -1,41 +1,67 @@
 /**
- * Tri des demandes de réservation de l'écran 11, en fonctions pures.
+ * Demandes de réservation de l'écran 11, en fonctions pures.
  *
- * Hypothèses :
- * - La liste vient de `listMyReservations()` : pour un gestionnaire, on suppose que la route renvoie
- *   les réservations de ses salles (anomalie 4, à faire confirmer par le module Back-end). Par
- *   prudence, si les salles du gestionnaire sont connues, on ne garde que les réservations dont la
- *   `roomId` en fait partie.
- * - « En attente » : statut `PENDING`, la plus proche d'abord (`startAt` croissant).
- * - « Traitées récemment » : `CONFIRMED`, `REJECTED` ou `COMPLETED`. Le contrat ne donne pas la date
- *   de traitement : on trie par date de la réservation, la plus récente d'abord, limité à
- *   `HANDLED_LIMIT`. Les annulées (`CANCELLED`) ne sont pas affichées.
+ * - La liste vient de `listReservationRequests()` (GraphQL) : le back filtre les salles du
+ *   gestionnaire, trie et limite. « En attente » : `PENDING`, la plus proche d'abord. « Traitées
+ *   récemment » : `CONFIRMED`, `REJECTED` ou `COMPLETED`, la plus récente d'abord (le contrat ne
+ *   donne pas la date de traitement : date de la réservation), au plus `HANDLED_LIMIT`.
+ * - Les demandes sont ramenées au type `Reservation` du REST, celui de `ReservationItem` et des
+ *   actions Confirmer / Refuser ; les noms de la salle et du demandeur sont gardés à part.
  */
-import type { Reservation, ReservationStatus } from '@room-booking/core';
+import type { Reservation } from '@room-booking/core';
+import type {
+  ReservationRequestFieldsFragment,
+  ReservationRequestsQuery,
+} from '@room-booking/core/graphql';
 
 /** Nombre maximal de demandes « Traitées récemment ». */
 export const HANDLED_LIMIT = 10;
 
-const HANDLED_STATUSES: readonly ReservationStatus[] = ['CONFIRMED', 'REJECTED', 'COMPLETED'];
+/** Listes de l'écran 11 et noms à afficher, par identifiant. */
+export interface RequestLists {
+  pending: Reservation[];
+  handled: Reservation[];
+  /** Nom de chaque salle, par `roomId`. */
+  roomNames: Map<string, string>;
+  /** Prénom et nom de chaque demandeur, par `userId`. */
+  requesterNames: Map<string, string>;
+}
 
-const byStart = (a: Reservation, b: Reservation) => Date.parse(a.startAt) - Date.parse(b.startAt);
+/** Demande GraphQL → `Reservation` du REST (champs vides omis, comme dans le contrat REST). */
+function toReservation(request: ReservationRequestFieldsFragment): Reservation {
+  return {
+    id: request.id,
+    roomId: request.room.id,
+    userId: request.requester.id,
+    startAt: request.startAt,
+    endAt: request.endAt,
+    status: request.status,
+    numberOfParticipants: request.numberOfParticipants ?? undefined,
+    comment: request.comment ?? undefined,
+    totalAmount: request.totalAmount,
+    currency: request.currency,
+  };
+}
 
 /**
- * Répartit les réservations en demandes en attente et demandes traitées.
- * @param reservations - Réservations reçues de l'API.
- * @param roomIds - Salles du gestionnaire ; `null` si elles sont inconnues (aucun filtre).
+ * Réponse de `listReservationRequests()` → listes de l'écran et noms à afficher.
+ * @param data - Données de la requête GraphQL.
  */
-export function splitRequests(
-  reservations: readonly Reservation[],
-  roomIds: ReadonlySet<string> | null = null,
-): { pending: Reservation[]; handled: Reservation[] } {
-  const own = roomIds ? reservations.filter((r) => roomIds.has(r.roomId)) : [...reservations];
+export function toRequestLists({ reservationRequests }: ReservationRequestsQuery): RequestLists {
+  const roomNames = new Map<string, string>();
+  const requesterNames = new Map<string, string>();
+  for (const request of [...reservationRequests.pending, ...reservationRequests.handled]) {
+    roomNames.set(request.room.id, request.room.name);
+    requesterNames.set(
+      request.requester.id,
+      `${request.requester.firstName} ${request.requester.lastName}`,
+    );
+  }
   return {
-    pending: own.filter((r) => r.status === 'PENDING').sort(byStart),
-    handled: own
-      .filter((r) => HANDLED_STATUSES.includes(r.status))
-      .sort((a, b) => byStart(b, a))
-      .slice(0, HANDLED_LIMIT),
+    pending: reservationRequests.pending.map(toReservation),
+    handled: reservationRequests.handled.map(toReservation),
+    roomNames,
+    requesterNames,
   };
 }
 

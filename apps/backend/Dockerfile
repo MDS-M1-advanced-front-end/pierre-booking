@@ -8,7 +8,8 @@ WORKDIR /repo
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm fetch
 COPY . .
-RUN pnpm install --offline --frozen-lockfile --filter backend \
+# backend... : le back et ses dépendances du dépôt (le core, dont les types sont vérifiés au build)
+RUN pnpm install --offline --frozen-lockfile --filter backend... \
   && pnpm --filter backend build \
   && pnpm --filter backend deploy --prod --legacy /out
 

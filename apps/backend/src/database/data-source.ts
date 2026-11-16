@@ -1,11 +1,11 @@
-import '../env.js';
+import '../env';
 import { join } from 'node:path';
 import { DataSource, type DataSourceOptions } from 'typeorm';
-import { Availability } from '../models/availabilities.model.js';
-import { Payment } from '../models/payments.model.js';
-import { Reservation } from '../models/reservations.model.js';
-import { Room } from '../models/rooms.model.js';
-import { User } from '../models/users.model.js';
+import { TypeOrmReservationEntity } from '../modules/reservations/infrastructure/persistence/typeorm-reservation.entity';
+import { TypeOrmPaymentEntity } from '../modules/reservations/infrastructure/persistence/typeorm-payment.entity';
+import { TypeOrmAvailabilityEntity } from '../modules/rooms/infrastructure/persistence/typeorm-availability.entity';
+import { TypeOrmRoomEntity } from '../modules/rooms/infrastructure/persistence/typeorm-room.entity';
+import { TypeOrmUserEntity } from '../modules/users/infrastructure/persistence/typeorm-user.entity';
 
 // Partagée par l'application (app.module.ts) et la CLI TypeORM (scripts migration:*)
 export const dataSourceOptions: DataSourceOptions = {
@@ -18,7 +18,13 @@ export const dataSourceOptions: DataSourceOptions = {
   // Ids générés par gen_random_uuid(), natif depuis PostgreSQL 13 (pas d'extension uuid-ossp)
   uuidExtension: 'pgcrypto',
   synchronize: false, // OBLIGATOIRE : Utilisation stricte des migrations en production/M
-  entities: [User, Room, Reservation, Availability, Payment],
+  entities: [
+    TypeOrmUserEntity,
+    TypeOrmRoomEntity,
+    TypeOrmAvailabilityEntity,
+    TypeOrmReservationEntity,
+    TypeOrmPaymentEntity,
+  ],
   // Fichiers compilés : la CLI tourne sur dist/
   migrations: [join(import.meta.dirname, 'migrations', '*.js')],
 };

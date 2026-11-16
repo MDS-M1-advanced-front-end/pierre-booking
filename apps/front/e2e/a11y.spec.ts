@@ -4,6 +4,7 @@
 // (contrastes, noms accessibles, ARIA, structure).
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import { mockReservationRequests } from './graphql';
 import { LEA, NADIA, signIn, VOLTAIRE_ID, waitForContent } from './helpers';
 
 const RESERVATION_ID = '00000000-0000-4000-8000-300000000001';
@@ -35,6 +36,7 @@ for (const viewport of [
     for (const { path, user } of pages) {
       test(`${path}${user ? ` (${user.role})` : ''}`, async ({ page }) => {
         if (user) await signIn(page, user);
+        await mockReservationRequests(page);
         await page.goto(path);
         await waitForContent(page);
 

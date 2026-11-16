@@ -16,7 +16,6 @@ export {
   getMe,
   changePassword,
   // Utilisateurs
-  getUser,
   updateUser,
   // Salles et disponibilités
   searchRooms,
@@ -35,3 +34,6 @@ export {
   confirmReservation,
   rejectReservation,
 } from '@room-booking/core';
+
+// API GraphQL du back-office : écrans qui croisent plusieurs ressources (écran 11 « Demandes »)
+export { getReservationRequests } from '@room-booking/core/graphql';

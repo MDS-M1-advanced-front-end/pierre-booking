@@ -8,6 +8,7 @@ import type {
   ReservationUpdateRequest,
   Result,
 } from '@room-booking/core';
+import type { ReservationRequestsQuery } from '@room-booking/core/graphql';
 import * as api from '../client';
 import { withSession } from '../errors';
 
@@ -16,6 +17,17 @@ export function listMyReservations(
   query: ListReservationsQuery = {},
 ): Promise<Result<PaginatedReservations>> {
   return withSession(api.listMyReservations(query));
+}
+
+/**
+ * Demandes de réservation de l'écran 11, en une requête GraphQL : en attente (toutes, la plus
+ * proche d'abord) et traitées (`handledLimit` plus récentes), avec le nom de la salle et du
+ * demandeur. Gestionnaire : ses salles ; administrateur : toutes les salles.
+ */
+export function listReservationRequests(
+  handledLimit: number,
+): Promise<Result<ReservationRequestsQuery>> {
+  return withSession(api.getReservationRequests({ handledLimit }));
 }
 
 /** Détail d'une réservation. */

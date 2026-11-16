@@ -3,6 +3,14 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "deleteOutDir": true
+    "deleteOutDir": true,
+    "builder": "swc",
+    "typeCheck": true,
+    "assets": [
+      {
+        "include": "graphql/*.graphql",
+        "watchAssets": true
+      }
+    ]
   }
 }

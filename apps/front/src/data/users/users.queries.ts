@@ -5,11 +5,6 @@ import { withSession } from '../errors';
 /** Champs qu'un utilisateur peut modifier : tout sauf `role`. */
 export type UserProfileUpdate = Omit<UserUpdateRequest, 'role'>;
 
-/** Consulte un utilisateur. */
-export function getUser(userId: string): Promise<Result<User>> {
-  return withSession(api.getUser(userId));
-}
-
 /**
  * Modifie un utilisateur. `UserUpdateRequest` accepte `role` (anomalie 7) : le front ne l'envoie
  * jamais, il est retiré du corps même s'il est présent à l'exécution.

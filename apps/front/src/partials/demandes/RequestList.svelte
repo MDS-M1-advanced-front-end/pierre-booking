@@ -3,22 +3,19 @@
   Demandes de réservation sur les salles du gestionnaire : « En attente » (Confirmer / Refuser) et
   « Traitées récemment ».
 
-  - Données : `listMyReservations()`. Hypothèse (anomalie 4, à faire confirmer par le module
-    Back-end) : pour un GESTIONNAIRE, `GET /reservations` renvoie les réservations de ses salles.
-    Par prudence, la liste est filtrée sur ses salles (`listRoomsOfOwner`) quand elles ont pu être
-    chargées (voir `requests.ts`).
-  - Noms : salles connues par `listRoomsOfOwner`, sinon `getRoomsByIds` (« Salle inconnue » en cas
-    d'erreur) ; demandeurs par `getUsersByIds` (droits de `GET /users/{id}` non précisés : « Client »
-    en cas d'erreur). Un seul appel par identifiant distinct (anomalie 8).
+  - Données : une seule requête GraphQL, `listReservationRequests()` : demandes en attente et
+    traitées des salles du gestionnaire (administrateur : toutes les salles), déjà triées et
+    limitées par le back, avec le nom de la salle et du demandeur (voir `requests.ts`). Elle
+    remplace `GET /reservations`, la lecture de toutes les salles pour filtrer celles du
+    gestionnaire, puis un appel par salle et par demandeur (anomalies 4, 5 et 8).
   - Actions : `confirmReservation(id)` ; `rejectReservation(id, { reason })` après la modale, sans
     `reason` si le motif est vide. La demande passe alors en tête des « Traitées récemment » et une
     confirmation (`role="status"`) prend le focus.
 
-  Props :
-    user: User   utilisateur connecté (fourni par `RequireAuth`)
+  Sans props : le back déduit les salles du jeton de l'utilisateur connecté.
 -->
 <script lang="ts">
-  import type { Reservation, Room, User } from '@room-booking/core';
+  import type { Reservation } from '@room-booking/core';
   import { onMount, tick } from 'svelte';
   import Alert from '../../components/Alert.svelte';
   import Button from '../../components/Button.svelte';
@@ -33,23 +30,12 @@
   import { errorMessage } from '../../data/errors';
   import {
     confirmReservation,
-    listMyReservations,
+    listReservationRequests,
     rejectReservation,
   } from '../../data/reservations/reservations.queries';
-  import { getRoomsByIds } from '../../data/rooms/roomNames';
-  import { listRoomsOfOwner } from '../../data/rooms/rooms.queries';
-  import { getUsersByIds } from '../../data/users/userNames';
   import { formatDateRange, TIME_ZONE } from '../../utils/dates';
-  import { markHandled, splitRequests } from './requests';
+  import { HANDLED_LIMIT, markHandled, toRequestLists } from './requests';
 
-  interface Props {
-    user: User;
-  }
-
-  let { user }: Props = $props();
-
-  /** Taille de page maximale de l'API. */
-  const PAGE_SIZE = 100;
   const ALREADY_HANDLED = 'Cette demande a déjà été traitée.';
 
   type LoadState = { type: 'loading' } | { type: 'error'; message: string } | { type: 'ready' };
@@ -57,8 +43,8 @@
   let loadState = $state<LoadState>({ type: 'loading' });
   let pending = $state<Reservation[]>([]);
   let handled = $state<Reservation[]>([]);
-  let rooms = $state.raw(new Map<string, Room>());
-  let users = $state.raw(new Map<string, User>());
+  let roomNames = $state.raw(new Map<string, string>());
+  let requesterNames = $state.raw(new Map<string, string>());
 
   /** Retour d'une action (confirmation ou erreur), focalisé après l'action. */
   let feedback = $state<{ variant: 'success' | 'danger'; message: string } | null>(null);
@@ -80,12 +66,8 @@
     month: 'long',
   });
 
-  const roomName = (r: Reservation) => rooms.get(r.roomId)?.name ?? 'Salle inconnue';
-
-  function requesterName(r: Reservation): string {
-    const requester = users.get(r.userId);
-    return requester ? `${requester.firstName} ${requester.lastName}` : 'Client';
-  }
+  const roomName = (r: Reservation) => roomNames.get(r.roomId) ?? 'Salle inconnue';
+  const requesterName = (r: Reservation) => requesterNames.get(r.userId) ?? 'Client';
 
   /** « (Bureau Oberkampf, 9 octobre) » */
   const where = (r: Reservation) =>
@@ -94,28 +76,12 @@
   async function load() {
     loadState = { type: 'loading' };
     feedback = null;
-    const [reservations, ownRooms] = await Promise.all([
-      listMyReservations({ pageSize: PAGE_SIZE }),
-      user.role === 'GESTIONNAIRE' ? listRoomsOfOwner(user.id) : Promise.resolve(null),
-    ]);
-    if (!reservations.ok) {
-      loadState = { type: 'error', message: errorMessage(reservations.error) };
+    const result = await listReservationRequests(HANDLED_LIMIT);
+    if (!result.ok) {
+      loadState = { type: 'error', message: errorMessage(result.error) };
       return;
     }
-    const known = new Map(ownRooms?.ok ? ownRooms.data.map((room) => [room.id, room]) : []);
-    const lists = splitRequests(
-      reservations.data.items,
-      ownRooms?.ok ? new Set(known.keys()) : null,
-    );
-    const shown = [...lists.pending, ...lists.handled];
-    const [fetchedRooms, requesters] = await Promise.all([
-      getRoomsByIds(shown.map((r) => r.roomId).filter((id) => !known.has(id))),
-      getUsersByIds(shown.map((r) => r.userId)),
-    ]);
-    rooms = new Map([...known, ...fetchedRooms]);
-    users = requesters;
-    pending = lists.pending;
-    handled = lists.handled;
+    ({ pending, handled, roomNames, requesterNames } = toRequestLists(result.data));
     loadState = { type: 'ready' };
   }
 

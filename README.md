@@ -32,7 +32,7 @@ pnpm seed          # une fois, dans un autre terminal : jeu de données du mock
 Images construites depuis `apps/backend/Dockerfile` et `apps/front/Dockerfile`, orchestrées par `compose.yaml` :
 
 ```sh
-cp .env.example .env   # au minimum JWT_SECRET
+cp .env.example .env   # à remplir : JWT_SECRET, JWT_REFRESH_SECRET, PEPPER_SECRET, DB_PASSWORD
 docker compose up -d --build
 ```
 
