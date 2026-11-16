@@ -1,9 +1,11 @@
 // Session de l'utilisateur dans le navigateur (cadrage.md § 2.3).
 // Le jeton est gardé dans le localStorage et rendu au client de `core` à chaque page,
-// car le client le garde dans une variable de module perdue au rechargement.
+// car le client le garde dans une variable de module perdue au rechargement. Il est renouvelé
+// par `POST /auth/refresh` avant son expiration (`ensureFreshSession`) ou après un `401`.
 import type { AuthResponse, User, UserRole } from '@room-booking/core';
 import { buildLoginUrl } from '../../utils/redirect';
-import { setAccessToken } from '../client';
+import { getAccessToken, refresh, setAccessToken } from '../client';
+import { clearPrivateCaches } from '../offline/serviceWorker';
 
 /** Clé du localStorage. */
 export const SESSION_KEY = 'quorum.session';
@@ -11,12 +13,17 @@ export const SESSION_KEY = 'quorum.session';
 /** Durée de vie par défaut du jeton si l'API n'envoie pas `expiresIn` (secondes). */
 const DEFAULT_EXPIRES_IN = 3600;
 
+/** Marge avant l'expiration du jeton d'accès à partir de laquelle on le renouvelle (ms). */
+const REFRESH_MARGIN_MS = 60 * 1000;
+
 /** Contenu enregistré sous `quorum.session`. */
 interface StoredSession {
   accessToken: string;
   user: User;
-  /** Date d'expiration en millisecondes depuis l'époque Unix. */
+  /** Date d'expiration du jeton d'accès, en millisecondes depuis l'époque Unix. */
   expiresAt: number;
+  /** Jeton de rafraîchissement ; `null` pour une session enregistrée avant son ajout. */
+  refreshToken: string | null;
 }
 
 /** Utilisateur connecté, réactif. À lire seulement : passer par les fonctions de ce module. */
@@ -59,7 +66,7 @@ function parse(raw: string | null): StoredSession | null {
   try {
     const value: unknown = JSON.parse(raw);
     if (!isRecord(value)) return null;
-    const { accessToken, user, expiresAt } = value;
+    const { accessToken, user, expiresAt, refreshToken } = value;
     if (
       typeof accessToken !== 'string' ||
       accessToken === '' ||
@@ -72,7 +79,12 @@ function parse(raw: string | null): StoredSession | null {
     ) {
       return null;
     }
-    return { accessToken, user: user as unknown as User, expiresAt };
+    return {
+      accessToken,
+      user: user as unknown as User,
+      expiresAt,
+      refreshToken: typeof refreshToken === 'string' && refreshToken !== '' ? refreshToken : null,
+    };
   } catch {
     return null;
   }
@@ -80,13 +92,15 @@ function parse(raw: string | null): StoredSession | null {
 
 /**
  * Relit la session du localStorage, rend le jeton au client de `core` et remplit `session.user`.
- * Une session expirée ou illisible est effacée. Sans effet côté serveur.
+ * Une session illisible, ou expirée sans jeton de rafraîchissement, est effacée. Une session
+ * expirée qui peut être renouvelée est gardée : le premier appel à l'API la renouvelle
+ * (`ensureFreshSession`). Sans effet côté serveur.
  * @returns L'utilisateur connecté, ou `null`.
  */
 export function restoreSession(): User | null {
   if (!isBrowser) return null;
   const stored = parse(readStorage());
-  if (!stored || stored.expiresAt <= Date.now()) {
+  if (!stored || (stored.expiresAt <= Date.now() && !stored.refreshToken)) {
     clearSession();
     return null;
   }
@@ -96,16 +110,22 @@ export function restoreSession(): User | null {
 }
 
 /**
- * Enregistre la session après une connexion réussie.
- * @param auth - Réponse de `POST /auth/login`.
+ * Enregistre la session après une connexion ou un renouvellement réussis.
+ * @param auth - Réponse de `POST /auth/login` ou de `POST /auth/refresh`. Sans `refreshToken`,
+ *   celui de la session enregistrée est gardé.
  */
 export function saveSession(auth: AuthResponse): void {
   if (!isBrowser) return;
+  // Autre compte que celui de la session enregistrée : les réponses de l'API gardées hors ligne
+  // sont les siennes
+  const previous = parse(readStorage());
+  if (previous && previous.user.id !== auth.user.id) void clearPrivateCaches();
   const expiresIn = auth.expiresIn ?? DEFAULT_EXPIRES_IN;
   writeStorage({
     accessToken: auth.accessToken,
     user: auth.user,
     expiresAt: Date.now() + expiresIn * 1000,
+    refreshToken: auth.refreshToken ?? previous?.refreshToken ?? null,
   });
   setAccessToken(auth.accessToken);
   session.user = auth.user;
@@ -122,10 +142,55 @@ export function updateSessionUser(user: User): void {
   session.user = user;
 }
 
-/** Efface la session : stockage, jeton du client de `core` et `session.user`. */
+/** Renouvellement en cours, partagé par les appels simultanés : un seul `POST /auth/refresh`. */
+let pendingRefresh: Promise<boolean> | null = null;
+
+/**
+ * Renouvelle le jeton d'accès avec le jeton de rafraîchissement enregistré. Les appels
+ * simultanés partagent la même requête. Le jeton est relu dans le localStorage à chaque fois :
+ * un autre onglet a pu le renouveler entre-temps.
+ * @returns Vrai si la session est renouvelée ; faux sans jeton de rafraîchissement ou s'il est
+ *   refusé (expiré, révoqué par un changement de mot de passe). La session n'est pas effacée :
+ *   c'est à l'appelant de décider (voir `withSession`).
+ */
+export function refreshSession(): Promise<boolean> {
+  if (!isBrowser) return Promise.resolve(false);
+  pendingRefresh ??= (async () => {
+    const refreshToken = parse(readStorage())?.refreshToken;
+    if (!refreshToken) return false;
+    const result = await refresh({ refreshToken });
+    if (result.ok) saveSession(result.data);
+    return result.ok;
+  })().finally(() => {
+    pendingRefresh = null;
+  });
+  return pendingRefresh;
+}
+
+/**
+ * À appeler avant chaque requête authentifiée : reprend le jeton si un autre onglet l'a
+ * renouvelé, et renouvelle la session si le jeton d'accès expire dans moins d'une minute. Un
+ * échec n'est pas traité ici : la requête partira avec l'ancien jeton et le `401` sera géré par
+ * `withSession`.
+ */
+export async function ensureFreshSession(): Promise<void> {
+  if (!isBrowser) return;
+  const stored = parse(readStorage());
+  if (!stored) return;
+  if (stored.accessToken !== getAccessToken()) setAccessToken(stored.accessToken);
+  if (stored.expiresAt - Date.now() < REFRESH_MARGIN_MS && stored.refreshToken) {
+    await refreshSession();
+  }
+}
+
+/**
+ * Efface la session : stockage, jeton du client de `core`, `session.user`, et les réponses de
+ * l'API gardées pour la consultation hors ligne (données personnelles).
+ */
 export function clearSession(): void {
   if (!isBrowser) return;
   removeStorage();
+  void clearPrivateCaches();
   setAccessToken(null);
   session.user = null;
 }

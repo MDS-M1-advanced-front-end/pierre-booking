@@ -9,6 +9,7 @@ import { PAYMENT_GATEWAY } from './application/ports/payment-gateway.port';
 import { RESERVATION_REQUESTS } from './application/ports/reservation-requests.port';
 import { ROOM_BOOKING } from './application/ports/room-booking.port';
 import { STATISTICS } from './application/ports/statistics.port';
+import { BrowseReservationsUseCase } from './application/use-cases/browse-reservations.use-case';
 import { CancelReservationUseCase } from './application/use-cases/cancel-reservation.use-case';
 import { ConfirmReservationUseCase } from './application/use-cases/confirm-reservation.use-case';
 import { CreatePaymentUseCase } from './application/use-cases/create-payment.use-case';
@@ -35,12 +36,14 @@ import { TypeOrmReservationEntity } from './infrastructure/persistence/typeorm-r
 import { TypeormReservationRequestsQuery } from './infrastructure/persistence/typeorm-reservation-requests.query';
 import { TypeormReservationRepository } from './infrastructure/persistence/typeorm-reservation.repository';
 import { TypeormStatisticsQuery } from './infrastructure/persistence/typeorm-statistics.query';
+import { AdminReservationsResolver } from './infrastructure/resolvers/admin-reservations.resolver';
 import { DashboardResolver } from './infrastructure/resolvers/dashboard.resolver';
 import { ReservationRequestsResolver } from './infrastructure/resolvers/reservation-requests.resolver';
 
 /**
  * Réservations, paiements et administration (liste de toutes les réservations, statistiques).
- * En GraphQL : tableau de bord et demandes de réservation (écran « Demandes » des gestionnaires).
+ * En GraphQL : tableau de bord, demandes de réservation (écran « Demandes » des gestionnaires),
+ * liste de toutes les réservations et leurs actions (administration).
  * Lit les salles à travers le port ROOM_BOOKING, branché sur RoomBookingService (module rooms).
  */
 @Module({
@@ -72,6 +75,8 @@ import { ReservationRequestsResolver } from './infrastructure/resolvers/reservat
     DashboardResolver,
     ListReservationRequestsUseCase,
     ReservationRequestsResolver,
+    BrowseReservationsUseCase,
+    AdminReservationsResolver,
     { provide: RESERVATION_REPOSITORY, useClass: TypeormReservationRepository },
     { provide: PAYMENT_REPOSITORY, useClass: TypeormPaymentRepository },
     { provide: ROOM_BOOKING, useExisting: RoomBookingService },

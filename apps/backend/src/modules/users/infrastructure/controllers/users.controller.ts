@@ -17,7 +17,7 @@ import { GetUserUseCase } from '../../application/use-cases/get-user.use-case';
 import { ListUsersUseCase } from '../../application/use-cases/list-users.use-case';
 import { UpdateUserUseCase } from '../../application/use-cases/update-user.use-case';
 import { UserRole } from '../../domain/entities/user.entity';
-import { Roles } from '../auth/auth.decorators';
+import { CurrentUser, Roles, type AuthUser } from '../auth/auth.decorators';
 import { toUserDTO } from '../dtos/user-dto.mapper';
 import {
   PaginatedUsersDTO,
@@ -73,29 +73,41 @@ export class UsersController {
    * PATCH /users/{userId} : modification, rôle compris.
    * @param userId - UUID de l'utilisateur.
    * @param dto - Champs à modifier.
-   * @returns L'utilisateur modifié ; 404 s'il n'existe pas, 409 si l'e-mail est pris.
+   * @param actor - Administrateur connecté.
+   * @returns L'utilisateur modifié ; 404 s'il n'existe pas, 409 si l'e-mail est pris ou si
+   *   l'administrateur change son propre rôle.
    */
   @Patch(':userId')
   async update(
     @Param('userId', ParseUUIDPipe) userId: string,
     @Body() dto: UpdateUserDTO,
+    @CurrentUser() actor: AuthUser,
   ): Promise<UserDTO> {
-    const user = await this.updateUserUseCase.execute(userId, {
-      firstName: dto.firstName,
-      lastName: dto.lastName,
-      email: dto.email,
-      role: dto.role,
-    });
+    const user = await this.updateUserUseCase.execute(
+      userId,
+      {
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        email: dto.email,
+        role: dto.role,
+      },
+      actor.id,
+    );
     return toUserDTO(user);
   }
 
   /**
    * DELETE /users/{userId} (204).
-   * @param userId - UUID de l'utilisateur ; 404 s'il n'existe pas, 409 s'il a des réservations.
+   * @param userId - UUID de l'utilisateur ; 404 s'il n'existe pas, 409 s'il a des réservations
+   *   ou si c'est l'administrateur connecté.
+   * @param actor - Administrateur connecté.
    */
   @Delete(':userId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('userId', ParseUUIDPipe) userId: string): Promise<void> {
-    return this.deleteUserUseCase.execute(userId);
+  remove(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @CurrentUser() actor: AuthUser,
+  ): Promise<void> {
+    return this.deleteUserUseCase.execute(userId, actor.id);
   }
 }

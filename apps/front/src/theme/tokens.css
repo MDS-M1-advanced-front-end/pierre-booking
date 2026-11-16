@@ -101,8 +101,9 @@
   --color-status-completed-bg: var(--color-info-bg);
 
   /* ---------- Typographie ---------- */
-  --font-family-base: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-family-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --font-family-base:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-family-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 
   --font-size-xs: 0.8125rem; /* 13px */
   --font-size-sm: 0.875rem; /* 14px */

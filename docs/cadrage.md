@@ -12,7 +12,7 @@ Toutes les décisions ont été validées le 2026-10-07 (voir la fin de [`plan.m
 
 **Dans le périmètre** : les 11 écrans de la maquette, parcours Socle (01 à 07) et espace gestionnaire Standard (08 à 11), en mobile (375 px) et desktop (1280 px).
 
-**Hors périmètre** : paiement simulé, back-office administrateur, PWA, mot de passe oublié (pas d'endpoint), Storybook (séance 5), comportement clavier avancé du SlotPicker (séance 6, on livre une base accessible).
+**Hors périmètre** : paiement simulé, back-office administrateur (ajouté ensuite, le 2026-11-16 : voir § 3), PWA (ajoutée le 2026-11-16 : voir § 2.10), mot de passe oublié (pas d'endpoint), Storybook (séance 5), comportement clavier avancé du SlotPicker (séance 6, on livre une base accessible).
 
 **Ajouté par rapport à la maquette** : pages « Accès refusé » (403) et « Page introuvable » (404), qui sont nécessaires pour les gardes de route ; changement de mot de passe sur le profil (écran 05).
 
@@ -49,7 +49,7 @@ Toutes les décisions ont été validées le 2026-10-07 (voir la fin de [`plan.m
 
 - Stockage **`localStorage`**, clé `quorum.session` : `{ accessToken, user, expiresAt }` (`expiresAt` = maintenant + `expiresIn`).
 - Le client de `core` garde le jeton dans une variable du module, perdue à chaque page. Chaque îlot connecté commence donc par `restoreSession()` : il lit le `localStorage`, appelle `setAccessToken()`, puis expose l'utilisateur via un état Svelte (`session.svelte.ts`).
-- **Pas de renouvellement du jeton** (aucune route de rafraîchissement dans le contrat) : si `expiresAt` est dépassé ou si l'API répond `401`, on vide la session et on redirige vers `/connexion?redirect=<page>`.
+- **Renouvellement du jeton** (ajouté le 2026-11-16, route `POST /auth/refresh`) : le jeton de rafraîchissement est gardé dans la session. Avant chaque appel authentifié, un jeton qui expire dans moins d'une minute est renouvelé ; sur un `401`, la session est renouvelée et l'appel rejoué une fois (`withSession`). Les appels simultanés partagent un seul renouvellement. Si le renouvellement échoue (jeton expiré au bout de 7 jours, ou révoqué par un changement de mot de passe), on vide la session et on redirige vers `/connexion?redirect=<page>`. Le renouvellement n'a lieu qu'au moment d'un appel : une page ouverte sans requête ne prolonge pas la session.
 - Déconnexion : `logout()` de `core` + suppression de la clé + retour au catalogue.
 - **Gardes** (dans le navigateur, avant d'afficher le contenu) : non connecté → `/connexion?redirect=…` ; mauvais rôle → page « Accès refusé ». Ce n'est qu'un confort d'interface : la vraie sécurité est l'API, qui contrôle les droits sur chaque requête.
 - **Règle** : `setAccessToken()` n'est **jamais** appelé côté serveur. La variable du module y serait partagée entre tous les visiteurs.
@@ -112,23 +112,41 @@ Toutes les décisions ont été validées le 2026-10-07 (voir la fin de [`plan.m
 
 ---
 
+### 2.10 PWA et hors-ligne
+
+Ajoutée le 2026-11-16. **Règle : consultation hors ligne, actions en ligne.**
+
+- **Installable** : manifeste et icônes générés par `@vite-pwa/astro` (v2, seule version compatible Astro 7) ; icônes produites depuis le logo (`public/favicon.svg`, qui était encore le logo d'Astro) par `pnpm generate:pwa-assets` (`pwa-assets.config.ts`).
+- **Service worker** (`src/sw.ts`, Workbox, stratégie `buildSW`) :
+  - fichiers du site et pages statiques précachés ;
+  - pages rendues par le serveur (catalogue, fiche salle…) : réseau d'abord, dernière version vue hors ligne, sinon la page `/hors-ligne` ;
+  - lectures de l'API (`GET` salles et réservations) : réseau d'abord, dernière réponse hors ligne. GraphQL (toujours en `POST`) et les écritures ne sont jamais mis en cache : l'administration et l'écran Demandes restent en ligne.
+- **Données personnelles** : le cache des réponses de l'API est vidé quand la session est effacée (déconnexion, expiration) et quand un autre compte se connecte (`clearPrivateCaches`).
+- **Interface** : bandeau « Vous êtes hors ligne » (`AppStatus`, dans le layout) ; les boutons d'action portent `needsNetwork` (inactifs hors ligne, formulaire non envoyé) ; une erreur réseau hors ligne affiche « Vous êtes hors ligne… ».
+- **Mises à jour** : une nouvelle version attend ; le bandeau « Nouvelle version disponible » l'active et recharge la page.
+- **Contournement** : l'intégration (v2.0.2) ne vise `dist/client` qu'avec `output: 'server'`. En `output: 'static'` + adaptateur, `astro.config.mjs` écrit le service worker dans `client/`, ne relève que les fichiers de `client/` et retire ce préfixe des adresses.
+- **Limites** : le service worker n'existe qu'au build (tester avec `pnpm build` puis `node dist/server/entry.mjs`) ; les photos des salles (autre origine, sans CORS) ne sont pas mises en cache par le service worker, seulement par le cache HTTP du navigateur.
+
 ## 3. Routes
 
-| #   | Écran                        | Route                                                       | Rendu                            | Accès                        |
-| --- | ---------------------------- | ----------------------------------------------------------- | -------------------------------- | ---------------------------- |
-| 01  | Catalogue                    | `/`                                                         | SSR + cache                      | Public                       |
-| 02  | Fiche salle                  | `/salles/[id]`                                              | SSR + cache                      | Public (réserver : connecté) |
-| 03  | Connexion                    | `/connexion`                                                | Statique                         | Visiteur                     |
-| 04  | Inscription                  | `/inscription`                                              | Statique                         | Visiteur                     |
-| 05  | Profil                       | `/profil`                                                   | Statique + îlot                  | Connecté                     |
-| 06  | Mes réservations             | `/reservations`                                             | Statique + îlot                  | Connecté                     |
-| 07  | Modifier une réservation     | `/reservations/[id]/modifier`                               | SSR (coquille) + îlot            | Connecté                     |
-| 08  | Mes salles                   | `/gestion/salles`                                           | Statique + îlot                  | `GESTIONNAIRE`               |
-| 09  | Ajouter / modifier une salle | `/gestion/salles/nouvelle`, `/gestion/salles/[id]/modifier` | Statique / SSR (coquille) + îlot | `GESTIONNAIRE`               |
-| 10  | Disponibilités               | `/gestion/salles/[id]/disponibilites`                       | SSR (coquille) + îlot            | `GESTIONNAIRE`               |
-| 11  | Demandes                     | `/gestion/demandes`                                         | Statique + îlot                  | `GESTIONNAIRE`               |
-| —   | Accès refusé                 | `/acces-refuse`                                             | Statique                         | —                            |
-| —   | Page introuvable             | `404.astro`                                                 | Statique                         | —                            |
+| #   | Écran                            | Route                                                                    | Rendu                            | Accès                        |
+| --- | -------------------------------- | ------------------------------------------------------------------------ | -------------------------------- | ---------------------------- |
+| 01  | Catalogue                        | `/`                                                                      | SSR + cache                      | Public                       |
+| 02  | Fiche salle                      | `/salles/[id]`                                                           | SSR + cache                      | Public (réserver : connecté) |
+| 03  | Connexion                        | `/connexion`                                                             | Statique                         | Visiteur                     |
+| 04  | Inscription                      | `/inscription`                                                           | Statique                         | Visiteur                     |
+| 05  | Profil                           | `/profil`                                                                | Statique + îlot                  | Connecté                     |
+| 06  | Mes réservations                 | `/reservations`                                                          | Statique + îlot                  | Connecté                     |
+| 07  | Modifier une réservation         | `/reservations/[id]/modifier`                                            | SSR (coquille) + îlot            | Connecté                     |
+| 08  | Mes salles                       | `/gestion/salles`                                                        | Statique + îlot                  | `GESTIONNAIRE`               |
+| 09  | Ajouter / modifier une salle     | `/gestion/salles/nouvelle`, `/gestion/salles/[id]/modifier`              | Statique / SSR (coquille) + îlot | `GESTIONNAIRE`               |
+| 10  | Disponibilités                   | `/gestion/salles/[id]/disponibilites`                                    | SSR (coquille) + îlot            | `GESTIONNAIRE`               |
+| 11  | Demandes                         | `/gestion/demandes`                                                      | Statique + îlot                  | `GESTIONNAIRE`               |
+| —   | Administration : tableau de bord | `/admin` (`?periode=`)                                                   | Statique + îlot                  | `ADMINISTRATEUR`             |
+| —   | Administration : utilisateurs    | `/admin/utilisateurs` (`?role=`, `?page=`)                               | Statique + îlot                  | `ADMINISTRATEUR`             |
+| —   | Administration : réservations    | `/admin/reservations` (`?statut=`, `?utilisateur=`, `?salle=`, `?page=`) | Statique + îlot                  | `ADMINISTRATEUR`             |
+| —   | Accès refusé                     | `/acces-refuse`                                                          | Statique                         | —                            |
+| —   | Page introuvable                 | `404.astro`                                                              | Statique                         | —                            |
 
 Les filtres passent par les paramètres d'URL : `/?location=…&capacityMin=10&date=…&page=2`, `/reservations?status=PENDING`, `/salles/[id]?date=2026-11-16`.
 

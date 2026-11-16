@@ -4,7 +4,11 @@ import { searchRooms } from '../client';
 import { listLocations, listRoomsOfOwner } from './rooms.queries';
 
 vi.mock('../client', () => ({ searchRooms: vi.fn() }));
-vi.mock('../auth/session.svelte', () => ({ expireSession: vi.fn() }));
+vi.mock('../auth/session.svelte', () => ({
+  ensureFreshSession: vi.fn(),
+  refreshSession: vi.fn().mockResolvedValue(false),
+  expireSession: vi.fn(),
+}));
 
 const OWNER_A = 'owner-a';
 const OWNER_B = 'owner-b';

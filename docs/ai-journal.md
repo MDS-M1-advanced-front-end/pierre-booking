@@ -26,6 +26,88 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-11-16 — PWA : installable et consultable hors ligne (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : mettre en place la PWA expliquée juste avant, avec les recommandations retenues : consultation hors ligne, actions en ligne, salles et « Mes réservations » gardées hors ligne.
+- **Demande** : « ok pour tes recommandations, génère les icônes depuis le favicon ». En cours de route : « t'avais pas commit la partie admin + graphql, fais ça avant » (fait : voir l'entrée « Espace d'administration en GraphQL »). Puis : « commit, push et pr vers main ».
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (`a0cdab6` mise au format de `tokens.css`, `3cd0401` front, `12819c4` docs ; branche `dev` poussée et PR vers `main`) :
+  - **icônes** : `public/favicon.svg` était encore le logo d'Astro du gabarit de départ. L'IA l'a signalé et l'a remplacé par le logo Quorum de l'en-tête (mêmes formes, couleurs des tokens), puis a généré favicon, icônes 64/192/512, icône « maskable » et icône Apple avec `@vite-pwa/assets-generator` (`pnpm generate:pwa-assets`) ;
+  - **manifeste et service worker** avec `@vite-pwa/astro` 2.0.2 (seule version compatible Astro 7) : `src/sw.ts` (Workbox) précache le site, sert les pages rendues par le serveur et les lectures de l'API en « réseau d'abord » avec la dernière version vue hors ligne, et la page `/hors-ligne` pour une page jamais visitée ;
+  - **interface** : bandeau « Vous êtes hors ligne » et bandeau « Nouvelle version disponible » (`AppStatus`), option `needsNetwork` du bouton posée sur les actions (formulaires et confirmations), message d'erreur « hors ligne » ;
+  - **confidentialité** : cache des réponses de l'API vidé à la déconnexion et quand un autre compte se connecte ;
+  - docs : `cadrage.md` § 2.10, `architecture.md`, `AGENTS.md`, `pistes.md`.
+- **Erreurs de l'IA relevées** :
+  - première configuration écrite d'après l'API de la v1 (`injectManifest`) : la v2 refuse un service worker en TypeScript avec cette stratégie, il fallait `buildSW`. Message d'erreur du build, corrigé après lecture des types de la v2 ;
+  - service worker d'abord généré au mauvais endroit (`dist/sw.js`, adresses en `client/…`, non servi) : vu en inspectant le build. Cause trouvée dans le code de l'intégration (elle ne vise `dist/client` qu'avec `output: 'server'`), contournée dans `astro.config.mjs` et documentée ;
+  - manifeste et icônes précachés deux fois (avertissement du build), corrigé ;
+  - page « hors ligne » sans `<h1>`, vue au test dans le navigateur ; une erreur de lint dans un test ; un test « formulaire non envoyé hors ligne » qui ne prouvait rien seul, complété par le cas en ligne.
+- **Vérification** : `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test` (402 tests, dont 14 nouveaux : bouton hors ligne, état du réseau, vidage du cache, message d'erreur). En vrai, front buildé et back en local, Chromium piloté par Playwright avec une session de test : en ligne, le service worker prend la main et remplit ses caches ; hors ligne, le catalogue (12 salles), « Mes réservations » et une fiche déjà vue s'affichent avec le bandeau, une fiche jamais vue affiche la page « hors ligne » ; de retour en ligne, la déconnexion supprime le cache de l'API. Nouvelle version simulée (modification de `sw.js` sur le serveur, fichier restauré ensuite) : bandeau affiché, « Recharger » active la nouvelle version. Chrome ne signale aucune erreur d'installabilité ni de manifeste. Non vérifié : l'installation réelle sur un téléphone, et les e2e (prévus au déploiement ; ils tournent en `astro dev`, sans service worker).
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-11-16 — Explication : faire de Quorum une PWA utilisable hors ligne (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : comprendre ce qu'est une PWA et comment la mettre en place sur ce projet avant d'écrire du code.
+- **Demande** : « j'aimerais que l'app soit une pwa avec offline. cependant j'ai très peu de connaissances sur ce domaine. est-ce que tu peux m'expliquer comment le mettre en place ? »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : explication seulement, sans modification du code : manifeste, service worker, stratégies de cache, et ce qu'elles donnent sur Quorum (pages rendues côté serveur, API sur une autre origine, jeton dans le `localStorage`, GraphQL en POST, écritures hors ligne). Proposition d'un plan en étapes et des décisions à prendre (portée du hors-ligne, données mises en cache, icônes).
+- **Erreurs de l'IA relevées** : aucune trouvée.
+- **Vérification** : versions du projet (`astro` ^7.3.6, `@astrojs/node` 11.1.7) ; compatibilité de `@vite-pwa/astro` 2.0.2 avec Astro 7 lue dans ses `peerDependencies` sur le registre npm ; comportement du client de `core` hors ligne (erreur réseau → `status: 0`, donc pas de déconnexion par `withSession`) lu dans `packages/core/src/api/client.ts`.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-11-16 — Espace d'administration en GraphQL (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal, skill `dataviz` pour le graphique.
+- **Objectif** : réaliser la piste 2 de `docs/pistes.md` (écrans administrateur), en GraphQL plutôt qu'avec les routes REST.
+- **Demande** : « commit push puis enchaines sur 2 en utilisant graphql plutôt que les routes classiques ».
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : commit et push du renouvellement de session (voir l'entrée « Pistes »). Puis, committé et poussé à ma demande avant de continuer la PWA (`6ee0774` core, `03eee92` back, `916c2e8` front, `62ef127` docs, puis ce journal ; dépôt `core` : `9b13dc5`) :
+  - **contrat** (`admin.graphql`, reporté dans le dépôt `core`) : requêtes `users` et `reservations` (paginées, filtrables), mutations `changeUserRole`, `deleteUser`, `confirmReservation`, `rejectReservation`, `cancelReservation`, champ `rejectionReason`. Le contrat n'est plus « en lecture seule » : choix de l'IA, pour suivre la demande (les écrans publics, clients et gestionnaires restent en REST). Opérations prêtes à l'emploi dans `operations.ts` ;
+  - **back** : resolvers `UsersResolver` et `AdminReservationsResolver`, qui reprennent les cas d'usage du REST (mêmes règles d'accès) ; lecture paginée avec la salle et le demandeur en jointure (`findPage`, `findById`) ; les filtres d'erreur du domaine répondent aussi en GraphQL (`respondDomainError`, `extensions.code` et `status`) ;
+  - **règle ajoutée** (choix de l'IA, aussi en REST et dans `openapi.yml`) : un administrateur ne peut ni changer son propre rôle ni supprimer son propre compte (409), pour ne pas se retirer l'accès ;
+  - **front** : pages `/admin` (tableau de bord sur une période : chiffres clés, histogramme du chiffre d'affaires, répartition par statut, classements), `/admin/utilisateurs` (rôle, suppression) et `/admin/reservations` (filtres statut, client, salle ; confirmer, refuser, annuler). Une requête GraphQL par écran, filtres dans l'adresse. Lien « Administration » dans l'en-tête, `/admin` comme page d'accueil d'un administrateur. Composant `ColumnChart` (une série, info-bulle au survol, tableau « Voir les données ») ;
+  - `docs/cadrage.md` (périmètre, routes) et `docs/pistes.md` à jour.
+- **Erreurs de l'IA relevées** :
+  - au commit, `CORE_VERSION` (deux lignes : adresse du dépôt, puis hash) a d'abord été écrasé par le hash seul ; repéré dans le diff du commit, corrigé avant le push ;
+  - `parseRole` et `parseStatus` testaient la valeur avec `in`, qui remonte le prototype : `?statut=toString` passait. Attrapé par le test écrit juste avant, corrigé avec `Object.hasOwn` ;
+  - appel de `RejectReservationUseCase` avec les paramètres dans le mauvais ordre (acteur et motif inversés), repéré en relisant la signature avant de compiler ;
+  - types des arguments GraphQL déclarés facultatifs (`?:`) alors que le codegen les génère en `T | null` : erreur de compilation, corrigée ;
+  - première version du graphique : colonnes focusables sans action (avertissement d'accessibilité de svelte-check), et en mobile, étiquettes des mois qui se chevauchaient et élargissaient la page à 383 px. Vu sur les captures, corrigé (libellés courts, 3 étiquettes en mobile, valeurs lisibles au clavier dans le tableau) ;
+  - en relançant les serveurs, un `pkill -f` de l'IA a tué son propre shell (le motif figurait dans sa ligne de commande).
+- **Vérification** : `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test` (389 tests, dont des nouveaux sur la règle « pas sur son propre compte », les paramètres d'adresse, les périodes, la série complétée et l'échelle du graphique), build du back. En vrai, back et front en local avec un jeton administrateur de test signé par l'IA : chaque requête et chaque erreur (403 client, 400 pagination ou UUID invalides, 404, 409 sur son propre compte, sur un compte avec réservations, sur une transition interdite) ; REST inchangé (409 et 404 au format `{ code, message }`). Captures des trois écrans en 1280 et 375 px, une seule requête GraphQL par écran, aucune erreur console. Dans le navigateur : changement de rôle d'un compte de test puis retour à son rôle d'origine, refus de suppression affiché dans la modale. Confirmer, refuser et annuler n'ont été testés qu'en erreur, pour ne pas modifier les réservations de la base de développement. E2E non lancés (prévus au déploiement).
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-11-16 — Pistes de fonctionnalités à ajouter ou améliorer (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : repérer ce qui manque ou peut être amélioré dans l'application.
+- **Demande** : « cherches des fonctionnalités que je pourrais ajouter/améliorer ».
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : analyse seulement, sans modification du code. Comparaison du contrat (`openapi.yml`, `admin.graphql`), des cas d'usage (`docs/use-cases.md`), du périmètre (`docs/cadrage.md`, `docs/plan.md`) et des pages du front. Principaux constats : routes du back sans écran (`/auth/refresh`, `/payments`, routes administrateur, requête GraphQL `dashboard`) ; statut COMPLETED annoncé mais jamais atteint (aucune méthode ni tâche planifiée) ; pas de notifications ni de mot de passe oublié.
+- **Erreurs de l'IA relevées** : aucune trouvée.
+- **Vérification** : recherches `grep` dans `apps/front/src` et `apps/backend/src` pour chaque constat.
+- **Suite** : « ok notes toi ça dans un md, ppuis implémentes le 1 sur une nouvelle branche dev ». Pistes notées dans `docs/pistes.md`. Branche `dev` créée depuis `refactor/to-clean-archi` (la PR #19 n'est pas encore fusionnée). Renouvellement de la session côté front, committé et poussé à ma demande « commit push » (`2b4d6e5`, pistes : `f8bd862`) :
+  - la session garde le jeton de rafraîchissement (`refreshToken`, `null` pour une session enregistrée avant ce changement) ; une session expirée qui peut être renouvelée n'est plus effacée à la relecture ;
+  - `refreshSession` appelle `POST /auth/refresh` ; les appels simultanés partagent une seule requête, et le jeton est relu dans le `localStorage` (un autre onglet a pu le renouveler) ;
+  - `ensureFreshSession`, avant chaque appel authentifié, reprend le jeton d'un autre onglet et renouvelle s'il expire dans moins d'une minute ;
+  - `withSession` prend désormais une fonction (pour pouvoir rejouer l'appel) : sur un `401`, renouvellement puis un seul nouvel essai ; échec → `expireSession` comme avant ;
+  - `cadrage.md` § 2.3 et le commentaire de `TOKEN_TTL_SECONDS` mis à jour.
+- **Vérification de la suite** : `pnpm typecheck`, `pnpm lint`, `pnpm format:check` ; tests du front (315, dont 14 nouveaux ou réécrits sur `refreshSession`, `ensureFreshSession` et `withSession`). En vrai, back et front lancés en local, avec des jetons de test signés par l'IA avec les secrets de développement : jeton d'accès expiré → `POST /auth/refresh` 200 puis `GET /reservations` 200, sans passer par la connexion ; jeton refusé (401) → renouvellement puis nouvel essai réussi ; jeton de rafraîchissement refusé → retour à `/connexion?redirect=%2Freservations`. Dans ce dernier cas, la réponse a été un 429 et non un 401 : la limite de 5 appels par minute et par IP sur les routes d'authentification, épuisée par les essais précédents de l'IA. E2E non lancés (prévus au déploiement).
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-11-16 — Diagnostic d'un 502 Bad Gateway sur le site déployé (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal, `curl` depuis le poste.
+- **Objectif** : comprendre pourquoi `https://booking.pierre-gaillard.dev/` répond 502 alors que le domaine est enregistré sur le service dans Dokploy.
+- **Demande** : « je me prends un 502 bad gateway sur le site en ligne […] l'erreur provient probablement de dokploy pourtant j'ai bien enregistré le domain sur le service ».
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : diagnostic seulement, sans accès à l'interface Dokploy ni au serveur. Le domaine répond `502 Bad Gateway` (réponse du proxy Traefik de Dokploy), y compris sur `/api`, alors que le front répond 200 en direct sur le port 4321 du serveur : le conteneur tourne, c'est le routage Traefik → conteneur qui échoue. Causes probables, à vérifier dans Dokploy : port du domaine différent de 4321, service non redéployé après l'ajout du domaine, ou conteneur hors du réseau `dokploy-network`.
+- **Erreurs de l'IA relevées** : aucune trouvée ; cause non confirmée faute d'accès à la configuration Dokploy.
+- **Vérification** : `curl` sur le domaine (502) et sur l'IP aux ports 4321 (200), 8080 (404 hors `/api`) et 3000 (interface Dokploy).
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-11-16 — Installation du skill pre-review et pré-relecture de la PR #19 (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal, skill `pre-review` et trois sous-agents de relecture.

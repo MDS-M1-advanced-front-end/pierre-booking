@@ -1,0 +1,29 @@
+---
+// Administration — utilisateurs : coquille statique, contenu dans l'îlot (session dans le
+// navigateur, données en GraphQL).
+import Skeleton from '../../components/Skeleton.svelte';
+import Layout from '../../layouts/Layout.astro';
+import AdminNav from '../../partials/admin/AdminNav.astro';
+import UsersPage from '../../partials/admin/UsersPage.svelte';
+---
+
+<Layout title="Utilisateurs" description="Rôles et comptes des utilisateurs de la plateforme.">
+  <div class="mb-(--space-5)">
+    <h1>Utilisateurs</h1>
+    <p class="mt-(--space-1) text-text-muted">
+      Rôles et comptes des utilisateurs de la plateforme.
+    </p>
+  </div>
+  <AdminNav current="/admin/utilisateurs" />
+
+  <UsersPage client:only="svelte">
+    <div slot="fallback" class="flex flex-col gap-(--space-3)" aria-busy="true">
+      <p class="visually-hidden" role="status">
+        Chargement…
+      </p>
+      <Skeleton class="h-10 w-1/2" />
+      <Skeleton class="h-24 w-full rounded-lg" />
+      <Skeleton class="h-24 w-full rounded-lg" />
+    </div>
+  </UsersPage>
+</Layout>

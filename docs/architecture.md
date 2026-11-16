@@ -19,7 +19,8 @@ apps/front/
 ├── .env.example                variables d'environnement (copier en .env)
 ├── e2e/                        tests de bout en bout Playwright (<parcours>.spec.ts)
 ├── playwright.config.ts
-├── public/                     fichiers servis tels quels (favicon…)
+├── public/                     fichiers servis tels quels (favicon, icônes de la PWA…)
+├── pwa-assets.config.ts        génération des icônes de la PWA depuis le logo
 └── src/
     ├── pages/                  routes Astro : composition uniquement
     │   └── index.astro         écran 01 Catalogue
@@ -38,7 +39,8 @@ apps/front/
     ├── theme/
     │   ├── global.css          Tailwind + branchement des tokens + styles de base
     │   └── tokens.css          copie telle quelle de maquettes/tokens.css
-    └── utils/                  fonctions pures, sans dépendance à Astro (format de prix…)
+    ├── utils/                  fonctions pures, sans dépendance à Astro (format de prix…)
+    └── sw.ts                   service worker de la PWA (cadrage.md § 2.10), compilé en /sw.js au build
 ```
 
 ### `pages/`

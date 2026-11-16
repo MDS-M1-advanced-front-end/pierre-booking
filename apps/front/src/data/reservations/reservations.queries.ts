@@ -1,4 +1,4 @@
-// Toutes ces routes exigent une session : un `401` la vide (voir `withSession`).
+// Toutes ces routes exigent une session : un `401` la renouvelle ou la vide (voir `withSession`).
 import type {
   ListReservationsQuery,
   PaginatedReservations,
@@ -16,7 +16,7 @@ import { withSession } from '../errors';
 export function listMyReservations(
   query: ListReservationsQuery = {},
 ): Promise<Result<PaginatedReservations>> {
-  return withSession(api.listMyReservations(query));
+  return withSession(() => api.listMyReservations(query));
 }
 
 /**
@@ -27,17 +27,17 @@ export function listMyReservations(
 export function listReservationRequests(
   handledLimit: number,
 ): Promise<Result<ReservationRequestsQuery>> {
-  return withSession(api.getReservationRequests({ handledLimit }));
+  return withSession(() => api.getReservationRequests({ handledLimit }));
 }
 
 /** Détail d'une réservation. */
 export function getReservation(reservationId: string): Promise<Result<Reservation>> {
-  return withSession(api.getReservation(reservationId));
+  return withSession(() => api.getReservation(reservationId));
 }
 
 /** Réserve une salle (statut PENDING). `409` si le créneau est pris. */
 export function createReservation(body: ReservationCreateRequest): Promise<Result<Reservation>> {
-  return withSession(api.createReservation(body));
+  return withSession(() => api.createReservation(body));
 }
 
 /** Modifie une réservation PENDING ou CONFIRMED. */
@@ -45,17 +45,17 @@ export function updateReservation(
   reservationId: string,
   body: ReservationUpdateRequest,
 ): Promise<Result<Reservation>> {
-  return withSession(api.updateReservation(reservationId, body));
+  return withSession(() => api.updateReservation(reservationId, body));
 }
 
 /** Annule une réservation (statut CANCELLED). */
 export function cancelReservation(reservationId: string): Promise<Result<void>> {
-  return withSession(api.cancelReservation(reservationId));
+  return withSession(() => api.cancelReservation(reservationId));
 }
 
 /** Confirme une réservation PENDING (gestionnaire de la salle, administrateur). */
 export function confirmReservation(reservationId: string): Promise<Result<Reservation>> {
-  return withSession(api.confirmReservation(reservationId));
+  return withSession(() => api.confirmReservation(reservationId));
 }
 
 /** Refuse une réservation PENDING, avec un motif facultatif. */
@@ -63,5 +63,5 @@ export function rejectReservation(
   reservationId: string,
   body?: ReservationRejectRequest,
 ): Promise<Result<Reservation>> {
-  return withSession(api.rejectReservation(reservationId, body));
+  return withSession(() => api.rejectReservation(reservationId, body));
 }

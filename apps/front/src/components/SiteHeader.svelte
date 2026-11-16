@@ -57,11 +57,14 @@
     const catalogue = { href: '/', label: 'Catalogue' };
     if (!user) return [catalogue];
     if (isManager) {
-      return [
+      const manager = [
         catalogue,
         { href: '/gestion/salles', label: 'Mes salles' },
         { href: '/gestion/demandes', label: 'Demandes' },
       ];
+      return user.role === 'ADMINISTRATEUR'
+        ? [...manager, { href: '/admin', label: 'Administration' }]
+        : manager;
     }
     return [catalogue, { href: '/reservations', label: 'Mes réservations' }];
   });

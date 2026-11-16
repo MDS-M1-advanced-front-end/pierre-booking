@@ -6,26 +6,16 @@ import {
   Roles,
   type AuthUser,
 } from '../../../users/infrastructure/auth/auth.decorators';
-import type { ReservationRequestView } from '../../application/ports/reservation-requests.port';
 import { ListReservationRequestsUseCase } from '../../application/use-cases/list-reservation-requests.use-case';
 import type { ReservationActor } from '../../domain/entities/reservation.entity';
 import { toActor } from '../controllers/actor';
 import { ReservationRequestsArgsDTO } from '../dtos/reservation-requests.dto';
+import { toReservationRequest } from './reservation-request.mapper';
 
 /** Objet `ReservationRequests` avant ses champs calculés : l'utilisateur, transmis à chaque champ. */
 interface RequestsScope {
   actor: ReservationActor;
 }
-
-/** Demande lue en base → type du contrat (instants ISO, comme en REST). */
-const toReservationRequest = (
-  view: ReservationRequestView,
-): ReservationRequest => ({
-  ...view,
-  startAt: view.startAt.toISOString(),
-  endAt: view.endAt.toISOString(),
-  createdAt: view.createdAt.toISOString(),
-});
 
 /**
  * Demandes de réservation de l'écran « Demandes » (admin.graphql du core), pour les gestionnaires

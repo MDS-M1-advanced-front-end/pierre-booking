@@ -169,6 +169,7 @@
 
     <div class="flex flex-wrap-reverse justify-end gap-(--space-3) pt-(--space-2)">
       <Button
+        needsNetwork
         type="submit"
         class="max-md:flex-[1_1_100%]"
         aria-busy={submitting}

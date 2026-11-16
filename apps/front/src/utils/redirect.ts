@@ -44,7 +44,8 @@ export function safeRedirectPath(target: string | null | undefined): string | nu
  * @param role - Rôle de l'utilisateur.
  */
 export function homePathForRole(role: UserRole): string {
-  return role === 'CLIENT' ? '/reservations' : '/gestion/salles';
+  if (role === 'CLIENT') return '/reservations';
+  return role === 'ADMINISTRATEUR' ? '/admin' : '/gestion/salles';
 }
 
 /**

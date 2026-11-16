@@ -5,7 +5,11 @@ import { expireSession } from '../auth/session.svelte';
 import { updateUser } from './users.queries';
 
 vi.mock('../client', () => ({ updateUser: vi.fn() }));
-vi.mock('../auth/session.svelte', () => ({ expireSession: vi.fn() }));
+vi.mock('../auth/session.svelte', () => ({
+  ensureFreshSession: vi.fn(),
+  refreshSession: vi.fn().mockResolvedValue(false),
+  expireSession: vi.fn(),
+}));
 
 const user = {
   id: 'u1',

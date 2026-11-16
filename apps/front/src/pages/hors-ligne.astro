@@ -1,0 +1,21 @@
+---
+// Page « hors ligne » : servie par le service worker quand une page n'a jamais été visitée et que
+// le réseau est absent. Statique et précachée.
+import Button from '../components/Button.svelte';
+import EmptyState from '../components/EmptyState.svelte';
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Hors ligne" description="Cette page n'est pas disponible sans connexion.">
+  <h1 class="visually-hidden">Page indisponible hors ligne</h1>
+  <EmptyState
+    title="Vous êtes hors ligne"
+    text="Cette page n'a pas encore été consultée sur cet appareil : elle s'affichera au retour de la connexion. Les pages déjà visitées, le catalogue et vos réservations restent consultables."
+    icon="info"
+    headingLevel={2}
+  >
+    <Button slot="action" href="/reservations" variant="secondary">
+      Mes réservations
+    </Button>
+  </EmptyState>
+</Layout>

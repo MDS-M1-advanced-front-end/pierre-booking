@@ -405,7 +405,7 @@
           class="flex flex-wrap-reverse justify-end gap-(--space-3) pt-(--space-2) max-md:*:flex-[1_1_100%]"
         >
           <Button variant="secondary" href="/gestion/salles">Annuler</Button>
-          <Button type="submit" aria-busy={submitting}>Enregistrer</Button>
+          <Button needsNetwork type="submit" aria-busy={submitting}>Enregistrer</Button>
         </div>
       </div>
     </form>

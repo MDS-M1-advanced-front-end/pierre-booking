@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import type { HTMLAnchorAttributes, HTMLButtonAttributes } from 'svelte/elements';
+  import { network } from '../data/offline/network.svelte';
 
   type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
@@ -18,6 +19,11 @@
     href?: string;
     type?: 'button' | 'submit';
     disabled?: boolean;
+    /**
+     * Action qui a besoin du réseau (réserver, enregistrer…) : hors ligne, le bouton est inactif
+     * (`aria-disabled`, il reste atteignable et annonce « hors ligne ») et le clic est sans effet.
+     */
+    needsNetwork?: boolean;
     class?: string;
     children?: Snippet;
   }
@@ -30,6 +36,7 @@
     href,
     type = 'button',
     disabled = false,
+    needsNetwork = false,
     class: className,
     children,
     ...rest
@@ -47,10 +54,21 @@
     danger: 'border-transparent bg-danger text-text-inverse hover:bg-danger-hover',
   };
 
+  const offline = $derived(needsNetwork && !network.online);
+
   // `aria-disabled` (ex. bouton en cours d'envoi) prend le même aspect que `disabled`.
   const inactive = $derived(
-    disabled || rest['aria-disabled'] === true || rest['aria-disabled'] === 'true',
+    disabled || offline || rest['aria-disabled'] === true || rest['aria-disabled'] === 'true',
   );
+
+  /** Hors ligne, le clic (et l'envoi du formulaire pour un bouton `submit`) est annulé. */
+  function handleClick(event: MouseEvent & { currentTarget: EventTarget & HTMLButtonElement }) {
+    if (offline) {
+      event.preventDefault();
+      return;
+    }
+    rest.onclick?.(event);
+  }
 
   const classes = $derived([
     'inline-flex items-center justify-center gap-(--space-2) rounded-md border',
@@ -83,7 +101,15 @@
     {@render children?.()}
   </a>
 {:else}
-  <button {...rest} class={classes} {type} {disabled}>
+  <button
+    {...rest}
+    class={classes}
+    {type}
+    {disabled}
+    aria-disabled={offline ? 'true' : rest['aria-disabled']}
+    onclick={handleClick}
+  >
     {@render children?.()}
+    {#if offline}<span class="visually-hidden">(indisponible hors ligne)</span>{/if}
   </button>
 {/if}

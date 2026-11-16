@@ -295,6 +295,7 @@
       {:else if user}
         <div class="flex flex-col gap-(--space-2)">
           <Button
+            needsNetwork
             type="submit"
             block
             aria-disabled={!range || submitting}
