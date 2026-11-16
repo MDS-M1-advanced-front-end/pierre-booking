@@ -1,20 +1,22 @@
 import type { AuthResponse, User } from '@room-booking/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { setAccessToken } = vi.hoisted(() => {
+const { setAccessToken, getAccessToken, refresh } = vi.hoisted(() => {
   // Le projet `front:data` ne compile pas les runes Svelte : on remplace `$state` par
   // l'identité. La réactivité n'est pas testée ici, seulement la logique.
   (globalThis as Record<string, unknown>).$state = <T>(value: T): T => value;
-  return { setAccessToken: vi.fn() };
+  return { setAccessToken: vi.fn(), getAccessToken: vi.fn(), refresh: vi.fn() };
 });
 
-vi.mock('../client', () => ({ setAccessToken }));
+vi.mock('../client', () => ({ setAccessToken, getAccessToken, refresh }));
 
 const {
   SESSION_KEY,
   clearSession,
+  ensureFreshSession,
   expireSession,
   hasRole,
+  refreshSession,
   restoreSession,
   saveSession,
   session,
@@ -43,6 +45,8 @@ beforeEach(() => {
   localStorage.clear();
   session.user = null;
   setAccessToken.mockClear();
+  getAccessToken.mockReset();
+  refresh.mockReset();
 });
 
 afterEach(() => {
@@ -59,9 +63,18 @@ describe('saveSession', () => {
       accessToken: 'jeton-1',
       user: lea,
       expiresAt: NOW.getTime() + 3600 * 1000,
+      refreshToken: null,
     });
     expect(setAccessToken).toHaveBeenCalledWith('jeton-1');
     expect(session.user).toEqual(lea);
+  });
+
+  it('enregistre le jeton de rafraîchissement, et garde l’ancien si la réponse n’en a pas', () => {
+    saveSession({ ...auth, refreshToken: 'long-1' });
+    expect(readStored()).toMatchObject({ refreshToken: 'long-1' });
+
+    saveSession({ ...auth, accessToken: 'jeton-2' });
+    expect(readStored()).toMatchObject({ accessToken: 'jeton-2', refreshToken: 'long-1' });
   });
 
   it('prend une heure par défaut si `expiresIn` est absent', () => {
@@ -87,7 +100,15 @@ describe('restoreSession', () => {
     expect(session.user).toBeNull();
   });
 
-  it('efface une session expirée', () => {
+  it('garde une session expirée qui peut être renouvelée', () => {
+    saveSession({ ...auth, refreshToken: 'long-1' });
+    vi.advanceTimersByTime(3600 * 1000);
+
+    expect(restoreSession()).toEqual(lea);
+    expect(localStorage.getItem(SESSION_KEY)).not.toBeNull();
+  });
+
+  it('efface une session expirée sans jeton de rafraîchissement', () => {
     saveSession(auth);
     vi.advanceTimersByTime(3600 * 1000);
     setAccessToken.mockClear();
@@ -163,7 +184,92 @@ describe('updateSessionUser', () => {
       accessToken: 'jeton-1',
       user: updated,
       expiresAt: NOW.getTime() + 3600 * 1000,
+      refreshToken: null,
     });
+  });
+});
+
+describe('refreshSession', () => {
+  const renewed: AuthResponse = {
+    accessToken: 'jeton-2',
+    expiresIn: 3600,
+    refreshToken: 'long-2',
+    user: lea,
+  };
+
+  it('échange le jeton de rafraîchissement et enregistre la nouvelle session', async () => {
+    saveSession({ ...auth, refreshToken: 'long-1' });
+    refresh.mockResolvedValue({ ok: true, data: renewed });
+
+    await expect(refreshSession()).resolves.toBe(true);
+
+    expect(refresh).toHaveBeenCalledWith({ refreshToken: 'long-1' });
+    expect(readStored()).toMatchObject({ accessToken: 'jeton-2', refreshToken: 'long-2' });
+    expect(setAccessToken).toHaveBeenLastCalledWith('jeton-2');
+  });
+
+  it('partage une seule requête entre les appels simultanés', async () => {
+    saveSession({ ...auth, refreshToken: 'long-1' });
+    refresh.mockResolvedValue({ ok: true, data: renewed });
+
+    const results = await Promise.all([refreshSession(), refreshSession(), refreshSession()]);
+
+    expect(results).toEqual([true, true, true]);
+    expect(refresh).toHaveBeenCalledOnce();
+  });
+
+  it('renvoie faux sans jeton de rafraîchissement, sans appeler l’API', async () => {
+    saveSession(auth);
+    await expect(refreshSession()).resolves.toBe(false);
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it('renvoie faux si le jeton est refusé, sans effacer la session', async () => {
+    saveSession({ ...auth, refreshToken: 'long-1' });
+    refresh.mockResolvedValue({
+      ok: false,
+      error: { status: 401, code: 'UNAUTHORIZED', message: 'x' },
+    });
+
+    await expect(refreshSession()).resolves.toBe(false);
+    expect(readStored()).toMatchObject({ accessToken: 'jeton-1' });
+  });
+});
+
+describe('ensureFreshSession', () => {
+  it('ne renouvelle pas un jeton qui a encore plus d’une minute', async () => {
+    saveSession({ ...auth, refreshToken: 'long-1' });
+    getAccessToken.mockReturnValue('jeton-1');
+    vi.advanceTimersByTime(3540 * 1000 - 1);
+
+    await ensureFreshSession();
+
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it('renouvelle un jeton qui expire dans moins d’une minute', async () => {
+    saveSession({ ...auth, refreshToken: 'long-1' });
+    refresh.mockResolvedValue({
+      ok: true,
+      data: { ...auth, accessToken: 'jeton-2', refreshToken: 'long-2' },
+    });
+    vi.advanceTimersByTime(3540 * 1000 + 1);
+
+    await ensureFreshSession();
+
+    expect(refresh).toHaveBeenCalledOnce();
+    expect(readStored()).toMatchObject({ accessToken: 'jeton-2' });
+  });
+
+  it('reprend le jeton renouvelé par un autre onglet', async () => {
+    saveSession({ ...auth, refreshToken: 'long-1' });
+    getAccessToken.mockReturnValue('jeton-0');
+    setAccessToken.mockClear();
+
+    await ensureFreshSession();
+
+    expect(setAccessToken).toHaveBeenCalledWith('jeton-1');
+    expect(refresh).not.toHaveBeenCalled();
   });
 });
 

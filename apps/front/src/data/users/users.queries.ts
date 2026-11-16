@@ -17,5 +17,5 @@ export function updateUser(userId: string, body: UserProfileUpdate): Promise<Res
   if (firstName !== undefined) safeBody.firstName = firstName;
   if (lastName !== undefined) safeBody.lastName = lastName;
   if (email !== undefined) safeBody.email = email;
-  return withSession(api.updateUser(userId, safeBody));
+  return withSession(() => api.updateUser(userId, safeBody));
 }

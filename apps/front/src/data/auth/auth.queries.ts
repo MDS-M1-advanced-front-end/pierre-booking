@@ -45,7 +45,7 @@ export function logout(): void {
 
 /** Profil de l'utilisateur connecté ; met à jour la session en cas de succès. */
 export async function getMe(): Promise<Result<User>> {
-  const result = await withSession(api.getMe());
+  const result = await withSession(() => api.getMe());
   if (result.ok) updateSessionUser(result.data);
   return result;
 }

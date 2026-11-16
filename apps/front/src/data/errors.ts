@@ -1,6 +1,6 @@
 // Normalisation des erreurs renvoyées par les fonctions de `core` (cadrage.md § 2.4 et § 2.6).
 import type { ApiError, Result } from '@room-booking/core';
-import { expireSession } from './auth/session.svelte';
+import { ensureFreshSession, expireSession, refreshSession } from './auth/session.svelte';
 
 /** Erreur exploitable par l'interface : `status` HTTP (0 = réseau), `code` et `message` de l'API. */
 export type DataError = ApiError;
@@ -40,13 +40,19 @@ export function errorMessage(error: DataError, messages: ErrorMessages = {}): st
 }
 
 /**
- * Applique la règle de session aux appels authentifiés : un `401` vide la session et renvoie
- * vers la connexion avec `redirect` (`expireSession`, pas de renouvellement du jeton, cadrage.md § 2.3).
- * @param call - La promesse renvoyée par une fonction de `core`.
- * @returns Le même `Result`.
+ * Applique la règle de session aux appels authentifiés (cadrage.md § 2.3) : le jeton est
+ * renouvelé avant l'appel s'il expire bientôt. Sur un `401`, la session est renouvelée et l'appel
+ * rejoué une fois ; si le renouvellement échoue ou si le `401` persiste, la session est vidée et
+ * l'utilisateur renvoyé vers la connexion avec `redirect` (`expireSession`).
+ * @param call - Fonction qui lance l'appel à `core` : elle peut être rappelée une seconde fois.
+ * @returns Le `Result` du dernier appel.
  */
-export async function withSession<T>(call: Promise<Result<T>>): Promise<Result<T>> {
-  const result = await call;
+export async function withSession<T>(call: () => Promise<Result<T>>): Promise<Result<T>> {
+  await ensureFreshSession();
+  let result = await call();
+  if (!result.ok && result.error.status === 401 && (await refreshSession())) {
+    result = await call();
+  }
   if (!result.ok && result.error.status === 401) expireSession();
   return result;
 }

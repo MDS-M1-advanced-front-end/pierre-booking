@@ -1,8 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { errorMessage, withSession } from './errors';
-import { expireSession } from './auth/session.svelte';
+import { ensureFreshSession, expireSession, refreshSession } from './auth/session.svelte';
 
-vi.mock('./auth/session.svelte', () => ({ expireSession: vi.fn() }));
+vi.mock('./auth/session.svelte', () => ({
+  ensureFreshSession: vi.fn(),
+  refreshSession: vi.fn(),
+  expireSession: vi.fn(),
+}));
 
 const error = (status: number) => ({ status, code: 'X', message: 'raw message' });
 
@@ -29,23 +33,59 @@ describe('errorMessage', () => {
 });
 
 describe('withSession', () => {
+  const fail = (status: number) => ({ ok: false as const, error: error(status) });
+
   beforeEach(() => {
     vi.mocked(expireSession).mockClear();
+    vi.mocked(ensureFreshSession).mockClear();
+    vi.mocked(refreshSession).mockReset().mockResolvedValue(false);
   });
 
-  it('vide la session sur un 401', async () => {
-    const result = await withSession(Promise.resolve({ ok: false as const, error: error(401) }));
+  it('renouvelle le jeton si besoin avant l’appel', async () => {
+    const call = vi.fn().mockResolvedValue({ ok: true, data: 42 });
+    await withSession(call);
+    expect(ensureFreshSession).toHaveBeenCalledOnce();
+    expect(vi.mocked(ensureFreshSession).mock.invocationCallOrder[0]).toBeLessThan(
+      call.mock.invocationCallOrder[0] ?? 0,
+    );
+  });
+
+  it('sur un 401, renouvelle la session et rejoue l’appel une fois', async () => {
+    vi.mocked(refreshSession).mockResolvedValue(true);
+    const call = vi
+      .fn()
+      .mockResolvedValueOnce(fail(401))
+      .mockResolvedValueOnce({ ok: true, data: 42 });
+    const result = await withSession(call);
+    expect(result).toEqual({ ok: true, data: 42 });
+    expect(call).toHaveBeenCalledTimes(2);
+    expect(expireSession).not.toHaveBeenCalled();
+  });
+
+  it('vide la session si le renouvellement échoue', async () => {
+    const call = vi.fn().mockResolvedValue(fail(401));
+    const result = await withSession(call);
     expect(result.ok).toBe(false);
+    expect(call).toHaveBeenCalledOnce();
     expect(expireSession).toHaveBeenCalledOnce();
   });
 
-  it.each([403, 404, 0])('garde la session sur un %i', async (status) => {
-    await withSession(Promise.resolve({ ok: false as const, error: error(status) }));
+  it('vide la session si le 401 persiste après le renouvellement', async () => {
+    vi.mocked(refreshSession).mockResolvedValue(true);
+    const call = vi.fn().mockResolvedValue(fail(401));
+    await withSession(call);
+    expect(call).toHaveBeenCalledTimes(2);
+    expect(expireSession).toHaveBeenCalledOnce();
+  });
+
+  it.each([403, 404, 0])('garde la session sur un %i, sans renouveler', async (status) => {
+    await withSession(() => Promise.resolve(fail(status)));
+    expect(refreshSession).not.toHaveBeenCalled();
     expect(expireSession).not.toHaveBeenCalled();
   });
 
   it('renvoie le succès tel quel', async () => {
-    const result = await withSession(Promise.resolve({ ok: true as const, data: 42 }));
+    const result = await withSession(() => Promise.resolve({ ok: true as const, data: 42 }));
     expect(result).toEqual({ ok: true, data: 42 });
     expect(expireSession).not.toHaveBeenCalled();
   });

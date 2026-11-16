@@ -15,6 +15,7 @@ export {
   logout,
   getMe,
   changePassword,
+  refresh,
   // Utilisateurs
   updateUser,
   // Salles et disponibilités

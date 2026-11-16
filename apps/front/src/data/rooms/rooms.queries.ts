@@ -37,17 +37,17 @@ export function getRoomAvailability(
 
 /** Ajoute une salle (gestionnaire, administrateur). */
 export function createRoom(body: RoomCreateRequest): Promise<Result<Room>> {
-  return withSession(api.createRoom(body));
+  return withSession(() => api.createRoom(body));
 }
 
 /** Modifie une salle : envoyer l'objet complet (anomalie 2). */
 export function updateRoom(roomId: string, body: RoomUpdateRequest): Promise<Result<Room>> {
-  return withSession(api.updateRoom(roomId, body));
+  return withSession(() => api.updateRoom(roomId, body));
 }
 
 /** Supprime une salle. */
 export function deleteRoom(roomId: string): Promise<Result<void>> {
-  return withSession(api.deleteRoom(roomId));
+  return withSession(() => api.deleteRoom(roomId));
 }
 
 /** Remplace les créneaux d'une salle pour une date. */
@@ -55,7 +55,7 @@ export function setRoomAvailability(
   roomId: string,
   body: AvailabilityUpdateRequest,
 ): Promise<Result<AvailabilitySlot[]>> {
-  return withSession(api.setRoomAvailability(roomId, body));
+  return withSession(() => api.setRoomAvailability(roomId, body));
 }
 
 /**
