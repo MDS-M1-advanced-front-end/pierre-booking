@@ -23,6 +23,10 @@ Fonctionnalités à ajouter ou à améliorer, relevées le 2026-11-16 en compara
 8. **Calendrier par salle pour le gestionnaire** : vue de la semaine avec les réservations, plutôt que la seule liste des demandes. Une requête GraphQL pourrait regrouper salle, disponibilités et réservations.
 9. **Restes du plan** : vérification au lecteur d'écran (étape 6.1) jamais faite ; schémas Zod de `core` toujours attendus.
 
+## Fait depuis
+
+- **PWA** : installable, consultable hors ligne (branche `dev`, voir `cadrage.md` § 2.10).
+
 ## Déploiement
 
 - `compose.yaml` publie les ports 4321 et 8080 sur l'IP publique : derrière Dokploy, retirer ces `ports:` et laisser le proxy router.

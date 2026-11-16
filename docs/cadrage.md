@@ -12,7 +12,7 @@ Toutes les décisions ont été validées le 2026-10-07 (voir la fin de [`plan.m
 
 **Dans le périmètre** : les 11 écrans de la maquette, parcours Socle (01 à 07) et espace gestionnaire Standard (08 à 11), en mobile (375 px) et desktop (1280 px).
 
-**Hors périmètre** : paiement simulé, back-office administrateur (ajouté ensuite, le 2026-11-16 : voir § 3), PWA, mot de passe oublié (pas d'endpoint), Storybook (séance 5), comportement clavier avancé du SlotPicker (séance 6, on livre une base accessible).
+**Hors périmètre** : paiement simulé, back-office administrateur (ajouté ensuite, le 2026-11-16 : voir § 3), PWA (ajoutée le 2026-11-16 : voir § 2.10), mot de passe oublié (pas d'endpoint), Storybook (séance 5), comportement clavier avancé du SlotPicker (séance 6, on livre une base accessible).
 
 **Ajouté par rapport à la maquette** : pages « Accès refusé » (403) et « Page introuvable » (404), qui sont nécessaires pour les gardes de route ; changement de mot de passe sur le profil (écran 05).
 
@@ -111,6 +111,21 @@ Toutes les décisions ont été validées le 2026-10-07 (voir la fin de [`plan.m
 `docker compose up dev` publiait 3000, 4200 et 5173, mais Astro écoute sur 4321, et seulement sur `localhost` par défaut. Première décision : `astro dev --port 5173`. **Abandonnée à l'implémentation** : quand le mock tourne dans Docker, le port 5173 de la machine est déjà pris par le conteneur, et Astro 7 refuse un second serveur de dev dans le même projet. **Retenu** : `astro dev --host 0.0.0.0` (port 4321) et `4321:4321` ajouté aux ports publiés dans `compose.yaml`. Le même port fonctionne avec ou sans Docker, et Playwright réutilise le serveur déjà lancé.
 
 ---
+
+### 2.10 PWA et hors-ligne
+
+Ajoutée le 2026-11-16. **Règle : consultation hors ligne, actions en ligne.**
+
+- **Installable** : manifeste et icônes générés par `@vite-pwa/astro` (v2, seule version compatible Astro 7) ; icônes produites depuis le logo (`public/favicon.svg`, qui était encore le logo d'Astro) par `pnpm generate:pwa-assets` (`pwa-assets.config.ts`).
+- **Service worker** (`src/sw.ts`, Workbox, stratégie `buildSW`) :
+  - fichiers du site et pages statiques précachés ;
+  - pages rendues par le serveur (catalogue, fiche salle…) : réseau d'abord, dernière version vue hors ligne, sinon la page `/hors-ligne` ;
+  - lectures de l'API (`GET` salles et réservations) : réseau d'abord, dernière réponse hors ligne. GraphQL (toujours en `POST`) et les écritures ne sont jamais mis en cache : l'administration et l'écran Demandes restent en ligne.
+- **Données personnelles** : le cache des réponses de l'API est vidé quand la session est effacée (déconnexion, expiration) et quand un autre compte se connecte (`clearPrivateCaches`).
+- **Interface** : bandeau « Vous êtes hors ligne » (`AppStatus`, dans le layout) ; les boutons d'action portent `needsNetwork` (inactifs hors ligne, formulaire non envoyé) ; une erreur réseau hors ligne affiche « Vous êtes hors ligne… ».
+- **Mises à jour** : une nouvelle version attend ; le bandeau « Nouvelle version disponible » l'active et recharge la page.
+- **Contournement** : l'intégration (v2.0.2) ne vise `dist/client` qu'avec `output: 'server'`. En `output: 'static'` + adaptateur, `astro.config.mjs` écrit le service worker dans `client/`, ne relève que les fichiers de `client/` et retire ce préfixe des adresses.
+- **Limites** : le service worker n'existe qu'au build (tester avec `pnpm build` puis `node dist/server/entry.mjs`) ; les photos des salles (autre origine, sans CORS) ne sont pas mises en cache par le service worker, seulement par le cache HTTP du navigateur.
 
 ## 3. Routes
 
