@@ -26,6 +26,39 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-11-16 — Explication : faire de Quorum une PWA utilisable hors ligne (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : comprendre ce qu'est une PWA et comment la mettre en place sur ce projet avant d'écrire du code.
+- **Demande** : « j'aimerais que l'app soit une pwa avec offline. cependant j'ai très peu de connaissances sur ce domaine. est-ce que tu peux m'expliquer comment le mettre en place ? »
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : explication seulement, sans modification du code : manifeste, service worker, stratégies de cache, et ce qu'elles donnent sur Quorum (pages rendues côté serveur, API sur une autre origine, jeton dans le `localStorage`, GraphQL en POST, écritures hors ligne). Proposition d'un plan en étapes et des décisions à prendre (portée du hors-ligne, données mises en cache, icônes).
+- **Erreurs de l'IA relevées** : aucune trouvée.
+- **Vérification** : versions du projet (`astro` ^7.3.6, `@astrojs/node` 11.1.7) ; compatibilité de `@vite-pwa/astro` 2.0.2 avec Astro 7 lue dans ses `peerDependencies` sur le registre npm ; comportement du client de `core` hors ligne (erreur réseau → `status: 0`, donc pas de déconnexion par `withSession`) lu dans `packages/core/src/api/client.ts`.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-11-16 — Espace d'administration en GraphQL (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal, skill `dataviz` pour le graphique.
+- **Objectif** : réaliser la piste 2 de `docs/pistes.md` (écrans administrateur), en GraphQL plutôt qu'avec les routes REST.
+- **Demande** : « commit push puis enchaines sur 2 en utilisant graphql plutôt que les routes classiques ».
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : commit et push du renouvellement de session (voir l'entrée « Pistes »). Puis, committé et poussé à ma demande avant de continuer la PWA (`6ee0774` core, `03eee92` back, `916c2e8` front, `62ef127` docs, puis ce journal ; dépôt `core` : `9b13dc5`) :
+  - **contrat** (`admin.graphql`, reporté dans le dépôt `core`) : requêtes `users` et `reservations` (paginées, filtrables), mutations `changeUserRole`, `deleteUser`, `confirmReservation`, `rejectReservation`, `cancelReservation`, champ `rejectionReason`. Le contrat n'est plus « en lecture seule » : choix de l'IA, pour suivre la demande (les écrans publics, clients et gestionnaires restent en REST). Opérations prêtes à l'emploi dans `operations.ts` ;
+  - **back** : resolvers `UsersResolver` et `AdminReservationsResolver`, qui reprennent les cas d'usage du REST (mêmes règles d'accès) ; lecture paginée avec la salle et le demandeur en jointure (`findPage`, `findById`) ; les filtres d'erreur du domaine répondent aussi en GraphQL (`respondDomainError`, `extensions.code` et `status`) ;
+  - **règle ajoutée** (choix de l'IA, aussi en REST et dans `openapi.yml`) : un administrateur ne peut ni changer son propre rôle ni supprimer son propre compte (409), pour ne pas se retirer l'accès ;
+  - **front** : pages `/admin` (tableau de bord sur une période : chiffres clés, histogramme du chiffre d'affaires, répartition par statut, classements), `/admin/utilisateurs` (rôle, suppression) et `/admin/reservations` (filtres statut, client, salle ; confirmer, refuser, annuler). Une requête GraphQL par écran, filtres dans l'adresse. Lien « Administration » dans l'en-tête, `/admin` comme page d'accueil d'un administrateur. Composant `ColumnChart` (une série, info-bulle au survol, tableau « Voir les données ») ;
+  - `docs/cadrage.md` (périmètre, routes) et `docs/pistes.md` à jour.
+- **Erreurs de l'IA relevées** :
+  - au commit, `CORE_VERSION` (deux lignes : adresse du dépôt, puis hash) a d'abord été écrasé par le hash seul ; repéré dans le diff du commit, corrigé avant le push ;
+  - `parseRole` et `parseStatus` testaient la valeur avec `in`, qui remonte le prototype : `?statut=toString` passait. Attrapé par le test écrit juste avant, corrigé avec `Object.hasOwn` ;
+  - appel de `RejectReservationUseCase` avec les paramètres dans le mauvais ordre (acteur et motif inversés), repéré en relisant la signature avant de compiler ;
+  - types des arguments GraphQL déclarés facultatifs (`?:`) alors que le codegen les génère en `T | null` : erreur de compilation, corrigée ;
+  - première version du graphique : colonnes focusables sans action (avertissement d'accessibilité de svelte-check), et en mobile, étiquettes des mois qui se chevauchaient et élargissaient la page à 383 px. Vu sur les captures, corrigé (libellés courts, 3 étiquettes en mobile, valeurs lisibles au clavier dans le tableau) ;
+  - en relançant les serveurs, un `pkill -f` de l'IA a tué son propre shell (le motif figurait dans sa ligne de commande).
+- **Vérification** : `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test` (389 tests, dont des nouveaux sur la règle « pas sur son propre compte », les paramètres d'adresse, les périodes, la série complétée et l'échelle du graphique), build du back. En vrai, back et front en local avec un jeton administrateur de test signé par l'IA : chaque requête et chaque erreur (403 client, 400 pagination ou UUID invalides, 404, 409 sur son propre compte, sur un compte avec réservations, sur une transition interdite) ; REST inchangé (409 et 404 au format `{ code, message }`). Captures des trois écrans en 1280 et 375 px, une seule requête GraphQL par écran, aucune erreur console. Dans le navigateur : changement de rôle d'un compte de test puis retour à son rôle d'origine, refus de suppression affiché dans la modale. Confirmer, refuser et annuler n'ont été testés qu'en erreur, pour ne pas modifier les réservations de la base de développement. E2E non lancés (prévus au déploiement).
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-11-16 — Pistes de fonctionnalités à ajouter ou améliorer (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
