@@ -4,7 +4,6 @@ import {
   In,
   LessThan,
   MoreThan,
-  Not,
   Repository,
   type FindOptionsWhere,
 } from 'typeorm';
@@ -32,14 +31,12 @@ export class TypeormRoomOccupancyAdapter implements RoomOccupancyPort {
    * @param roomIds - Salles concernées ; liste vide : aucun résultat, sans requête.
    * @param from - Début de l'intervalle (inclus).
    * @param to - Fin de l'intervalle (exclue).
-   * @param excludedReservationId - Réservation à ignorer.
    * @returns Les périodes occupées.
    */
   async findOccupied(
     roomIds: string[],
     from: Date,
     to: Date,
-    excludedReservationId?: string,
   ): Promise<Occupancy[]> {
     if (roomIds.length === 0) return [];
     const where: FindOptionsWhere<TypeOrmReservationEntity> = {
@@ -48,7 +45,6 @@ export class TypeormRoomOccupancyAdapter implements RoomOccupancyPort {
       startAt: LessThan(to),
       endAt: MoreThan(from),
     };
-    if (excludedReservationId) where.id = Not(excludedReservationId);
     const entities = await this.reservations.find({
       where,
       select: { roomId: true, startAt: true, endAt: true },

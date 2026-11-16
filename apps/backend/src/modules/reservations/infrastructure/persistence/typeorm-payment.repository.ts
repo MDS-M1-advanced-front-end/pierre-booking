@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { isUniqueViolation } from '../../../../common/database-errors';
-import type { Payment } from '../../domain/entities/payment.entity';
+import {
+  PaymentStatus,
+  type Payment,
+  type PaymentMethod,
+} from '../../domain/entities/payment.entity';
 import { ReservationConflictException } from '../../domain/exceptions/reservation-domain.exception';
 import type { PaymentRepositoryInterface } from '../../domain/repositories/payment.repository.interface';
 import { PaymentMapper } from './payment.mapper';
@@ -40,5 +44,29 @@ export class TypeormPaymentRepository implements PaymentRepositoryInterface {
       }
       throw error;
     }
+  }
+
+  /** @inheritdoc */
+  async retryFailed(
+    reservationId: string,
+    method: PaymentMethod,
+  ): Promise<Payment | null> {
+    const result = await this.typeormPaymentRepository
+      .createQueryBuilder()
+      .update()
+      .set({
+        status: PaymentStatus.PENDING,
+        paymentMethod: method,
+        externalTransactionId: null,
+        paymentUrl: null,
+      })
+      .where('reservation_id = :reservationId AND status = :failed', {
+        reservationId,
+        failed: PaymentStatus.FAILED,
+      })
+      .returning('id')
+      .execute();
+    const [row] = result.raw as { id: string }[];
+    return row ? this.findById(row.id) : null;
   }
 }

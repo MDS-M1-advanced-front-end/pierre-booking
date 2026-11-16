@@ -18,15 +18,9 @@ export interface RoomOccupancyPort {
    * @param roomIds - Salles concernées ; liste vide : aucun résultat.
    * @param from - Début de l'intervalle (inclus).
    * @param to - Fin de l'intervalle (exclue).
-   * @param excludedReservationId - Réservation à ignorer (celle qu'on est en train de modifier).
    * @returns Les périodes qui chevauchent [from, to[.
    */
-  findOccupied(
-    roomIds: string[],
-    from: Date,
-    to: Date,
-    excludedReservationId?: string,
-  ): Promise<Occupancy[]>;
+  findOccupied(roomIds: string[], from: Date, to: Date): Promise<Occupancy[]>;
 }
 
 /** Jeton d'injection de {@link RoomOccupancyPort}. */

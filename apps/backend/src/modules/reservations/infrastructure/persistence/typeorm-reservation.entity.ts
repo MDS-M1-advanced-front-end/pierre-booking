@@ -3,6 +3,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Exclusion,
   Index,
   JoinColumn,
   ManyToOne,
@@ -23,6 +24,12 @@ import { TypeOrmPaymentEntity } from './typeorm-payment.entity';
 @Check(`"end_at" > "start_at"`)
 @Check(`"number_of_participants" >= 1`)
 @Check(`"total_amount" >= 0`)
+// Deux réservations actives ne se chevauchent pas sur une même salle (migration
+// PreventOverlappingReservations). Déclarée ici aussi : sinon migration:generate la supprime.
+@Exclusion(
+  'EXC_reservations_no_overlap',
+  `USING gist ("room_id" WITH =, tstzrange("start_at", "end_at") WITH &&) WHERE ("status" IN ('PENDING', 'CONFIRMED'))`,
+)
 export class TypeOrmReservationEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;

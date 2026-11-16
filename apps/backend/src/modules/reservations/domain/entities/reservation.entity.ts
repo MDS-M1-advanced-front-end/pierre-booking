@@ -38,7 +38,6 @@ const ALLOWED_RESERVATION_TRANSITIONS: Record<
     ReservationStatus.CONFIRMED,
     ReservationStatus.REJECTED,
     ReservationStatus.CANCELLED,
-    ReservationStatus.REJECTED,
   ],
   [ReservationStatus.CONFIRMED]: [
     ReservationStatus.PENDING,

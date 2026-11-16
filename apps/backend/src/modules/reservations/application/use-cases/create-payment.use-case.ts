@@ -44,7 +44,8 @@ export class CreatePaymentUseCase {
    * @returns Le paiement enregistré, avec le statut renvoyé par le prestataire.
    * @throws {ReservationNotFoundException} Réservation introuvable.
    * @throws {ReservationAccessDeniedException} L'utilisateur n'est pas l'auteur.
-   * @throws {ReservationConflictException} Réservation REJECTED, CANCELLED ou COMPLETED, ou déjà payée.
+   * @throws {ReservationConflictException} Réservation REJECTED, CANCELLED ou COMPLETED, ou qui a
+   *   déjà un paiement PENDING ou PAID (un paiement FAILED est retenté).
    */
   async execute(
     reservationId: string,
@@ -65,29 +66,38 @@ export class CreatePaymentUseCase {
 
     // Réserver l'unicité du paiement AVANT de débiter : une seconde requête concurrente (ou un
     // second appel) est rejetée ici par la contrainte d'unicité `reservation_id`, donc le
-    // prestataire n'est jamais débité deux fois. Le paiement est créé PENDING puis mis à jour
-    // avec le résultat du débit.
-    // ReservationConflictException si la réservation a déjà un paiement.
-    const payment = await this.paymentRepository.save(
-      new Payment({
-        reservationId: reservation.id!,
+    // prestataire n'est jamais débité deux fois. Le paiement est créé PENDING (ou un paiement
+    // FAILED est repris) puis mis à jour avec le résultat du débit.
+    // ReservationConflictException si la réservation a déjà un paiement PENDING ou PAID.
+    const payment =
+      (await this.paymentRepository.retryFailed(reservation.id!, method)) ??
+      (await this.paymentRepository.save(
+        new Payment({
+          reservationId: reservation.id!,
+          amount: reservation.totalAmount,
+          currency: reservation.currency,
+          paymentMethod: method,
+          status: PaymentStatus.PENDING,
+          externalTransactionId: null,
+          paymentUrl: null,
+        }),
+      ));
+
+    try {
+      const charge = await this.gateway.charge({
         amount: reservation.totalAmount,
         currency: reservation.currency,
-        paymentMethod: method,
-        status: PaymentStatus.PENDING,
-        externalTransactionId: null,
-        paymentUrl: null,
-      }),
-    );
-
-    const charge = await this.gateway.charge({
-      amount: reservation.totalAmount,
-      currency: reservation.currency,
-      method,
-    });
-    payment.status = charge.status;
-    payment.externalTransactionId = charge.externalTransactionId;
-    payment.paymentUrl = charge.paymentUrl;
+        method,
+      });
+      payment.status = charge.status;
+      payment.externalTransactionId = charge.externalTransactionId;
+      payment.paymentUrl = charge.paymentUrl;
+    } catch (error) {
+      // Prestataire injoignable ou en erreur : FAILED, pour qu'une nouvelle tentative le reprenne
+      payment.status = PaymentStatus.FAILED;
+      await this.paymentRepository.save(payment);
+      throw error;
+    }
     return this.paymentRepository.save(payment);
   }
 }

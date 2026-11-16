@@ -1,4 +1,4 @@
-import type { Payment } from '../entities/payment.entity';
+import type { Payment, PaymentMethod } from '../entities/payment.entity';
 
 /** Persistance des paiements (implémentée par `TypeormPaymentRepository`). */
 export interface PaymentRepositoryInterface {
@@ -14,6 +14,18 @@ export interface PaymentRepositoryInterface {
    * @throws {ReservationConflictException} La réservation a déjà un paiement.
    */
   save(payment: Payment): Promise<Payment>;
+  /**
+   * Reprend le paiement FAILED d'une réservation pour une nouvelle tentative : le repasse à
+   * PENDING avec le nouveau moyen de paiement, en une seule écriture conditionnelle (deux
+   * tentatives simultanées ne peuvent pas reprendre le même paiement).
+   * @param reservationId - UUID de la réservation.
+   * @param method - Moyen de paiement de la nouvelle tentative.
+   * @returns Le paiement repris, ou null si la réservation n'a pas de paiement FAILED.
+   */
+  retryFailed(
+    reservationId: string,
+    method: PaymentMethod,
+  ): Promise<Payment | null>;
 }
 
 /** Jeton d'injection de `PaymentRepositoryInterface`. */
