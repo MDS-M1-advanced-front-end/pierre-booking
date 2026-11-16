@@ -39,8 +39,10 @@ export class ChangePasswordUseCase {
   ): Promise<void> {
     const user = await this.userRepository.findById(userId);
     if (!user) throw new UserNotFoundException();
+    // Un hash de l'ancien format (outdated) est accepté : il est remplacé juste après
     if (
-      !(await this.passwordHasher.verify(currentPassword, user.passwordHash))
+      (await this.passwordHasher.verify(currentPassword, user.passwordHash)) ===
+      'invalid'
     ) {
       throw new WrongCurrentPasswordException();
     }

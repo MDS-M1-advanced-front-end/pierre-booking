@@ -50,13 +50,18 @@ export class LoginUserUseCase {
       User.normalizeEmail(email),
     );
     // Toujours hacher, même sans compte : la réponse prend le même temps dans les deux cas.
-    const passwordOk = await this.passwordHasher.verify(
+    const check = await this.passwordHasher.verify(
       password,
       user?.passwordHash ?? DUMMY_PASSWORD_HASH,
     );
     // Même erreur si l'e-mail est inconnu ou le mot de passe faux
-    if (!user || !user.id || !passwordOk) {
+    if (!user || !user.id || check === 'invalid') {
       throw new InvalidCredentialsException();
+    }
+    // Hash d'avant le poivre : re-haché au format actuel, sans révoquer les jetons
+    if (check === 'outdated') {
+      user.passwordHash = await this.passwordHasher.hash(password);
+      await this.userRepository.save(user);
     }
     return {
       short: await this.tokens.issue(user.id),

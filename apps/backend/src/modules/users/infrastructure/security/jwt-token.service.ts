@@ -8,9 +8,10 @@ import type {
 } from '../../application/ports/token.port';
 
 /**
- * Durée de vie d'un jeton d'accès, en secondes (15 min).
+ * Durée de vie d'un jeton d'accès, en secondes (1 h). Le front ne rafraîchit pas encore le jeton
+ * (`/auth/refresh`) : une durée plus courte le déconnecterait d'autant plus souvent.
  */
-export const TOKEN_TTL_SECONDS = 15 * 60;
+export const TOKEN_TTL_SECONDS = 60 * 60;
 
 /**
  * Durée de vie d'un jeton de rafraîchissement, en secondes (7 jours).
