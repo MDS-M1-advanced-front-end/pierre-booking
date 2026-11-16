@@ -12,7 +12,7 @@ Toutes les décisions ont été validées le 2026-10-07 (voir la fin de [`plan.m
 
 **Dans le périmètre** : les 11 écrans de la maquette, parcours Socle (01 à 07) et espace gestionnaire Standard (08 à 11), en mobile (375 px) et desktop (1280 px).
 
-**Hors périmètre** : paiement simulé, back-office administrateur, PWA, mot de passe oublié (pas d'endpoint), Storybook (séance 5), comportement clavier avancé du SlotPicker (séance 6, on livre une base accessible).
+**Hors périmètre** : paiement simulé, back-office administrateur (ajouté ensuite, le 2026-11-16 : voir § 3), PWA, mot de passe oublié (pas d'endpoint), Storybook (séance 5), comportement clavier avancé du SlotPicker (séance 6, on livre une base accessible).
 
 **Ajouté par rapport à la maquette** : pages « Accès refusé » (403) et « Page introuvable » (404), qui sont nécessaires pour les gardes de route ; changement de mot de passe sur le profil (écran 05).
 
@@ -114,21 +114,24 @@ Toutes les décisions ont été validées le 2026-10-07 (voir la fin de [`plan.m
 
 ## 3. Routes
 
-| #   | Écran                        | Route                                                       | Rendu                            | Accès                        |
-| --- | ---------------------------- | ----------------------------------------------------------- | -------------------------------- | ---------------------------- |
-| 01  | Catalogue                    | `/`                                                         | SSR + cache                      | Public                       |
-| 02  | Fiche salle                  | `/salles/[id]`                                              | SSR + cache                      | Public (réserver : connecté) |
-| 03  | Connexion                    | `/connexion`                                                | Statique                         | Visiteur                     |
-| 04  | Inscription                  | `/inscription`                                              | Statique                         | Visiteur                     |
-| 05  | Profil                       | `/profil`                                                   | Statique + îlot                  | Connecté                     |
-| 06  | Mes réservations             | `/reservations`                                             | Statique + îlot                  | Connecté                     |
-| 07  | Modifier une réservation     | `/reservations/[id]/modifier`                               | SSR (coquille) + îlot            | Connecté                     |
-| 08  | Mes salles                   | `/gestion/salles`                                           | Statique + îlot                  | `GESTIONNAIRE`               |
-| 09  | Ajouter / modifier une salle | `/gestion/salles/nouvelle`, `/gestion/salles/[id]/modifier` | Statique / SSR (coquille) + îlot | `GESTIONNAIRE`               |
-| 10  | Disponibilités               | `/gestion/salles/[id]/disponibilites`                       | SSR (coquille) + îlot            | `GESTIONNAIRE`               |
-| 11  | Demandes                     | `/gestion/demandes`                                         | Statique + îlot                  | `GESTIONNAIRE`               |
-| —   | Accès refusé                 | `/acces-refuse`                                             | Statique                         | —                            |
-| —   | Page introuvable             | `404.astro`                                                 | Statique                         | —                            |
+| #   | Écran                            | Route                                                                    | Rendu                            | Accès                        |
+| --- | -------------------------------- | ------------------------------------------------------------------------ | -------------------------------- | ---------------------------- |
+| 01  | Catalogue                        | `/`                                                                      | SSR + cache                      | Public                       |
+| 02  | Fiche salle                      | `/salles/[id]`                                                           | SSR + cache                      | Public (réserver : connecté) |
+| 03  | Connexion                        | `/connexion`                                                             | Statique                         | Visiteur                     |
+| 04  | Inscription                      | `/inscription`                                                           | Statique                         | Visiteur                     |
+| 05  | Profil                           | `/profil`                                                                | Statique + îlot                  | Connecté                     |
+| 06  | Mes réservations                 | `/reservations`                                                          | Statique + îlot                  | Connecté                     |
+| 07  | Modifier une réservation         | `/reservations/[id]/modifier`                                            | SSR (coquille) + îlot            | Connecté                     |
+| 08  | Mes salles                       | `/gestion/salles`                                                        | Statique + îlot                  | `GESTIONNAIRE`               |
+| 09  | Ajouter / modifier une salle     | `/gestion/salles/nouvelle`, `/gestion/salles/[id]/modifier`              | Statique / SSR (coquille) + îlot | `GESTIONNAIRE`               |
+| 10  | Disponibilités                   | `/gestion/salles/[id]/disponibilites`                                    | SSR (coquille) + îlot            | `GESTIONNAIRE`               |
+| 11  | Demandes                         | `/gestion/demandes`                                                      | Statique + îlot                  | `GESTIONNAIRE`               |
+| —   | Administration : tableau de bord | `/admin` (`?periode=`)                                                   | Statique + îlot                  | `ADMINISTRATEUR`             |
+| —   | Administration : utilisateurs    | `/admin/utilisateurs` (`?role=`, `?page=`)                               | Statique + îlot                  | `ADMINISTRATEUR`             |
+| —   | Administration : réservations    | `/admin/reservations` (`?statut=`, `?utilisateur=`, `?salle=`, `?page=`) | Statique + îlot                  | `ADMINISTRATEUR`             |
+| —   | Accès refusé                     | `/acces-refuse`                                                          | Statique                         | —                            |
+| —   | Page introuvable                 | `404.astro`                                                              | Statique                         | —                            |
 
 Les filtres passent par les paramètres d'URL : `/?location=…&capacityMin=10&date=…&page=2`, `/reservations?status=PENDING`, `/salles/[id]?date=2026-11-16`.
 

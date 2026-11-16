@@ -4,8 +4,8 @@ Fonctionnalités à ajouter ou à améliorer, relevées le 2026-11-16 en compara
 
 ## Le back est prêt, il manque l'écran
 
-1. **Renouvellement de la session avec `/auth/refresh`** : le front ne l'utilisait pas, l'utilisateur était renvoyé à la connexion au bout d'une heure, même en plein formulaire. Renouveler le jeton juste avant son expiration et sur un `401`. Front seulement. **En cours sur la branche `dev`.**
-2. **Écrans administrateur** : les routes existent (`/users`, `/admin/reservations`, `/admin/statistics`, requête GraphQL `dashboard`) mais le back-office était hors périmètre (`cadrage.md` § 1).
+1. **Renouvellement de la session avec `/auth/refresh`** : le front ne l'utilisait pas, l'utilisateur était renvoyé à la connexion au bout d'une heure, même en plein formulaire. Renouveler le jeton juste avant son expiration et sur un `401`. Front seulement. **Fait** (branche `dev`, `2b4d6e5`).
+2. **Écrans administrateur** : les routes existent (`/users`, `/admin/reservations`, `/admin/statistics`, requête GraphQL `dashboard`) mais le back-office était hors périmètre (`cadrage.md` § 1). **Fait** (branche `dev`), entièrement en GraphQL : requêtes `users` et `reservations`, mutations `changeUserRole`, `deleteUser`, `confirmReservation`, `rejectReservation`, `cancelReservation` ajoutées à `admin.graphql`.
    - gestion des utilisateurs : liste, changement de rôle, suppression ;
    - toutes les réservations, avec des filtres ;
    - tableau de bord sur une période, alimenté par la requête GraphQL `dashboard`.
