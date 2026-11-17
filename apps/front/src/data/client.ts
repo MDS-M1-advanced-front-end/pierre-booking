@@ -17,7 +17,7 @@ export {
   changePassword,
   refresh,
   // Utilisateurs
-  updateUser,
+  updateMe,
   // Salles et disponibilités
   searchRooms,
   getRoom,

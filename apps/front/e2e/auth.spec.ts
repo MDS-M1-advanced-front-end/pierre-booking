@@ -227,7 +227,7 @@ test.describe('05 Profil', () => {
     await firstName.fill('Léonie');
 
     const request = page.waitForRequest(
-      (r) => r.url().endsWith(`/users/${CLIENT.id}`) && r.method() === 'PATCH',
+      (r) => r.url().endsWith('/auth/me') && r.method() === 'PATCH',
     );
     await page.getByRole('button', { name: 'Enregistrer' }).click();
     const body = (await request).postDataJSON() as Record<string, unknown>;
