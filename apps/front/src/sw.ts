@@ -72,7 +72,12 @@ setCatchHandler(async ({ request }) => {
   return Response.error();
 });
 
-// Nouvelle version : elle attend que la page la demande (bandeau « Nouvelle version disponible »)
-self.addEventListener('message', (event) => {
-  if ((event.data as { type?: string } | null)?.type === 'SKIP_WAITING') void self.skipWaiting();
+// Mise à jour automatique : une nouvelle version remplace l'ancienne dès son installation et prend
+// la main sur les pages ouvertes, qui se rechargent (serviceWorker.ts). Sans ça, un visiteur
+// garderait l'ancienne version (et ses éventuels défauts) tant que tous ses onglets restent ouverts.
+self.addEventListener('install', () => {
+  void self.skipWaiting();
+});
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
 });

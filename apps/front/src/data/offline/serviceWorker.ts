@@ -1,24 +1,26 @@
-// Enregistrement du service worker (src/sw.ts, compilé en /sw.js au build) et mises à jour.
-import { Workbox } from 'workbox-window';
+// Enregistrement du service worker (src/sw.ts, compilé en /sw.js au build), mise à jour automatique.
 import { API_CACHE } from './cacheNames';
 
 /**
  * Enregistre le service worker. Rien en développement (il n'existe qu'au build) ni sans support.
- * @param onUpdate - Appelé quand une nouvelle version attend : `apply()` l'active puis recharge la
- *   page (bandeau « Nouvelle version disponible »).
+ * Mise à jour automatique : quand une nouvelle version prend la main (après un déploiement), la
+ * page se recharge pour charger le nouveau code. Pas de rechargement à la première installation.
  */
-export function registerServiceWorker(onUpdate: (apply: () => void) => void): void {
+export function registerServiceWorker(): void {
   if (import.meta.env.DEV || !('serviceWorker' in navigator)) return;
-  const wb = new Workbox('/sw.js');
-  wb.addEventListener('waiting', () => {
-    onUpdate(() => {
-      wb.addEventListener('controlling', () => {
-        location.reload();
-      });
-      wb.messageSkipWaiting();
-    });
+  // Première prise en main (première visite) : simple installation. Les suivantes : mise à jour.
+  let controlled = navigator.serviceWorker.controller !== null;
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!controlled) {
+      controlled = true;
+      return;
+    }
+    if (reloading) return;
+    reloading = true;
+    location.reload();
   });
-  void wb.register();
+  void navigator.serviceWorker.register('/sw.js');
 }
 
 /**

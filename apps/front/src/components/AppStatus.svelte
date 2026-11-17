@@ -2,11 +2,10 @@
   Bandeaux de la PWA, sur toutes les pages (Layout) :
   - « Vous êtes hors ligne » tant que le réseau manque : la page montre la dernière version vue,
     les actions sont indisponibles (règle : consultation hors ligne, actions en ligne) ;
-  - « Nouvelle version disponible » quand un nouveau service worker attend, avec un bouton pour
-    l'activer (rechargement de la page) ;
   - l'issue des demandes de réservation faites hors ligne (envoyée, ou refusée avec le motif),
     jusqu'à ce que l'utilisateur ferme le message.
-  Enregistre aussi le service worker et lance l'envoi des demandes en attente (maintenant et à
+  Enregistre aussi le service worker (mise à jour automatique : la page se recharge quand une
+  nouvelle version prend la main) et lance l'envoi des demandes en attente (maintenant et à
   chaque retour de la connexion). Rendu dans le navigateur seulement (`client:only`).
 -->
 <script lang="ts">
@@ -20,14 +19,9 @@
   import Button from './Button.svelte';
   import Icon from './Icon.svelte';
 
-  /** Active la nouvelle version ; `null` tant qu'aucune n'attend. */
-  let applyUpdate = $state<(() => void) | null>(null);
-
   onMount(() => {
     watchNetwork();
-    registerServiceWorker((apply) => {
-      applyUpdate = apply;
-    });
+    registerServiceWorker();
     watchPendingReservations();
   });
 
@@ -80,10 +74,4 @@
       </Button>
     </div>
   {/each}
-  {#if applyUpdate}
-    <div class={[bar, 'bg-action-subtle text-text']}>
-      <span>Une nouvelle version de Quorum est disponible.</span>
-      <Button size="sm" variant="secondary" onclick={() => applyUpdate?.()}>Recharger</Button>
-    </div>
-  {/if}
 </div>

@@ -362,9 +362,6 @@ importers:
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
-      workbox-window:
-        specifier: ^7.4.1
-        version: 7.4.1
     devDependencies:
       '@astrojs/check':
         specifier: ^0.9.10
@@ -7110,9 +7107,6 @@ packages:
 
   workbox-strategies@7.4.1:
     resolution: {integrity: sha512-GZxpaw9NbmOelj7667uZ2kpk5BFpOGbO4X0qjwh5ls8XQ8C+Lha5LQchTiUzsTFSS+NlUpftYAyOVXvQUrcqOQ==}
-
-  workbox-window@7.4.1:
-    resolution: {integrity: sha512-notZDH2u8VXaqyuD7xaqIfEFi6SRM4SUSd7ewe9PDsVqADuepxX2ZMY3uvuZGxzY5ZOsGC/vD3A/3smFtJt4/A==}
 
   wrap-ansi@10.0.2:
     resolution: {integrity: sha512-6OLRNZqRntVGBm26ghZ5eZhCuWWyOkRCSn8XsOIuq5stpCE/tjLbdozd93naILZig0lmD8ANfRwnhn0DLeXGlg==}
@@ -14114,11 +14108,6 @@ snapshots:
 
   workbox-strategies@7.4.1:
     dependencies:
-      workbox-core: 7.4.1
-
-  workbox-window@7.4.1:
-    dependencies:
-      '@types/trusted-types': 2.0.7
       workbox-core: 7.4.1
 
   wrap-ansi@10.0.2:
