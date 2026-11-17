@@ -8,9 +8,11 @@
     room: Room;
     /** Destination du lien ; par défaut la fiche de la salle. */
     href?: string;
+    /** Image chargée en priorité : cartes visibles dès l'ouverture de la page (image LCP). */
+    priority?: boolean;
   }
 
-  let { room, href }: Props = $props();
+  let { room, href, priority = false }: Props = $props();
 
   const isActive = $derived(room.status === 'ACTIVE');
   const equipment = $derived(room.equipment ?? []);
@@ -33,7 +35,8 @@
       class={['aspect-video w-full object-cover', !isActive && 'grayscale']}
       src={room.imageUrl}
       alt=""
-      loading="lazy"
+      loading={priority ? 'eager' : 'lazy'}
+      fetchpriority={priority ? 'high' : undefined}
     />
   {:else}
     <div

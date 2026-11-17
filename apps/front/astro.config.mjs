@@ -23,6 +23,10 @@ export default defineConfig({
   // Pages statiques par défaut ; une page passe en SSR avec `export const prerender = false`.
   output: 'static',
   adapter: node({ mode: 'standalone' }),
+  // CSS écrite dans chaque page plutôt que dans un fichier à part : un fichier CSS bloque
+  // l'affichage le temps de son téléchargement (Lighthouse : ~300 ms). La feuille fait ~8 Kio
+  // compressée, elle est servie à chaque page mais l'affichage n'attend plus de requête.
+  build: { inlineStylesheets: 'always' },
   integrations: [
     svelte(),
     // PWA : installable (manifeste) et consultable hors ligne (service worker src/sw.ts). Le service

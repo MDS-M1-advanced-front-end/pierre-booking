@@ -60,9 +60,10 @@ const retryHref = Astro.url.pathname + Astro.url.search;
     <>
       <ResultsBar filters={filters} total={total} />
       <ul class="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-(--space-4) p-0">
-        {rooms.map((room) => (
+        {rooms.map((room, index) => (
           <li>
-            <RoomCard room={room} />
+            {/* Image LCP : la première carte, seule visible sans défiler sur mobile (une colonne) */}
+            <RoomCard room={room} priority={index === 0} />
           </li>
         ))}
       </ul>

@@ -26,6 +26,21 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-11-17 — Lighthouse mobile : rendu bloqué, image LCP, préconnexion (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : corriger les problèmes du rapport Lighthouse (mobile) de la production.
+- **Demande** : « il va être l'heure d'opti le lighthouse. j'ai ces problèmes en version pc, je te laisse les corriger », avec le rapport collé (puis : « je t'avais déjà envoyé le mobile. le pc est une version réduite du mobile ») : CSS `Layout.css` (38,5 Kio) qui bloque le rendu (~300 ms), image LCP (première carte du catalogue) en `loading="lazy"` sans `fetchpriority`, aucune préconnexion (`fastly.picsum.photos`, ~300 ms), chaîne de requêtes critiques.
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (non committé) :
+  - CSS intégrée dans chaque page (`build.inlineStylesheets: 'always'`, `astro.config.mjs`) : plus de requête bloquante ; la feuille fait ~8 Kio compressée ;
+  - `RoomCard` : propriété `priority` (`loading="eager"`, `fetchpriority="high"`), donnée à la première carte du catalogue (d'abord aux trois premières, la rangée visible sur ordinateur ; ramené à une seule une fois le rapport identifié comme mobile, où la grille n'a qu'une colonne et où les trois images prioritaires se partageaient la bande passante) ;
+  - préconnexion aux origines des images, calculée depuis les données (`utils/imageOrigins.ts`, testé), sur le catalogue et la fiche salle ; `picsum.photos` redirige vers `fastly.picsum.photos`, les deux sont préconnectés ; `Layout.astro` transmet un emplacement `head` ;
+  - e2e : quatre tests cherchaient `getByRole('status')` sur toute la page et tombaient aussi sur la zone toujours présente d'`AppStatus` (bandeaux hors ligne) ; ils cherchent maintenant dans `main`.
+- **Erreurs de l'IA relevées** : les quatre e2e (`gestion-planning` ×3, `catalogue` ×1) échouaient depuis l'ajout par l'IA de la zone `role="status"` d'`AppStatus` (commit PWA `3cd0401`) ; lors des séances précédentes, l'IA n'avait relancé que les specs touchées, pas toute la suite. La chaîne de requêtes JS (`SiteHeader` → `Icon` → `client`…) n'a pas été traitée : la page d'accueil est rendue par le serveur, ces scripts ne retardent pas le LCP.
+- **Vérification** : build servi contre le mock Prism, HTML de `/` et de la fiche salle relu (préconnexions, attributs des images, `<style>` dans la page, plus de fichier CSS) ; `pnpm typecheck`, `pnpm lint`, test unitaire de `imageOrigins` ; e2e complets : 85 sur 85.
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-11-17 — Documentation remise à jour et audit de qualité de tout le code (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal, avec 7 sous-agents en lecture seule (1 pour la doc, 6 pour l'audit, découpé par zone : back users/rooms, back reservations, front data, front components/pages, front partials, core/e2e/infra) et le skill `pre-review` (grille, script de conventions).

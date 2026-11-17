@@ -11,6 +11,7 @@ import BookingPanel from '../../partials/salle/BookingPanel.svelte';
 import RoomEquipment from '../../partials/salle/RoomEquipment.astro';
 import RoomHero from '../../partials/salle/RoomHero.astro';
 import { formatPrice } from '../../utils/formatPrice';
+import { imageOrigins } from '../../utils/imageOrigins';
 
 export const prerender = false;
 
@@ -38,9 +39,13 @@ const description = room
       .filter(Boolean)
       .join(' ')
   : undefined;
+const preconnect = imageOrigins([room?.imageUrl]);
 ---
 
 <Layout title={room?.name ?? 'Salle indisponible'} description={description}>
+  {preconnect.map((origin) => (
+    <link slot="head" rel="preconnect" href={origin} />
+  ))}
   <a
     class="mb-(--space-3) inline-flex min-h-(--size-target-min) items-center gap-(--space-1) text-sm"
     href="/"
