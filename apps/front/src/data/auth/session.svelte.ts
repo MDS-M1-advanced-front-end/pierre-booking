@@ -5,6 +5,7 @@
 import type { AuthResponse, User, UserRole } from '@room-booking/core';
 import { buildLoginUrl } from '../../utils/redirect';
 import { getAccessToken, refresh, setAccessToken } from '../client';
+import { clearOutbox } from '../offline/outbox.svelte';
 import { clearPrivateCaches } from '../offline/serviceWorker';
 
 /** Clé du localStorage. */
@@ -184,13 +185,15 @@ export async function ensureFreshSession(): Promise<void> {
 }
 
 /**
- * Efface la session : stockage, jeton du client de `core`, `session.user`, et les réponses de
- * l'API gardées pour la consultation hors ligne (données personnelles).
+ * Efface la session : stockage, jeton du client de `core`, `session.user`, et ce qui est gardé
+ * pour le hors ligne (données personnelles) : réponses de l'API et demandes de réservation en
+ * attente d'envoi.
  */
 export function clearSession(): void {
   if (!isBrowser) return;
   removeStorage();
   void clearPrivateCaches();
+  clearOutbox();
   setAccessToken(null);
   session.user = null;
 }

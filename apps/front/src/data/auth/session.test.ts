@@ -11,6 +11,8 @@ const { setAccessToken, getAccessToken, refresh } = vi.hoisted(() => {
 vi.mock('../client', () => ({ setAccessToken, getAccessToken, refresh }));
 const clearPrivateCaches = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 vi.mock('../offline/serviceWorker', () => ({ clearPrivateCaches }));
+const clearOutbox = vi.hoisted(() => vi.fn());
+vi.mock('../offline/outbox.svelte', () => ({ clearOutbox }));
 
 const {
   SESSION_KEY,
@@ -293,9 +295,11 @@ describe('cache hors ligne des réponses de l’API', () => {
 });
 
 describe('clearSession', () => {
-  it('vide le cache hors ligne des réponses de l’API', () => {
+  it('vide le cache hors ligne des réponses de l’API et les demandes en attente d’envoi', () => {
+    clearOutbox.mockClear();
     clearSession();
     expect(clearPrivateCaches).toHaveBeenCalledOnce();
+    expect(clearOutbox).toHaveBeenCalledOnce();
   });
 
   it('vide le stockage, le jeton et l’utilisateur', () => {

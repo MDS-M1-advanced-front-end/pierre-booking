@@ -114,16 +114,22 @@ Toutes les décisions ont été validées le 2026-10-07 (voir la fin de [`plan.m
 
 ### 2.10 PWA et hors-ligne
 
-Ajoutée le 2026-11-16. **Règle : consultation hors ligne, actions en ligne.**
+Ajoutée le 2026-11-16. **Règle : consultation hors ligne, actions en ligne**, avec une exception ajoutée le 2026-11-17 : les demandes de réservation, mises en file (voir plus bas).
 
 - **Installable** : manifeste et icônes générés par `@vite-pwa/astro` (v2, seule version compatible Astro 7) ; icônes produites depuis le logo (`public/favicon.svg`, qui était encore le logo d'Astro) par `pnpm generate:pwa-assets` (`pwa-assets.config.ts`).
 - **Service worker** (`src/sw.ts`, Workbox, stratégie `buildSW`) :
-  - fichiers du site et pages statiques précachés ;
+  - fichiers du site et pages statiques précachés ; leurs paramètres d'URL sont ignorés (`/reservations?status=…` sert la page précachée, lue ensuite dans le navigateur) ;
   - pages rendues par le serveur (catalogue, fiche salle…) : réseau d'abord, dernière version vue hors ligne, sinon la page `/hors-ligne` ;
   - lectures de l'API (`GET` salles et réservations) : réseau d'abord, dernière réponse hors ligne. GraphQL (toujours en `POST`) et les écritures ne sont jamais mis en cache : l'administration et l'écran Demandes restent en ligne.
 - **Données personnelles** : le cache des réponses de l'API est vidé quand la session est effacée (déconnexion, expiration) et quand un autre compte se connecte (`clearPrivateCaches`).
 - **Interface** : bandeau « Vous êtes hors ligne » (`AppStatus`, dans le layout) ; les boutons d'action portent `needsNetwork` (inactifs hors ligne, formulaire non envoyé) ; une erreur réseau hors ligne affiche « Vous êtes hors ligne… ».
-- **Mises à jour** : une nouvelle version attend ; le bandeau « Nouvelle version disponible » l'active et recharge la page.
+- **Demandes de réservation hors ligne** (2026-11-17) :
+  - hors ligne, ou si le réseau coupe pendant l'envoi (erreur réseau), « Demander la réservation » devient « Enregistrer la demande » : la demande est gardée dans le localStorage (`data/offline/outbox.svelte.ts`) et affichée dans « Mes réservations », section « En attente d'envoi », où elle peut être retirée ;
+  - envoi par la page (`data/reservations/pendingReservations.ts`), au chargement de chaque page et à chaque retour de la connexion, dans l'ordre, par `withSession` : le jeton est renouvelé s'il a expiré pendant la coupure. Choix écarté : l'API Background Sync (Chromium seulement, et la requête rejouée garde un jeton qui peut avoir expiré) ;
+  - issue affichée dans un bandeau jusqu'à ce qu'on le ferme : envoyée, ou refusée avec le motif. Sur un `409`, on vérifie si la demande n'était pas déjà arrivée (réponse perdue pendant une coupure) : comptée comme envoyée, sinon « créneau plus libre ». Réseau, serveur en panne (5xx) ou session expirée : la demande reste en file ;
+  - la file est liée au compte et vidée avec la session (déconnexion, expiration) ;
+  - limites : l'envoi demande que l'application soit ouverte après le retour du réseau ; les créneaux affichés hors ligne sont ceux de la dernière visite, donc possiblement pris ; seules les créations passent par la file (modifier, annuler restent en ligne).
+- **Mises à jour automatiques** (2026-11-17, `registerType: 'autoUpdate'`) : une nouvelle version s'installe, prend la main tout de suite (`skipWaiting`, `clients.claim`) et la page se recharge. Avant, elle attendait un clic sur « Recharger » : un visiteur pouvait garder une version cassée tant que ses onglets restaient ouverts (cas réel : appels à `localhost` après la correction de `PUBLIC_API_BASE_URL`). Contrepartie : un rechargement peut survenir peu après l'ouverture d'une page, pendant une saisie ; les demandes en file, dans le localStorage, ne sont pas perdues.
 - **Contournement** : l'intégration (v2.0.2) ne vise `dist/client` qu'avec `output: 'server'`. En `output: 'static'` + adaptateur, `astro.config.mjs` écrit le service worker dans `client/`, ne relève que les fichiers de `client/` et retire ce préfixe des adresses.
 - **Limites** : le service worker n'existe qu'au build (tester avec `pnpm build` puis `node dist/server/entry.mjs`) ; les photos des salles (autre origine, sans CORS) ne sont pas mises en cache par le service worker, seulement par le cache HTTP du navigateur.
 

@@ -26,6 +26,7 @@ Fonctionnalités à ajouter ou à améliorer, relevées le 2026-11-16 en compara
 ## Fait depuis
 
 - **PWA** : installable, consultable hors ligne (branche `dev`, voir `cadrage.md` § 2.10).
+- **Réservation hors ligne** : demande mise en file sur l'appareil, envoyée au retour de la connexion (branche `dev`, voir `cadrage.md` § 2.10).
 
 ## Déploiement
 

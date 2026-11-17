@@ -26,6 +26,53 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-11-17 — Production : la connexion appelle encore localhost (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : comprendre pourquoi, sur le site déployé, la connexion appelle `localhost` alors que `PUBLIC_API_BASE_URL=https://booking.pierre-gaillard.dev/api` est renseignée dans Dokploy.
+- **Demande** : « dans la page login, les requêtes login se lancent sur localhost en prod, alors que j'ai bien renseigné PUBLIC_API_BASE_URL=https://booking.pierre-gaillard.dev/api ». Puis : « registerType: 'autoUpdate' il faut le mettre », et « commit et pr ».
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (diagnostic, sans modification du code) :
+  - build local avec une autre adresse : elle est bien inscrite dans le code du navigateur, la chaîne de configuration fonctionne ;
+  - fichiers JavaScript servis par le site : ils contiennent déjà `https://booking.pierre-gaillard.dev/api`, plus aucune trace de `localhost`. La variable est donc prise en compte ; le navigateur exécute une ancienne version, gardée par le service worker de la PWA : la nouvelle version attend que l'utilisateur clique « Recharger » dans le bandeau (choix `registerType: 'prompt'`), ou que tous les onglets du site soient fermés ;
+  - second problème trouvé au passage : `https://booking.pierre-gaillard.dev/api/rooms` arrive au back sous la forme `/api/api/rooms` (réponse 404 de NestJS). Le domaine `/api` du back dans Dokploy ajoute le préfixe une seconde fois (chemin interne à `/api`).
+  - **mise à jour automatique** (`4ba4bfe` front, `777b581` docs) : `registerType: 'autoUpdate'` dans `astro.config.mjs` ne suffit pas seul, car l'enregistrement est fait par la page (`injectRegister: false`) avec un service worker écrit à la main. Donc : `skipWaiting()` à l'installation et `clients.claim()` à l'activation dans `sw.ts` ; dans `serviceWorker.ts`, rechargement de la page quand une nouvelle version prend la main (événement `controllerchange`), pas à la première installation ; bandeau « Recharger » retiré d'`AppStatus`. `workbox-window` n'est plus utilisé : dépendance retirée. `cadrage.md` § 2.10 mis à jour. Les navigateurs qui ont encore l'ancienne version (« prompt ») passent à la nouvelle sans clic, puisque c'est la nouvelle qui appelle `skipWaiting()` ; la page déjà ouverte ne se recharge pas d'elle-même (c'est l'ancien code qui tourne), la page suivante est la bonne.
+- **Erreurs de l'IA relevées** : effet de bord de la PWA non signalé lors de sa mise en place : après un déploiement, un visiteur garde l'ancienne version tant qu'il n'a pas cliqué « Recharger », y compris pour une correction de configuration comme celle-ci. Pour la mise à jour automatique, première version avec les événements de `workbox-window` : la page ne se rechargeait pas au test dans le navigateur. Remplacée par l'API du navigateur (`controllerchange`) ; deuxième essai encore raté, parce que la page de test en était à sa première visite (le rechargement n'était prévu que pour une page déjà contrôlée au chargement) ; corrigé en considérant la première prise en main comme l'installation et les suivantes comme des mises à jour.
+- **Vérification** : build local avec une adresse de test ; lecture des 45 fichiers JavaScript précachés du site déployé ; requête sur `/api/rooms` en production (message d'erreur du back). Mise à jour automatique : `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test` (417) ; front buildé et Chromium : première visite contrôlée sans rechargement, puis `sw.js` modifié sur le serveur (restauré ensuite) : la page se recharge seule, aucun bandeau, aucune erreur JavaScript. Non testé : le passage depuis l'ancienne version « prompt » réellement installée.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-11-17 — Réservation hors ligne : file d'attente envoyée au retour du réseau (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : mettre en place la file d'attente recommandée dans l'entrée précédente, pour les seules créations de réservation.
+- **Demande** : « ok implémente la file pour les réservations sur dev », puis « ok commit ».
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (`98f4d51` front, `d4ddc49` docs) :
+  - `data/offline/outbox.svelte.ts` : file réactive gardée dans le localStorage (demandes et messages d'issue), relue à chaque modification et synchronisée entre onglets ; vidée avec la session. L'explication parlait d'IndexedDB : l'IA a finalement choisi le localStorage, comme la session (données petites, lecture synchrone, pas de bibliothèque) ;
+  - `data/reservations/pendingReservations.ts` : envoi dans l'ordre par `createReservation` (donc `withSession`), au chargement de chaque page et à chaque événement `online` ; un seul envoi à la fois. Sur un `409`, relecture de « mes réservations » pour reconnaître une demande déjà arrivée (réponse perdue) ; réseau, 5xx ou 401 : la demande reste en file ;
+  - fiche salle : hors ligne, le bouton devient « Enregistrer la demande » (il ne porte plus `needsNetwork`) ; une erreur réseau pendant l'envoi met aussi la demande en file ;
+  - « Mes réservations » : section « En attente d'envoi » (avec « Retirer »), message `?queued=1`, rechargement de la liste quand une demande arrive ;
+  - `AppStatus` : lance l'envoi et affiche l'issue (envoyée, ou refusée avec le motif) jusqu'à fermeture ; texte du bandeau hors ligne adapté ;
+  - `sw.ts` : paramètres d'URL ignorés pour les pages précachées. Sans ça, `/reservations?queued=1` (et `?status=…`) n'étaient pas trouvées hors ligne et affichaient la page « hors ligne » : défaut de la PWA livrée la veille, trouvé en préparant ce travail ;
+  - docs : `cadrage.md` § 2.10, `architecture.md`, `pistes.md`.
+- **Erreurs de l'IA relevées** :
+  - au test dans le navigateur, le message « elle sera envoyée dès le retour de la connexion » restait affiché après l'envoi : corrigé (il disparaît quand une demande arrive) ;
+  - deux erreurs de lint (`new Date()` signalé par la règle Svelte, assertions de type inutiles dans un test) et un test qui dépendait du compteur laissé par le test précédent ;
+  - en arrêtant les serveurs de test, `pkill -f` a de nouveau tué son propre shell (même erreur que lors de l'espace d'administration) ; serveurs arrêtés ensuite par leurs tâches.
+- **Vérification** : `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test` (417 tests, dont 15 nouveaux : file, envoi, 409 déjà arrivé ou créneau pris, erreurs qui gardent la demande, session qui vide la file). En vrai, avec une base Postgres jetable remplie par le seed (la base locale n'a pas été touchée), front buildé et Chromium : hors ligne, deux demandes mises en file et affichées « En attente d'envoi » ; pendant la coupure, un autre client prend le second créneau ; au retour du réseau, la première est envoyée et apparaît dans « À venir », la seconde est refusée avec « Le créneau n'est plus libre » ; fermeture des messages, stockage vide, aucune erreur JavaScript. Non vérifié : la coupure au milieu d'un envoi (seulement en test unitaire), un vrai téléphone.
+- **Ce que j'en retiens** : _à compléter_
+
+### 2026-11-17 — Réservation hors ligne envoyée au retour du réseau : explication (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : savoir si la PWA peut enregistrer une réservation hors ligne et l'envoyer au retour de la connexion.
+- **Demande** : « pour le mode hors ligne, est-il possible de faire une réservation mais qu'elle s'envoie que quand on a retrouvé la connexion ». Puis : « mais du coup c'est en place pour aucune requête ? » (réponse : non, aucune écriture n'est mise en file ; hors ligne, seule la lecture marche, choix retenu lors de la mise en place de la PWA).
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** : explication, sans code. Deux approches présentées : l'API Background Sync (rejoue la requête depuis le service worker, même onglet fermé, mais Chromium seulement, et la requête rejouée garde son jeton, expiré au bout d'une heure) et une file d'attente gérée par le front (IndexedDB, envoi au retour en ligne avec `withSession`, donc jeton renouvelé). Points à trancher : créneau pris entre-temps (la contrainte d'exclusion du back renvoie un conflit), affichage « en attente d'envoi », double envoi si la réponse se perd, disponibilités affichées hors ligne potentiellement périmées. Recommandation : la file gérée par le front.
+- **Erreurs de l'IA relevées** : aucune trouvée.
+- **Vérification** : lecture du back (contrainte d'exclusion sur les réservations, durées des jetons dans `jwt-token.service.ts`).
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-11-17 — Production : catalogue vide et connexion impossible (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.

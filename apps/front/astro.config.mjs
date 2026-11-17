@@ -50,9 +50,10 @@ export default defineConfig({
           }),
         ],
       },
-      // Enregistrement par la page (AppStatus.svelte), avec le bandeau de mise à jour
+      // Enregistrement par la page (AppStatus.svelte, serviceWorker.ts) ; mise à jour automatique,
+      // appliquée dans src/sw.ts (skipWaiting + clients.claim) et serviceWorker.ts (rechargement)
       injectRegister: false,
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       manifest: {
         name: 'Quorum : réservation de salles',
         short_name: 'Quorum',

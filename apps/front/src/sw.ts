@@ -24,7 +24,10 @@ const NETWORK_TIMEOUT_SECONDS = 4;
 const DAY_SECONDS = 24 * 60 * 60;
 
 // Pages statiques : Astro les écrit en `/connexion/index.html`, servies à l'adresse `/connexion`.
+// Leurs paramètres d'URL (`/reservations?status=…`, `?queued=1`) sont lus dans le navigateur : la
+// page précachée sert pour toutes les variantes, y compris hors ligne.
 precacheAndRoute(self.__WB_MANIFEST, {
+  ignoreURLParametersMatching: [/.*/],
   urlManipulation: ({ url }) => {
     if (url.pathname.endsWith('/') || url.pathname.includes('.')) return [];
     return [new URL(`${url.pathname}/index.html`, url)];
@@ -69,7 +72,12 @@ setCatchHandler(async ({ request }) => {
   return Response.error();
 });
 
-// Nouvelle version : elle attend que la page la demande (bandeau « Nouvelle version disponible »)
-self.addEventListener('message', (event) => {
-  if ((event.data as { type?: string } | null)?.type === 'SKIP_WAITING') void self.skipWaiting();
+// Mise à jour automatique : une nouvelle version remplace l'ancienne dès son installation et prend
+// la main sur les pages ouvertes, qui se rechargent (serviceWorker.ts). Sans ça, un visiteur
+// garderait l'ancienne version (et ses éventuels défauts) tant que tous ses onglets restent ouverts.
+self.addEventListener('install', () => {
+  void self.skipWaiting();
+});
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
 });

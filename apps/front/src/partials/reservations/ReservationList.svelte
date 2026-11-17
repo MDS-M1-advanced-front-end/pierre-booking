@@ -2,12 +2,14 @@
   Contenu de l'écran 06 Mes réservations (maquette : ecrans/06-mes-reservations.html).
   Filtre par statut dans l'URL (`?status=…`), sections « À venir » et « Passées, refusées ou
   annulées », noms des salles via `getRoomsByIds` (anomalie 8), annulation dans une modale.
-  Messages de retour : `?created=1` (écran 02) et `?updated=1` (écran 07), retirés de l'URL après
-  affichage pour qu'un rechargement ne les réaffiche pas.
+  Messages de retour : `?created=1` et `?queued=1` (écran 02) et `?updated=1` (écran 07), retirés
+  de l'URL après affichage pour qu'un rechargement ne les réaffiche pas.
+  Demandes faites hors ligne (cadrage § 2.10) : section « En attente d'envoi » en tête, affichée
+  même si la liste n'a pas pu être chargée ; la liste se recharge quand l'une d'elles arrive.
 -->
 <script lang="ts">
   import type { Reservation, ReservationStatus, Room, User } from '@room-booking/core';
-  import { onMount, tick } from 'svelte';
+  import { onMount, tick, untrack } from 'svelte';
   import Alert from '../../components/Alert.svelte';
   import Button from '../../components/Button.svelte';
   import EmptyState from '../../components/EmptyState.svelte';
@@ -18,12 +20,13 @@
   import SegmentedNav from '../../components/SegmentedNav.svelte';
   import Skeleton from '../../components/Skeleton.svelte';
   import { errorMessage } from '../../data/errors';
+  import { outbox, settlePending } from '../../data/offline/outbox.svelte';
   import {
     cancelReservation,
     listMyReservations,
   } from '../../data/reservations/reservations.queries';
   import { getRoomsByIds } from '../../data/rooms/roomNames';
-  import { formatDateRange } from '../../utils/dates';
+  import { formatDateRange, formatShortDate, formatTime } from '../../utils/dates';
 
   interface Props {
     user: User;
@@ -43,6 +46,8 @@
 
   const FLASH_MESSAGES = {
     created: 'Votre demande de réservation a été envoyée au gestionnaire de la salle.',
+    queued:
+      'Votre demande est enregistrée sur cet appareil : elle sera envoyée au gestionnaire dès le retour de la connexion.',
     updated: 'Votre réservation a été modifiée.',
   } as const;
 
@@ -63,6 +68,22 @@
   let cancelling = $state(false);
   let cancelError = $state<string | null>(null);
   let cancelled = false;
+
+  /** Demandes de ce compte faites hors ligne, pas encore envoyées. */
+  const pending = $derived(outbox.items.filter((item) => item.userId === user.id));
+
+  // Une demande en attente vient d'arriver à l'API (envoi au retour de la connexion) : elle fait
+  // désormais partie de la liste
+  let lastSent = untrack(() => outbox.sent);
+  $effect(() => {
+    if (outbox.sent === lastSent) return;
+    lastSent = outbox.sent;
+    untrack(() => {
+      // « Sera envoyée » ne vaut plus : l'issue s'affiche dans le bandeau (AppStatus)
+      if (flash === FLASH_MESSAGES.queued) flash = null;
+      void load();
+    });
+  });
 
   const navItems = $derived(
     FILTERS.map((filter) => ({
@@ -129,9 +150,11 @@
     status = parseStatus(url.searchParams.get('status'));
 
     if (url.searchParams.get('created') === '1') flash = FLASH_MESSAGES.created;
+    else if (url.searchParams.get('queued') === '1') flash = FLASH_MESSAGES.queued;
     else if (url.searchParams.get('updated') === '1') flash = FLASH_MESSAGES.updated;
-    if (url.searchParams.has('created') || url.searchParams.has('updated')) {
+    if (['created', 'queued', 'updated'].some((key) => url.searchParams.has(key))) {
       url.searchParams.delete('created');
+      url.searchParams.delete('queued');
       url.searchParams.delete('updated');
       history.replaceState(history.state, '', url.pathname + url.search + url.hash);
     }
@@ -187,6 +210,54 @@
   </div>
 {/if}
 
+{#if pending.length > 0}
+  <section class="mb-(--space-6) flex flex-col gap-(--space-4)" aria-labelledby="pending-title">
+    <div class="flex flex-col gap-(--space-1)">
+      <h2 id="pending-title">En attente d'envoi</h2>
+      <p class="text-sm text-text-muted">
+        Demandes faites hors ligne, enregistrées sur cet appareil. Elles seront envoyées au
+        gestionnaire dès le retour de la connexion, si le créneau est toujours libre.
+      </p>
+    </div>
+    <ul class="flex flex-col gap-(--space-3)">
+      {#each pending as item (item.id)}
+        <li
+          class="flex flex-wrap items-center justify-between gap-(--space-3) rounded-lg border border-dashed border-border-strong bg-surface p-(--space-4) md:px-(--space-5)"
+        >
+          <div class="flex flex-col gap-(--space-1)">
+            <h3 class="text-md">{item.roomName}</h3>
+            <p class="flex flex-wrap gap-x-(--space-4) gap-y-(--space-1) text-sm text-text-muted">
+              <span class="inline-flex items-center gap-(--space-1)">
+                <Icon name="calendar" />
+                {formatShortDate(item.body.startAt)} · {formatTime(item.body.startAt)} – {formatTime(
+                  item.body.endAt,
+                )}
+              </span>
+              {#if item.body.numberOfParticipants}
+                <span class="inline-flex items-center gap-(--space-1)">
+                  <Icon name="users" />
+                  {item.body.numberOfParticipants}
+                  {item.body.numberOfParticipants > 1 ? 'participants' : 'participant'}
+                </span>
+              {/if}
+            </p>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            aria-label={`Retirer la demande pour ${item.roomName}, ${formatDateRange(item.body.startAt, item.body.endAt)}`}
+            onclick={() => {
+              settlePending(item.id);
+            }}
+          >
+            Retirer
+          </Button>
+        </li>
+      {/each}
+    </ul>
+  </section>
+{/if}
+
 {#if loading}
   <div class="flex flex-col gap-(--space-3)" aria-busy="true">
     <p class="visually-hidden" role="status">Chargement des réservations…</p>
@@ -213,7 +284,9 @@
     onretry={load}
   />
 {:else if reservations.length === 0}
-  {#if status}
+  {#if pending.length > 0}
+    <!-- Les demandes en attente tiennent lieu de liste -->
+  {:else if status}
     <EmptyState
       title="Aucune réservation avec ce statut"
       text="Choisissez un autre statut ou affichez toutes vos réservations."
