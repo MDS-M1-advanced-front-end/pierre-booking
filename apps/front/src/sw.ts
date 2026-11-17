@@ -24,7 +24,10 @@ const NETWORK_TIMEOUT_SECONDS = 4;
 const DAY_SECONDS = 24 * 60 * 60;
 
 // Pages statiques : Astro les écrit en `/connexion/index.html`, servies à l'adresse `/connexion`.
+// Leurs paramètres d'URL (`/reservations?status=…`, `?queued=1`) sont lus dans le navigateur : la
+// page précachée sert pour toutes les variantes, y compris hors ligne.
 precacheAndRoute(self.__WB_MANIFEST, {
+  ignoreURLParametersMatching: [/.*/],
   urlManipulation: ({ url }) => {
     if (url.pathname.endsWith('/') || url.pathname.includes('.')) return [];
     return [new URL(`${url.pathname}/index.html`, url)];

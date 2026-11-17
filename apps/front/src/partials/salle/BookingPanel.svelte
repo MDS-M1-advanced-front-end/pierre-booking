@@ -10,10 +10,12 @@
       bouton « Demander la réservation » (ou lien « Se connecter pour réserver »).
 
   Pas d'estimation de prix (cadrage § 2.7, anomalie 1) : on affiche la durée et le tarif horaire.
+  Hors ligne (ou réseau coupé pendant l'envoi), la demande est mise en file sur l'appareil et
+  envoyée au retour de la connexion (cadrage § 2.10, `data/offline/outbox.svelte.ts`).
   Dates : `date` est un jour de Paris ; `startAt` / `endAt` partent en UTC (`parisToUtcIso`).
 -->
 <script lang="ts">
-  import type { AvailabilitySlot, Room, User } from '@room-booking/core';
+  import type { AvailabilitySlot, ReservationCreateRequest, Room, User } from '@room-booking/core';
   import { onMount, untrack, type Snippet } from 'svelte';
   import Alert from '../../components/Alert.svelte';
   import Button from '../../components/Button.svelte';
@@ -25,6 +27,8 @@
   import Textarea from '../../components/Textarea.svelte';
   import { restoreSession } from '../../data/auth/session.svelte';
   import { errorMessage } from '../../data/errors';
+  import { isOffline, network } from '../../data/offline/network.svelte';
+  import { queueReservation } from '../../data/offline/outbox.svelte';
   import { createReservation } from '../../data/reservations/reservations.queries';
   import { getRoomAvailability } from '../../data/rooms/rooms.queries';
   import { isBefore, isIsoDate } from '../../utils/dateNavigation';
@@ -140,7 +144,7 @@
 
   async function handleSubmit(event: SubmitEvent & { currentTarget: HTMLFormElement }) {
     event.preventDefault();
-    if (!range || submitting || !isActive) return;
+    if (!range || submitting || !isActive || !user) return;
 
     const input = event.currentTarget.elements.namedItem('participants');
     if (!(input instanceof HTMLInputElement)) return;
@@ -154,16 +158,32 @@
     submitError = null;
     conflict = false;
     const trimmedComment = comment.trim();
-    const result = await createReservation({
+    const body: ReservationCreateRequest = {
       roomId: room.id,
       startAt: parisToUtcIso(date, range.startTime),
       endAt: parisToUtcIso(date, range.endTime),
       numberOfParticipants: Number(input.value),
       ...(trimmedComment !== '' && { comment: trimmedComment }),
-    });
+    };
+    const { id: userId } = user;
+    const queue = () => {
+      queueReservation(userId, room.name, body);
+      location.assign('/reservations?queued=1');
+    };
 
+    if (isOffline()) {
+      queue();
+      return;
+    }
+    const result = await createReservation(body);
     if (result.ok) {
       location.assign('/reservations?created=1');
+      return;
+    }
+    // Réseau coupé pendant l'envoi : la demande part au retour de la connexion. Si elle était
+    // arrivée quand même, l'envoi suivant le reconnaîtra (pendingReservations.ts).
+    if (result.error.status === 0) {
+      queue();
       return;
     }
     submitting = false;
@@ -295,18 +315,28 @@
       {:else if user}
         <div class="flex flex-col gap-(--space-2)">
           <Button
-            needsNetwork
             type="submit"
             block
             aria-disabled={!range || submitting}
             aria-busy={submitting}
-            aria-describedby={range ? undefined : 'booking-requirement'}
+            aria-describedby={[
+              range ? undefined : 'booking-requirement',
+              network.online ? undefined : 'booking-offline',
+            ]
+              .filter(Boolean)
+              .join(' ') || undefined}
           >
-            Demander la réservation
+            {network.online ? 'Demander la réservation' : 'Enregistrer la demande'}
           </Button>
           {#if !range}
             <p id="booking-requirement" class="text-sm text-text-muted">
               Choisissez au moins un créneau pour envoyer votre demande.
+            </p>
+          {/if}
+          {#if !network.online}
+            <p id="booking-offline" class="text-sm text-text-muted">
+              Vous êtes hors ligne : la demande sera enregistrée sur cet appareil et envoyée au
+              gestionnaire dès le retour de la connexion.
             </p>
           {/if}
         </div>
