@@ -19,6 +19,10 @@ WORKDIR /app
 # deploy : package.json et dépendances de production ; dist est ignoré par git, donc copié à part
 COPY --from=build --chown=node:node /out ./
 COPY --from=build --chown=node:node /repo/apps/backend/dist ./dist
+# Jeu de démo pour le seed, lancé à la main une seule fois (il vide les tables) :
+#   node dist/database/seed.js --production   (mot de passe des comptes : SEED_PASSWORD)
+COPY --from=build --chown=node:node /repo/mock/data ./mock/data
+ENV SEED_DATA_DIR=/app/mock/data
 USER node
 EXPOSE 8080
 # Migrations à chaque démarrage (sans effet si la base est à jour), puis l'API
