@@ -58,8 +58,10 @@ interface MockSlot {
 // Créneaux ouverts pour chaque salle active, à partir d'aujourd'hui
 const AVAILABILITY_DAYS = 60;
 
-// src/database ou dist/database → racine du dépôt
-const MOCK_DATA_DIR = join(import.meta.dirname, '../../../../mock/data');
+// SEED_DATA_DIR dans l'image Docker du back ; sinon src/database ou dist/database → racine du dépôt
+const MOCK_DATA_DIR =
+  process.env.SEED_DATA_DIR ||
+  join(import.meta.dirname, '../../../../mock/data');
 
 function readMock<T>(name: string): T[] {
   return JSON.parse(
@@ -68,8 +70,14 @@ function readMock<T>(name: string): T[] {
 }
 
 async function seed(): Promise<void> {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('Seed refusé en production : il vide toutes les tables.');
+  // En production, seulement sur demande explicite (base neuve) : le seed vide toutes les tables
+  if (
+    process.env.NODE_ENV === 'production' &&
+    !process.argv.includes('--production')
+  ) {
+    throw new Error(
+      'Seed refusé en production : il vide toutes les tables. Ajouter --production pour confirmer.',
+    );
   }
   const users = readMock<MockUser>('users');
   const rooms = readMock<MockRoom>('rooms');

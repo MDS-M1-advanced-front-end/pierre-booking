@@ -26,6 +26,22 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-11-17 — Production : catalogue vide et connexion impossible (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : comprendre pourquoi, sur le site déployé, la page d'accueil n'affiche aucune salle et la connexion échoue.
+- **Demande** : « je n'ai aucune salle sur la home, comme si le seeder avait pas fonctionné. et je n'arrive pas non plus à me connecter ».
+- **Résultat** : _à compléter_
+- **Demande (suite)** : requête SQL pour lister les salles dans le conteneur Postgres ; résultat collé par l'apprenant : 0 salle, 0 utilisateur. L'apprenant signale aussi qu'aucun appel XHR ne part du front.
+- **Ce qui a été fait** (diagnostic, puis seed rendu lançable en production : `edb72c6` back, `aad35cc` docs ; PR vers `main`) : l'IA a inspecté le site public (HTML rendu, fichiers JavaScript servis) et la configuration (`compose.yaml`, Dockerfiles, `seed.ts`). Deux causes distinctes :
+  - **connexion** : le JavaScript du navigateur appelle `http://localhost:8080/api`, la valeur par défaut de `PUBLIC_API_BASE_URL`. Cette variable est lue au build du front (argument Docker) et n'a pas été fixée dans Dokploy ; l'API n'a pas non plus d'adresse publique (`/api` sur le domaine du front répond 404). Le navigateur ne peut donc pas joindre l'API ;
+  - **catalogue vide** : la page affiche « Aucune salle ne correspond », pas le message d'erreur : le serveur Astro joint bien l'API par le réseau interne (`http://backend:8080/api`), mais la base est vide. Les migrations tournent au démarrage du back, le seed jamais en production ; de plus, `seed.ts` lit `mock/data/*.json`, absent de l'image Docker du back, et vide toutes les tables avant de les remplir.
+  - **pas d'appel XHR** : normal sur l'accueil (salles chargées par le serveur Astro) ; à la connexion, une page HTTPS qui appelle `http://localhost` est bloquée par le navigateur avant l'envoi (contenu mixte), l'erreur n'apparaît qu'en console ;
+  - **seed en production** : `mock/data` copié dans l'image du back (`SEED_DATA_DIR`) ; la protection ajoutée lors de l'audit de sécurité (seed refusé en production) est gardée, mais peut être levée explicitement avec `--production`. L'IA a écarté l'idée de lancer le seed avec `NODE_ENV=development`, qui aurait aussi assoupli la vérification des secrets. README et `AGENTS.md` mis à jour.
+- **Erreurs de l'IA relevées** : premier test de l'image avec des secrets trop courts (refusés en production, erreur de test sans conséquence) ; l'IA avait d'abord proposé de lancer le seed dans le conteneur sans avoir vu qu'il le refuse en production. Le point `PUBLIC_API_BASE_URL` figurait déjà dans `docs/pistes.md` (section Déploiement), sans avoir été vérifié sur le site déployé lors des PR précédentes.
+- **Vérification** : page d'accueil du site public (état vide et non état d'erreur), recherche de l'adresse de l'API dans les fichiers JavaScript servis, requêtes sur les adresses candidates de l'API. Image de production du back construite et lancée contre un Postgres jetable : seed refusé sans `--production`, accepté avec (9 utilisateurs, 15 salles, 8 réservations), `GET /api/rooms` renvoie 13 salles actives, connexion d'un compte du seed : 200. Typecheck du back.
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-11-16 — PWA : installable et consultable hors ligne (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
