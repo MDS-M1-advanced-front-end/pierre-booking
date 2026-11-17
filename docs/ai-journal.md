@@ -32,7 +32,7 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Objectif** : corriger les problèmes du rapport Lighthouse (mobile) de la production.
 - **Demande** : « il va être l'heure d'opti le lighthouse. j'ai ces problèmes en version pc, je te laisse les corriger », avec le rapport collé (puis : « je t'avais déjà envoyé le mobile. le pc est une version réduite du mobile ») : CSS `Layout.css` (38,5 Kio) qui bloque le rendu (~300 ms), image LCP (première carte du catalogue) en `loading="lazy"` sans `fetchpriority`, aucune préconnexion (`fastly.picsum.photos`, ~300 ms), chaîne de requêtes critiques.
 - **Résultat** : _à compléter_
-- **Ce qui a été fait** (non committé) :
+- **Ce qui a été fait** (`594998a` e2e, `309c7a7` Lighthouse ; PR #25 vers `main`, sur « ok fais la pr ») :
   - CSS intégrée dans chaque page (`build.inlineStylesheets: 'always'`, `astro.config.mjs`) : plus de requête bloquante ; la feuille fait ~8 Kio compressée ;
   - `RoomCard` : propriété `priority` (`loading="eager"`, `fetchpriority="high"`), donnée à la première carte du catalogue (d'abord aux trois premières, la rangée visible sur ordinateur ; ramené à une seule une fois le rapport identifié comme mobile, où la grille n'a qu'une colonne et où les trois images prioritaires se partageaient la bande passante) ;
   - préconnexion aux origines des images, calculée depuis les données (`utils/imageOrigins.ts`, testé), sur le catalogue et la fiche salle ; `picsum.photos` redirige vers `fastly.picsum.photos`, les deux sont préconnectés ; `Layout.astro` transmet un emplacement `head` ;
