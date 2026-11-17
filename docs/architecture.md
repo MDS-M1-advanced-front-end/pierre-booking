@@ -81,7 +81,7 @@ Un dossier par domaine de l'API : `rooms`, `reservations`, `auth`, `users`. Fich
 | `<domaine>.queries.ts` | Fonctions `async` appelées par les partials. Elles enveloppent les fonctions de `core` (`searchRooms`, `getRoom`…) et décident quoi faire d'un `Result` en erreur. |
 | `<domaine>.mock.ts`    | Données fictives typées avec les types de `core`, utilisées par `queries` tant que l'API n'est pas branchée. Commentaire en tête : donnée temporaire.              |
 
-État partagé du navigateur (session) : `data/auth/session.svelte.ts`.
+État partagé du navigateur : session (`data/auth/session.svelte.ts`), réseau et file des demandes de réservation faites hors ligne (`data/offline/`, cadrage.md § 2.10).
 
 Pas de schémas de validation dans le front : les fonctions de `core` sont utilisées telles quelles, et les schémas Zod viendront de `core`. En attendant, les formulaires s'appuient sur les contraintes HTML (voir `cadrage.md` § 2.6).
 
