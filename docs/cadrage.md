@@ -47,7 +47,7 @@ Toutes les décisions ont été validées le 2026-10-07 (voir la fin de [`plan.m
 
 ### 2.3 Session et authentification
 
-- Stockage **`localStorage`**, clé `quorum.session` : `{ accessToken, user, expiresAt }` (`expiresAt` = maintenant + `expiresIn`).
+- Stockage **`localStorage`**, clé `quorum.session` : `{ accessToken, user, expiresAt, refreshToken }` (`expiresAt` = maintenant + `expiresIn`).
 - Le client de `core` garde le jeton dans une variable du module, perdue à chaque page. Chaque îlot connecté commence donc par `restoreSession()` : il lit le `localStorage`, appelle `setAccessToken()`, puis expose l'utilisateur via un état Svelte (`session.svelte.ts`).
 - **Renouvellement du jeton** (ajouté le 2026-11-16, route `POST /auth/refresh`) : le jeton de rafraîchissement est gardé dans la session. Avant chaque appel authentifié, un jeton qui expire dans moins d'une minute est renouvelé ; sur un `401`, la session est renouvelée et l'appel rejoué une fois (`withSession`). Les appels simultanés partagent un seul renouvellement. Si le renouvellement échoue (jeton expiré au bout de 7 jours, ou révoqué par un changement de mot de passe), on vide la session et on redirige vers `/connexion?redirect=<page>`. Le renouvellement n'a lieu qu'au moment d'un appel : une page ouverte sans requête ne prolonge pas la session.
 - Déconnexion : `logout()` de `core` + suppression de la clé + retour au catalogue.
@@ -93,14 +93,15 @@ Toutes les décisions ont été validées le 2026-10-07 (voir la fin de [`plan.m
 - `pnpm check` (typecheck, lint, format, tests) doit passer à la fin de chaque lot. **Il échoue aujourd'hui** : Prettier analyse `apps/front/.astro/`, `dist/`, la copie de `tokens.css`, et ne sait pas formater `.astro` ni `.svelte`. Correction au lot 0.
 - **Tests unitaires : Vitest, centralisé à la racine, avec des projets nommés.** Un seul `vitest.config.ts` à la racine déclare des projets (`test.projects`, chacun avec un `name`, ses fichiers et son environnement) :
 
-  | Projet             | Fichiers                                 | Environnement           | Contenu                                                                              |
-  | ------------------ | ---------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------ |
-  | `core`             | `packages/core/src/**/*.test.ts`         | `node`                  | tests de `core` (s'il en ajoute)                                                     |
-  | `front:utils`      | `apps/front/src/utils/**/*.test.ts`      | `node`                  | formatage, fuseaux, découpage horaire, messages de validation                        |
-  | `front:data`       | `apps/front/src/data/**/*.test.ts`       | `jsdom`                 | session (`localStorage`), normalisation des erreurs des `queries`, `mockPersona`     |
-  | `front:components` | `apps/front/src/components/**/*.test.ts` | `jsdom` + plugin Svelte | logique et rendu des composants (SlotPicker, Field…), avec `@testing-library/svelte` |
+  | Projet             | Fichiers                                                                         | Environnement           | Contenu                                                                                                       |
+  | ------------------ | -------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------- |
+  | `core`             | `packages/core/src/**/*.test.ts`                                                 | `node`                  | tests de `core` (s'il en ajoute)                                                                              |
+  | `front:utils`      | `apps/front/src/utils/**/*.test.ts`                                              | `node`                  | formatage, fuseaux, découpage horaire, messages de validation                                                 |
+  | `front:data`       | `apps/front/src/data/**/*.test.ts`                                               | `jsdom`                 | session (`localStorage`), normalisation des erreurs des `queries`, `mockPersona`                              |
+  | `front:components` | `apps/front/src/components/**/*.test.ts`, `apps/front/src/partials/**/*.test.ts` | `jsdom` + plugin Svelte | logique et rendu des composants (SlotPicker, Field…), avec `@testing-library/svelte`, et helpers des partials |
+  | `backend`          | `apps/backend/src/**/*.spec.ts` (config `apps/backend/vitest.config.ts`)         | `node`                  | cas d'usage et entités du back (ajouté avec le back)                                                          |
 
-  `pnpm test` lance tous les projets ; `pnpm test --project front:utils` (ou `--project 'front:*'`) n'en lance qu'une partie. Un nouveau dossier testé = un nouveau projet `front:<dossier>`.
+  `pnpm test` lance tous les projets ; `pnpm test --project front:utils` (ou `--project 'front:*'`) n'en lance qu'une partie. Un nouveau dossier testé rejoint un projet existant, ou en reçoit un.
 
 - **Tests de bout en bout : Playwright** (`@playwright/test` 1.63). C'est l'outil qui pilote un vrai navigateur (Chromium, Firefox, WebKit) et rejoue les parcours comme un utilisateur. Dossier `apps/front/e2e/`. Le serveur de dev et le mock Prism sont lancés par la config Playwright (`webServer`). Script `pnpm test:e2e`, séparé de `pnpm check` (il faut les navigateurs installés et le mock).
 - Parcours de bout en bout visés : visiteur (catalogue → filtres → fiche → « Se connecter pour réserver ») ; client (connexion → réservation → mes réservations → annulation) ; gestionnaire (connexion → mes salles → modification → disponibilités → demandes). Prism étant sans état, les tests vérifient **la requête envoyée** (`page.waitForRequest`, corps attendu) et l'affichage de la réponse, pas la persistance.
@@ -108,7 +109,7 @@ Toutes les décisions ont été validées le 2026-10-07 (voir la fin de [`plan.m
 
 ### 2.9 Docker
 
-`docker compose up dev` publiait 3000, 4200 et 5173, mais Astro écoute sur 4321, et seulement sur `localhost` par défaut. Première décision : `astro dev --port 5173`. **Abandonnée à l'implémentation** : quand le mock tourne dans Docker, le port 5173 de la machine est déjà pris par le conteneur, et Astro 7 refuse un second serveur de dev dans le même projet. **Retenu** : `astro dev --host 0.0.0.0` (port 4321) et `4321:4321` ajouté aux ports publiés dans `compose.yaml`. Le même port fonctionne avec ou sans Docker, et Playwright réutilise le serveur déjà lancé.
+`docker compose up dev` publiait 3000, 4200 et 5173, mais Astro écoute sur 4321, et seulement sur `localhost` par défaut. Première décision : `astro dev --port 5173`. **Abandonnée à l'implémentation** : quand le mock tourne dans Docker, le port 5173 de la machine est déjà pris par le conteneur, et Astro 7 refuse un second serveur de dev dans le même projet. **Retenu** : `astro dev --host 0.0.0.0` (port 4321) et `4321:4321` ajouté aux ports publiés dans `compose.yaml`. Le même port fonctionne avec ou sans Docker, et Playwright réutilise le serveur déjà lancé. **Depuis** (lot 3) : `compose.yaml` sert la production (base, back sur 8080, front sur 4321, images `apps/*/Dockerfile`) ; en développement, `compose.dev.yaml` ne lance que la base et `pnpm dev` lance le back et le front sur la machine.
 
 ---
 
@@ -127,7 +128,7 @@ Ajoutée le 2026-11-16. **Règle : consultation hors ligne, actions en ligne**, 
   - hors ligne, ou si le réseau coupe pendant l'envoi (erreur réseau), « Demander la réservation » devient « Enregistrer la demande » : la demande est gardée dans le localStorage (`data/offline/outbox.svelte.ts`) et affichée dans « Mes réservations », section « En attente d'envoi », où elle peut être retirée ;
   - envoi par la page (`data/reservations/pendingReservations.ts`), au chargement de chaque page et à chaque retour de la connexion, dans l'ordre, par `withSession` : le jeton est renouvelé s'il a expiré pendant la coupure. Choix écarté : l'API Background Sync (Chromium seulement, et la requête rejouée garde un jeton qui peut avoir expiré) ;
   - issue affichée dans un bandeau jusqu'à ce qu'on le ferme : envoyée, ou refusée avec le motif. Sur un `409`, on vérifie si la demande n'était pas déjà arrivée (réponse perdue pendant une coupure) : comptée comme envoyée, sinon « créneau plus libre ». Réseau, serveur en panne (5xx) ou session expirée : la demande reste en file ;
-  - la file est liée au compte et vidée avec la session (déconnexion, expiration) ;
+  - la file est liée au compte : vidée à la déconnexion volontaire, gardée si la session expire (elle partira quand le même compte se reconnectera), et les demandes d'un autre compte sont retirées à chaque connexion. Un renouvellement de jeton impossible pour l'instant (réseau, panne, limite de débit) ne déconnecte plus : l'appel échoue comme une erreur réseau et la demande reste en file (corrigé le 2026-11-17 après l'audit) ;
   - limites : l'envoi demande que l'application soit ouverte après le retour du réseau ; les créneaux affichés hors ligne sont ceux de la dernière visite, donc possiblement pris ; seules les créations passent par la file (modifier, annuler restent en ligne).
 - **Mises à jour automatiques** (2026-11-17, `registerType: 'autoUpdate'`) : une nouvelle version s'installe, prend la main tout de suite (`skipWaiting`, `clients.claim`) et la page se recharge. Avant, elle attendait un clic sur « Recharger » : un visiteur pouvait garder une version cassée tant que ses onglets restaient ouverts (cas réel : appels à `localhost` après la correction de `PUBLIC_API_BASE_URL`). Contrepartie : un rechargement peut survenir peu après l'ouverture d'une page, pendant une saisie ; les demandes en file, dans le localStorage, ne sont pas perdues.
 - **Contournement** : l'intégration (v2.0.2) ne vise `dist/client` qu'avec `output: 'server'`. En `output: 'static'` + adaptateur, `astro.config.mjs` écrit le service worker dans `client/`, ne relève que les fichiers de `client/` et retire ce préfixe des adresses.
@@ -135,24 +136,25 @@ Ajoutée le 2026-11-16. **Règle : consultation hors ligne, actions en ligne**, 
 
 ## 3. Routes
 
-| #   | Écran                            | Route                                                                    | Rendu                            | Accès                        |
-| --- | -------------------------------- | ------------------------------------------------------------------------ | -------------------------------- | ---------------------------- |
-| 01  | Catalogue                        | `/`                                                                      | SSR + cache                      | Public                       |
-| 02  | Fiche salle                      | `/salles/[id]`                                                           | SSR + cache                      | Public (réserver : connecté) |
-| 03  | Connexion                        | `/connexion`                                                             | Statique                         | Visiteur                     |
-| 04  | Inscription                      | `/inscription`                                                           | Statique                         | Visiteur                     |
-| 05  | Profil                           | `/profil`                                                                | Statique + îlot                  | Connecté                     |
-| 06  | Mes réservations                 | `/reservations`                                                          | Statique + îlot                  | Connecté                     |
-| 07  | Modifier une réservation         | `/reservations/[id]/modifier`                                            | SSR (coquille) + îlot            | Connecté                     |
-| 08  | Mes salles                       | `/gestion/salles`                                                        | Statique + îlot                  | `GESTIONNAIRE`               |
-| 09  | Ajouter / modifier une salle     | `/gestion/salles/nouvelle`, `/gestion/salles/[id]/modifier`              | Statique / SSR (coquille) + îlot | `GESTIONNAIRE`               |
-| 10  | Disponibilités                   | `/gestion/salles/[id]/disponibilites`                                    | SSR (coquille) + îlot            | `GESTIONNAIRE`               |
-| 11  | Demandes                         | `/gestion/demandes`                                                      | Statique + îlot                  | `GESTIONNAIRE`               |
-| —   | Administration : tableau de bord | `/admin` (`?periode=`)                                                   | Statique + îlot                  | `ADMINISTRATEUR`             |
-| —   | Administration : utilisateurs    | `/admin/utilisateurs` (`?role=`, `?page=`)                               | Statique + îlot                  | `ADMINISTRATEUR`             |
-| —   | Administration : réservations    | `/admin/reservations` (`?statut=`, `?utilisateur=`, `?salle=`, `?page=`) | Statique + îlot                  | `ADMINISTRATEUR`             |
-| —   | Accès refusé                     | `/acces-refuse`                                                          | Statique                         | —                            |
-| —   | Page introuvable                 | `404.astro`                                                              | Statique                         | —                            |
+| #   | Écran                            | Route                                                                    | Rendu                            | Accès                          |
+| --- | -------------------------------- | ------------------------------------------------------------------------ | -------------------------------- | ------------------------------ |
+| 01  | Catalogue                        | `/`                                                                      | SSR + cache                      | Public                         |
+| 02  | Fiche salle                      | `/salles/[id]`                                                           | SSR + cache                      | Public (réserver : connecté)   |
+| 03  | Connexion                        | `/connexion`                                                             | Statique                         | Visiteur                       |
+| 04  | Inscription                      | `/inscription`                                                           | Statique                         | Visiteur                       |
+| 05  | Profil                           | `/profil`                                                                | Statique + îlot                  | Connecté                       |
+| 06  | Mes réservations                 | `/reservations`                                                          | Statique + îlot                  | `CLIENT`                       |
+| 07  | Modifier une réservation         | `/reservations/[id]/modifier`                                            | SSR (coquille) + îlot            | `CLIENT`                       |
+| 08  | Mes salles                       | `/gestion/salles`                                                        | Statique + îlot                  | `GESTIONNAIRE`, administrateur |
+| 09  | Ajouter / modifier une salle     | `/gestion/salles/nouvelle`, `/gestion/salles/[id]/modifier`              | Statique / SSR (coquille) + îlot | `GESTIONNAIRE`, administrateur |
+| 10  | Disponibilités                   | `/gestion/salles/[id]/disponibilites`                                    | SSR (coquille) + îlot            | `GESTIONNAIRE`, administrateur |
+| 11  | Demandes                         | `/gestion/demandes`                                                      | Statique + îlot                  | `GESTIONNAIRE`, administrateur |
+| —   | Administration : tableau de bord | `/admin` (`?periode=`)                                                   | Statique + îlot                  | `ADMINISTRATEUR`               |
+| —   | Administration : utilisateurs    | `/admin/utilisateurs` (`?role=`, `?page=`)                               | Statique + îlot                  | `ADMINISTRATEUR`               |
+| —   | Administration : réservations    | `/admin/reservations` (`?statut=`, `?utilisateur=`, `?salle=`, `?page=`) | Statique + îlot                  | `ADMINISTRATEUR`               |
+| —   | Hors ligne                       | `/hors-ligne`                                                            | Statique (précachée, § 2.10)     | —                              |
+| —   | Accès refusé                     | `/acces-refuse`                                                          | Statique                         | —                              |
+| —   | Page introuvable                 | `404.astro`                                                              | Statique                         | —                              |
 
 Les filtres passent par les paramètres d'URL : `/?location=…&capacityMin=10&date=…&page=2`, `/reservations?status=PENDING`, `/salles/[id]?date=2026-11-16`.
 
@@ -160,7 +162,8 @@ Les filtres passent par les paramètres d'URL : `/?location=…&capacityMin=10&d
 
 - visiteur : Catalogue · Se connecter · Créer un compte ;
 - client : Catalogue · Mes réservations · prénom (→ profil) · Se déconnecter ;
-- gestionnaire : Catalogue · Mes salles · Demandes (nombre en attente) · prénom (→ profil) · Se déconnecter.
+- gestionnaire : Catalogue · Mes salles · Demandes (nombre en attente) · prénom (→ profil) · Se déconnecter ;
+- administrateur : comme le gestionnaire, plus Administration (`/admin`).
 
 En mobile, la navigation passe dans un `<details>` (menu). Un lien d'évitement « Aller au contenu » est présent sur toutes les pages.
 
@@ -188,7 +191,7 @@ Pour chaque écran : données, composants, états, anomalies du contrat et crit�
 ### 03 Connexion — `/connexion`
 
 - **Données** : `login({ email, password })`.
-- **États** : `401` → alerte générique « Adresse e-mail ou mot de passe incorrect » ; succès → `redirect` ou, par défaut, `/reservations` (client) ou `/gestion/salles` (gestionnaire).
+- **États** : `401` → alerte générique « Adresse e-mail ou mot de passe incorrect » ; succès → `redirect` ou, par défaut, `/reservations` (client), `/gestion/salles` (gestionnaire) ou `/admin` (administrateur).
 - **Anomalies** : pas de « mot de passe oublié » (aucun endpoint).
 - **Accepté si** : session enregistrée (§ 2.3) ; un utilisateur déjà connecté est redirigé.
 
@@ -200,7 +203,7 @@ Pour chaque écran : données, composants, états, anomalies du contrat et crit�
 
 ### 05 Profil — `/profil`
 
-- **Données** : `getMe()` ; `updateUser(user.id, { firstName, lastName, email })`, **sans jamais envoyer `role`**.
+- **Données** : `getMe()` ; `updateMe({ firstName, lastName, email })` (`PATCH /auth/me`), **sans jamais envoyer `role`**. La première version appelait `updateUser` (`PATCH /users/{id}`), réservé aux administrateurs sur le vrai back : un client recevait un `403` (corrigé le 2026-11-17, le mock n'applique pas les rôles).
 - **Composants** : formulaire, bloc « Mon compte » (rôle en badge, membre depuis).
 - **États** : succès → `role="status"` « Vos informations ont été enregistrées » ; met à jour la session.
 - **Changement de mot de passe** (ajouté, absent de la maquette) : la maquette dit qu'aucun endpoint ne le permet, mais `core` expose `changePassword({ currentPassword, newPassword })` (`PATCH /auth/password`, 204). Bloc « Changer mon mot de passe » sous le formulaire : mot de passe actuel, nouveau (8 caractères minimum), confirmation (vérifiée côté client) ; succès → `role="status"` et champs vidés ; erreur `400`/`401` → « Mot de passe actuel incorrect » (hypothèse, le contrat ne précise pas le code).
@@ -243,7 +246,7 @@ Pour chaque écran : données, composants, états, anomalies du contrat et crit�
 
 ### 11 Demandes — `/gestion/demandes`
 
-- **Données** : `listMyReservations()`. Hypothèse de la maquette : pour un gestionnaire, la route renvoie les réservations de ses salles. Noms des salles via `getRoom`, des demandeurs via `getUser(userId)` (droits non précisés : si `403`, on affiche « Client »).
+- **Données** : `listReservationRequests()`, une requête GraphQL `reservationRequests` (ajoutée ensuite) : demandes en attente et traitées des salles du gestionnaire (administrateur : toutes), avec la salle et le demandeur. Elle remplace la première version (`listMyReservations()`, puis `getRoom` et `getUser` par identifiant ; anomalies 4, 5 et 8).
 - **Composants** : sections « En attente (n) » et « Traitées récemment », `ReservationItem` avec « Confirmer » / « Refuser », `Modal` de refus avec motif facultatif.
 - **Actions** : `confirmReservation(id)`, `rejectReservation(id, { reason })` ; succès → `role="status"`.
 
@@ -263,10 +266,13 @@ Source : `maquettes/composants.html`. En Svelte (§ 2.2) dans `src/components/`,
 | `DatePager`                                         | jour précédent / suivant + champ date                                                                                  |
 | `Pagination`, `SegmentedNav`                        | `aria-current="page"`                                                                                                  |
 | `ReservationItem`                                   | bloc de date, titre, badge, prix, commentaire, actions                                                                 |
-| `Table`                                             | s'empile en mobile                                                                                                     |
+| tableaux                                            | pas de composant : balisage dans chaque partial, empilé en mobile (`partials/admin/table.ts`)                          |
 | `EmptyState`, `Skeleton`, `ErrorState`              | états vide, chargement, erreur                                                                                         |
 | `Icon`                                              | migré en Svelte, mêmes tracés que la maquette                                                                          |
 | `SiteHeader`, `SiteFooter`                          | en-tête = îlot (session) ; pied de page = Astro                                                                        |
+| `RequireAuth`, `ErrorSummary`                       | garde de session et de rôle ; résumé des erreurs d'un formulaire                                                       |
+| `AppStatus`                                         | bandeaux de la PWA (hors ligne, issue des demandes mises en file), § 2.10                                              |
+| `ColumnChart`                                       | histogramme du tableau de bord d'administration                                                                        |
 
 ## 6. Accessibilité (WCAG 2.2 AA)
 
@@ -279,7 +285,7 @@ On reprend les règles du README de la maquette : focus visible (3 px + 2 px de 
 | 1   | Pas de prix avant réservation                               | 02, 07     | Pas d'estimation : tarif horaire et durée ; `totalAmount` affiché après création  |
 | 2   | `RoomUpdateRequest` = champs requis de la création          | 09         | `PATCH` avec l'objet complet                                                      |
 | 3   | `roomId` absent du `PUT` de disponibilités                  | 10         | Déjà contourné dans `core`                                                        |
-| 4   | Pas de liste des réservations des salles d'un gestionnaire  | 11         | Hypothèse : `GET /reservations` les renvoie pour un `GESTIONNAIRE`                |
+| 4   | Pas de liste des réservations des salles d'un gestionnaire  | 11         | Résolue : requête GraphQL `reservationRequests`                                   |
 | 5   | Pas de filtre `ownerId` sur `GET /rooms`                    | 08         | Filtre côté client, toutes les pages parcourues                                   |
 | 6   | `status` absent des requêtes de salle                       | 08, 09     | Statut en lecture seule                                                           |
 | 7   | `UserUpdateRequest` accepte `role`                          | 05         | Le front n'envoie jamais `role`                                                   |
@@ -287,7 +293,7 @@ On reprend les règles du README de la maquette : focus visible (3 px + 2 px de 
 | 9   | Créneaux de la réservation modifiée peut-être indisponibles | 07         | Rendus sélectionnables côté client                                                |
 | 10  | Pas de mot de passe oublié                                  | 03         | Aucun lien. Le changement de mot de passe, lui, existe et est ajouté à l'écran 05 |
 | 11  | _Nouveau_ : fuseau des créneaux non précisé                 | 02, 07, 10 | Hypothèse heure de Paris                                                          |
-| 12  | _Nouveau_ : pas de route de rafraîchissement du jeton       | tous       | Reconnexion après expiration                                                      |
+| 12  | _Nouveau_ : pas de route de rafraîchissement du jeton       | tous       | Résolue le 2026-11-16 : `POST /auth/refresh`, renouvellement automatique (§ 2.3)  |
 | 13  | _Nouveau_ : pas de liste des lieux                          | 01         | Liste déduite des salles                                                          |
 
 ## 8. Risques

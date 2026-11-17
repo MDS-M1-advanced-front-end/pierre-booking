@@ -1,43 +1,27 @@
-# Astro Starter Kit: Minimal
+# Front : Quorum
+
+Astro 7 (pages statiques, quelques pages rendues par le serveur avec cache de route) et îlots Svelte 5, Tailwind 4. PWA installable et consultable hors ligne. Voir le [README racine](../../README.md) pour lancer tout le projet.
+
+- Organisation des fichiers et règles (pages, partials, components, data) : [docs/architecture.md](../../docs/architecture.md).
+- Écrans, session, rendu, PWA : [docs/cadrage.md](../../docs/cadrage.md).
+
+## Configuration
+
+Copier `.env.example` en `.env` pour changer l'adresse de l'API :
+
+- `API_BASE_URL` : API appelée par le serveur Astro (par défaut le back, `http://localhost:8080/api` ; mock Prism : `http://localhost:4010`) ;
+- `PUBLIC_API_BASE_URL` : API appelée par le navigateur, inscrite dans le code au build (par défaut `API_BASE_URL`).
+
+## Commandes (dans `apps/front`)
 
 ```sh
-pnpm create astro@latest -- --template minimal
+pnpm dev                  # http://localhost:4321 (sans service worker)
+pnpm build                # build de production, service worker compris
+node dist/server/entry.mjs   # sert le build (tester la PWA)
+pnpm typecheck            # astro check + svelte-check
+pnpm lint
+pnpm test:e2e             # Playwright contre le mock Prism (arrêter pnpm dev avant)
+pnpm generate:pwa-assets  # icônes de la PWA depuis public/favicon.svg
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
-
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
-
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                | Action                                           |
-| :--------------------- | :----------------------------------------------- |
-| `pnpm install`         | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Les tests unitaires se lancent depuis la racine (`pnpm test`).
