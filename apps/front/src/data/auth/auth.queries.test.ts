@@ -9,6 +9,8 @@ vi.mock('../client', () => ({
   logout: vi.fn(),
   changePassword: vi.fn(),
 }));
+const clearOutbox = vi.hoisted(() => vi.fn());
+vi.mock('../offline/outbox.svelte', () => ({ clearOutbox }));
 vi.mock('./session.svelte', () => ({
   saveSession: vi.fn(),
   clearSession: vi.fn(),
@@ -74,10 +76,11 @@ describe('register', () => {
 });
 
 describe('logout', () => {
-  it('supprime le jeton et la session', () => {
+  it('supprime le jeton, la session et les demandes en attente d’envoi', () => {
     logout();
     expect(api.logout).toHaveBeenCalledOnce();
     expect(clearSession).toHaveBeenCalledOnce();
+    expect(clearOutbox).toHaveBeenCalledOnce();
   });
 });
 

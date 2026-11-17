@@ -175,7 +175,28 @@ export function dismissNotice(id: string): void {
 }
 
 /**
- * Vide la file et ses messages. Appelé quand la session est effacée : les demandes sont liées au
+ * Vrai si la demande est toujours en file (relu dans le stockage : elle a pu être retirée dans
+ * cet onglet ou dans un autre pendant un envoi).
+ * @param id - Identifiant local de la demande.
+ */
+export function isQueued(id: string): boolean {
+  return isBrowser && read().items.some((item) => item.id === id);
+}
+
+/**
+ * Ne garde que les demandes et messages d'un compte. Appelé à chaque connexion : les demandes
+ * d'un autre compte (données personnelles) ne doivent pas rester sur l'appareil.
+ * @param userId - Compte connecté.
+ */
+export function keepOutboxOf(userId: string): void {
+  update((state) => ({
+    items: state.items.filter((item) => item.userId === userId),
+    notices: state.notices.filter((notice) => notice.userId === userId),
+  }));
+}
+
+/**
+ * Vide la file et ses messages. Appelé à la déconnexion volontaire : les demandes sont liées au
  * compte et contiennent des données personnelles (comme le cache de l'API).
  */
 export function clearOutbox(): void {

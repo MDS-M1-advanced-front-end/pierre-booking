@@ -5,7 +5,7 @@ import type { ReservationCreateRequest } from '@room-booking/core';
 import { restoreSession } from '../auth/session.svelte';
 import { errorMessage } from '../errors';
 import { isOffline } from '../offline/network.svelte';
-import { outbox, settlePending, type PendingReservation } from '../offline/outbox.svelte';
+import { isQueued, outbox, settlePending, type PendingReservation } from '../offline/outbox.svelte';
 import { createReservation, listMyReservations } from './reservations.queries';
 
 /** Taille de page maximale de l'API : toutes les réservations d'un client tiennent en une page. */
@@ -43,7 +43,8 @@ async function send(pending: PendingReservation): Promise<boolean> {
     return true;
   }
   const { status } = result.error;
-  // 401 : `withSession` a déjà renvoyé vers la connexion
+  // 401 : session refusée, `withSession` renvoie vers la connexion ; la demande reste en file et
+  // partira quand le même compte se reconnectera
   if (status === 0 || status === 401 || status >= 500) return false;
   if (status === 409) {
     const created = await alreadyCreated(pending.body);
@@ -71,6 +72,8 @@ export function sendPendingReservations(): Promise<void> {
     const user = restoreSession();
     if (!user) return;
     for (const pending of outbox.items.filter((item) => item.userId === user.id)) {
+      // Retirée pendant l'envoi des précédentes (dans cet onglet ou un autre) : on ne l'envoie pas
+      if (!isQueued(pending.id)) continue;
       if (!(await send(pending))) return;
     }
   })().finally(() => {

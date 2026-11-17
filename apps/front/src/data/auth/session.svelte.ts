@@ -5,7 +5,7 @@
 import type { AuthResponse, User, UserRole } from '@room-booking/core';
 import { buildLoginUrl } from '../../utils/redirect';
 import { getAccessToken, refresh, setAccessToken } from '../client';
-import { clearOutbox } from '../offline/outbox.svelte';
+import { keepOutboxOf } from '../offline/outbox.svelte';
 import { clearPrivateCaches } from '../offline/serviceWorker';
 
 /** Clé du localStorage. */
@@ -121,6 +121,8 @@ export function saveSession(auth: AuthResponse): void {
   // sont les siennes
   const previous = parse(readStorage());
   if (previous && previous.user.id !== auth.user.id) void clearPrivateCaches();
+  // Demandes hors ligne d'un autre compte (session expirée puis autre connexion) : retirées
+  keepOutboxOf(auth.user.id);
   const expiresIn = auth.expiresIn ?? DEFAULT_EXPIRES_IN;
   writeStorage({
     accessToken: auth.accessToken,
@@ -143,25 +145,35 @@ export function updateSessionUser(user: User): void {
   session.user = user;
 }
 
+/**
+ * Issue d'un renouvellement : `renewed` (nouveau jeton), `rejected` (pas de jeton de
+ * rafraîchissement, ou refusé : expiré, révoqué) ou `unavailable` (réseau, serveur en panne,
+ * limite de débit : le jeton reste peut-être valable, on réessaiera).
+ */
+export type RefreshOutcome = 'renewed' | 'rejected' | 'unavailable';
+
 /** Renouvellement en cours, partagé par les appels simultanés : un seul `POST /auth/refresh`. */
-let pendingRefresh: Promise<boolean> | null = null;
+let pendingRefresh: Promise<RefreshOutcome> | null = null;
 
 /**
  * Renouvelle le jeton d'accès avec le jeton de rafraîchissement enregistré. Les appels
  * simultanés partagent la même requête. Le jeton est relu dans le localStorage à chaque fois :
  * un autre onglet a pu le renouveler entre-temps.
- * @returns Vrai si la session est renouvelée ; faux sans jeton de rafraîchissement ou s'il est
- *   refusé (expiré, révoqué par un changement de mot de passe). La session n'est pas effacée :
- *   c'est à l'appelant de décider (voir `withSession`).
+ * @returns L'issue (`RefreshOutcome`). La session n'est jamais effacée ici : c'est à l'appelant
+ *   de décider (voir `withSession`).
  */
-export function refreshSession(): Promise<boolean> {
-  if (!isBrowser) return Promise.resolve(false);
-  pendingRefresh ??= (async () => {
+export function refreshSession(): Promise<RefreshOutcome> {
+  if (!isBrowser) return Promise.resolve('rejected');
+  pendingRefresh ??= (async (): Promise<RefreshOutcome> => {
     const refreshToken = parse(readStorage())?.refreshToken;
-    if (!refreshToken) return false;
+    if (!refreshToken) return 'rejected';
     const result = await refresh({ refreshToken });
-    if (result.ok) saveSession(result.data);
-    return result.ok;
+    if (result.ok) {
+      saveSession(result.data);
+      return 'renewed';
+    }
+    const { status } = result.error;
+    return status === 0 || status === 429 || status >= 500 ? 'unavailable' : 'rejected';
   })().finally(() => {
     pendingRefresh = null;
   });
@@ -185,15 +197,15 @@ export async function ensureFreshSession(): Promise<void> {
 }
 
 /**
- * Efface la session : stockage, jeton du client de `core`, `session.user`, et ce qui est gardé
- * pour le hors ligne (données personnelles) : réponses de l'API et demandes de réservation en
- * attente d'envoi.
+ * Efface la session : stockage, jeton du client de `core`, `session.user`, et les réponses de
+ * l'API gardées pour la consultation hors ligne (données personnelles). Les demandes de
+ * réservation en attente d'envoi restent : elles partiront quand le même compte se reconnectera
+ * (la déconnexion volontaire, elle, les vide : `logout`).
  */
 export function clearSession(): void {
   if (!isBrowser) return;
   removeStorage();
   void clearPrivateCaches();
-  clearOutbox();
   setAccessToken(null);
   session.user = null;
 }

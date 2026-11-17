@@ -47,7 +47,7 @@ describe('withSession', () => {
   beforeEach(() => {
     vi.mocked(expireSession).mockClear();
     vi.mocked(ensureFreshSession).mockClear();
-    vi.mocked(refreshSession).mockReset().mockResolvedValue(false);
+    vi.mocked(refreshSession).mockReset().mockResolvedValue('rejected');
   });
 
   it('renouvelle le jeton si besoin avant l’appel', async () => {
@@ -60,7 +60,7 @@ describe('withSession', () => {
   });
 
   it('sur un 401, renouvelle la session et rejoue l’appel une fois', async () => {
-    vi.mocked(refreshSession).mockResolvedValue(true);
+    vi.mocked(refreshSession).mockResolvedValue('renewed');
     const call = vi
       .fn()
       .mockResolvedValueOnce(fail(401))
@@ -71,7 +71,17 @@ describe('withSession', () => {
     expect(expireSession).not.toHaveBeenCalled();
   });
 
-  it('vide la session si le renouvellement échoue', async () => {
+  it('garde la session si le renouvellement est impossible pour l’instant (réseau, panne)', async () => {
+    vi.mocked(refreshSession).mockResolvedValue('unavailable');
+    const call = vi.fn().mockResolvedValue(fail(401));
+    const result = await withSession(call);
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error.status).toBe(0);
+    expect(call).toHaveBeenCalledOnce();
+    expect(expireSession).not.toHaveBeenCalled();
+  });
+
+  it('vide la session si le renouvellement est refusé', async () => {
     const call = vi.fn().mockResolvedValue(fail(401));
     const result = await withSession(call);
     expect(result.ok).toBe(false);
@@ -80,7 +90,7 @@ describe('withSession', () => {
   });
 
   it('vide la session si le 401 persiste après le renouvellement', async () => {
-    vi.mocked(refreshSession).mockResolvedValue(true);
+    vi.mocked(refreshSession).mockResolvedValue('renewed');
     const call = vi.fn().mockResolvedValue(fail(401));
     await withSession(call);
     expect(call).toHaveBeenCalledTimes(2);

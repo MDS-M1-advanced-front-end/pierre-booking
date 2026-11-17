@@ -5,7 +5,7 @@ import type {
   Result,
 } from '@room-booking/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { clearOutbox, outbox, queueReservation } from '../offline/outbox.svelte';
+import { clearOutbox, outbox, queueReservation, settlePending } from '../offline/outbox.svelte';
 
 const { createReservation, listMyReservations, restoreSession } = vi.hoisted(() => ({
   createReservation: vi.fn<(body: ReservationCreateRequest) => Promise<Result<Reservation>>>(),
@@ -154,6 +154,21 @@ describe('sendPendingReservations', () => {
       kind: 'rejected',
       reason: 'Certaines informations sont invalides.',
     });
+  });
+
+  it('n’envoie pas une demande retirée pendant l’envoi des précédentes', async () => {
+    queueReservation('u-1', 'Salle Atlas', body);
+    const second = queueReservation('u-1', 'Salle Borée', { ...body, roomId: 'r-2' });
+    createReservation.mockImplementation(() => {
+      // L'utilisateur retire la seconde pendant que la première part
+      settlePending(second.id);
+      return Promise.resolve({ ok: true, data: created() });
+    });
+
+    await sendPendingReservations();
+
+    expect(createReservation).toHaveBeenCalledOnce();
+    expect(outbox.notices.map((notice) => notice.roomName)).toEqual(['Salle Atlas']);
   });
 
   it('les appels simultanés partagent un seul envoi', async () => {
