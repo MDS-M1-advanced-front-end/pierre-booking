@@ -36,7 +36,7 @@ cp .env.example .env   # à remplir : JWT_SECRET, JWT_REFRESH_SECRET, PEPPER_SEC
 docker compose up -d --build
 ```
 
-Front sur http://localhost:4321, API sur http://localhost:8080/api. Les migrations s'appliquent au démarrage du back. La base n'est pas exposée ; elle démarre vide (le seed est réservé au développement).
+Front sur http://localhost:4321, API sur http://localhost:8080/api. Les migrations s'appliquent au démarrage du back. La base n'est pas exposée ; elle démarre vide. Pour charger le jeu de démo une fois, sur une base neuve (le seed vide toutes les tables), dans le conteneur du back : `SEED_PASSWORD=… node dist/database/seed.js --production`.
 
 ## Commandes
 
