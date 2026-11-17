@@ -112,7 +112,7 @@ test.describe('Disponibilités', () => {
         ...slots(19, 21, false),
       ],
     });
-    await expect(page.getByRole('status')).toContainText(
+    await expect(page.getByRole('main').getByRole('status')).toContainText(
       'Les créneaux du lundi 16 novembre 2026 ont été enregistrés.',
     );
   });
@@ -187,7 +187,7 @@ test.describe('Demandes', () => {
     await pending.getByRole('button', { name: 'Confirmer' }).click();
     await request;
 
-    await expect(page.getByRole('status')).toHaveText(
+    await expect(page.getByRole('main').getByRole('status')).toHaveText(
       /Réservation de .+ confirmée \(Auditorium Bastille, 20 octobre\)\.$/,
     );
     await expect(page.getByText('Aucune demande en attente')).toBeVisible();
@@ -217,7 +217,7 @@ test.describe('Demandes', () => {
     expect((await request).postDataJSON()).toEqual({ reason: 'Salle en travaux ce jour-là.' });
 
     await expect(dialog).toBeHidden();
-    await expect(page.getByRole('status')).toHaveText(
+    await expect(page.getByRole('main').getByRole('status')).toHaveText(
       /Demande de .+ refusée \(Auditorium Bastille, 20 octobre\)\.$/,
     );
   });

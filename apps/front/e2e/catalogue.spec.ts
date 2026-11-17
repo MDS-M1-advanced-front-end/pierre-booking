@@ -4,7 +4,8 @@ import { expect, test } from '@playwright/test';
 // Astro : la requête n'est pas observable depuis le navigateur. On vérifie donc l'URL de la page
 // et ce qu'elle affiche. Le mock ignore les filtres et la pagination (15 salles, toujours).
 
-const results = (page: import('@playwright/test').Page) => page.getByRole('status');
+const results = (page: import('@playwright/test').Page) =>
+  page.getByRole('main').getByRole('status');
 
 test.describe('catalogue', () => {
   test('affiche les salles du mock', async ({ page }) => {
