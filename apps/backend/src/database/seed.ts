@@ -55,6 +55,9 @@ interface MockSlot {
   endTime: string;
 }
 
+// Mot de passe des comptes du seed en développement (publié dans le README)
+const DEV_PASSWORD = 'motdepasse';
+
 // Créneaux ouverts pour chaque salle active, à partir d'aujourd'hui
 const AVAILABILITY_DAYS = 60;
 
@@ -71,13 +74,22 @@ function readMock<T>(name: string): T[] {
 
 async function seed(): Promise<void> {
   // En production, seulement sur demande explicite (base neuve) : le seed vide toutes les tables
-  if (
-    process.env.NODE_ENV === 'production' &&
-    !process.argv.includes('--production')
-  ) {
-    throw new Error(
-      'Seed refusé en production : il vide toutes les tables. Ajouter --production pour confirmer.',
-    );
+  if (process.env.NODE_ENV === 'production') {
+    if (!process.argv.includes('--production')) {
+      throw new Error(
+        'Seed refusé en production : il vide toutes les tables. Ajouter --production pour confirmer.',
+      );
+    }
+    // Sans SEED_PASSWORD, tous les comptes (administrateurs compris) auraient le mot de passe
+    // publié dans le README
+    if (
+      !process.env.SEED_PASSWORD ||
+      process.env.SEED_PASSWORD === DEV_PASSWORD
+    ) {
+      throw new Error(
+        'Seed refusé en production sans SEED_PASSWORD : fixer un mot de passe pour les comptes de démo.',
+      );
+    }
   }
   const users = readMock<MockUser>('users');
   const rooms = readMock<MockRoom>('rooms');
@@ -86,7 +98,7 @@ async function seed(): Promise<void> {
   // créneaux réservés, calculés ici à partir des réservations : tous les créneaux sont ouverts.
   const slots = readMock<MockSlot>('availability');
   const passwordHash = await new ScryptPasswordHasher().hash(
-    process.env.SEED_PASSWORD || 'motdepasse',
+    process.env.SEED_PASSWORD || DEV_PASSWORD,
   );
 
   await dataSource.initialize();
