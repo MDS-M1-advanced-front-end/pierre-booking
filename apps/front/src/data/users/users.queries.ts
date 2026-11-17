@@ -1,21 +1,18 @@
-import type { Result, User, UserUpdateRequest } from '@room-booking/core';
+import type { ProfileUpdateRequest, Result, User } from '@room-booking/core';
 import * as api from '../client';
 import { withSession } from '../errors';
 
-/** Champs qu'un utilisateur peut modifier : tout sauf `role`. */
-export type UserProfileUpdate = Omit<UserUpdateRequest, 'role'>;
-
 /**
- * Modifie un utilisateur. `UserUpdateRequest` accepte `role` (anomalie 7) : le front ne l'envoie
- * jamais, il est retiré du corps même s'il est présent à l'exécution.
- * @param userId - UUID de l'utilisateur.
+ * Modifie le profil de l'utilisateur connecté (`PATCH /auth/me`). `PATCH /users/{id}` est réservé
+ * aux administrateurs : un client ou un gestionnaire y recevrait un `403`. Seuls le prénom, le nom
+ * et l'e-mail sont envoyés, jamais `role`, même s'il est présent à l'exécution (anomalie 7).
  * @param body - Prénom, nom, e-mail.
  */
-export function updateUser(userId: string, body: UserProfileUpdate): Promise<Result<User>> {
+export function updateProfile(body: ProfileUpdateRequest): Promise<Result<User>> {
   const { firstName, lastName, email } = body;
-  const safeBody: UserProfileUpdate = {};
+  const safeBody: ProfileUpdateRequest = {};
   if (firstName !== undefined) safeBody.firstName = firstName;
   if (lastName !== undefined) safeBody.lastName = lastName;
   if (email !== undefined) safeBody.email = email;
-  return withSession(() => api.updateUser(userId, safeBody));
+  return withSession(() => api.updateMe(safeBody));
 }

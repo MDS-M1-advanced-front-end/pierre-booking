@@ -1,6 +1,6 @@
 # Base de données
 
-PostgreSQL, accédé via TypeORM (`apps/backend/src/models/`). Les tables et colonnes sont en `snake_case`, les propriétés des entités en `camelCase`.
+PostgreSQL, accédé via TypeORM (entités `apps/backend/src/modules/<module>/infrastructure/persistence/typeorm-*.entity.ts`, migrations `apps/backend/src/database/migrations/`). Les tables et colonnes sont en `snake_case`, les propriétés des entités en `camelCase`.
 
 ## MCD
 
@@ -16,7 +16,7 @@ PostgreSQL, accédé via TypeORM (`apps/backend/src/models/`). Les tables et col
 
 ## MLD
 
-- **users** (<u>id</u>, first_name, last_name, email, password_hash, role, created_at)
+- **users** (<u>id</u>, first_name, last_name, email, password_hash, role, password_changed_at, created_at)
 - **rooms** (<u>id</u>, #owner_id, name, description, capacity, location, equipment, price_per_hour, status, image_url, created_at)
 - **availabilities** (<u>id</u>, #room_id, date, start_time, end_time, is_available)
 - **reservations** (<u>id</u>, #user_id, #room_id, start_at, end_at, status, number_of_participants, comment, total_amount, currency, rejection_reason, created_at)
@@ -26,15 +26,16 @@ PostgreSQL, accédé via TypeORM (`apps/backend/src/models/`). Les tables et col
 
 ### users
 
-| Colonne       | Type           | Contraintes                                                               |
-| ------------- | -------------- | ------------------------------------------------------------------------- |
-| id            | `uuid`         | PK, généré                                                                |
-| first_name    | `varchar(100)` | NOT NULL                                                                  |
-| last_name     | `varchar(100)` | NOT NULL                                                                  |
-| email         | `varchar(255)` | NOT NULL, UNIQUE                                                          |
-| password_hash | `varchar(255)` | NOT NULL                                                                  |
-| role          | `enum`         | NOT NULL, `CLIENT` \| `GESTIONNAIRE` \| `ADMINISTRATEUR`, défaut `CLIENT` |
-| created_at    | `timestamptz`  | NOT NULL, défaut `now()`                                                  |
+| Colonne             | Type           | Contraintes                                                               |
+| ------------------- | -------------- | ------------------------------------------------------------------------- |
+| id                  | `uuid`         | PK, généré                                                                |
+| first_name          | `varchar(100)` | NOT NULL                                                                  |
+| last_name           | `varchar(100)` | NOT NULL                                                                  |
+| email               | `varchar(255)` | NOT NULL, UNIQUE                                                          |
+| password_hash       | `varchar(255)` | NOT NULL                                                                  |
+| role                | `enum`         | NOT NULL, `CLIENT` \| `GESTIONNAIRE` \| `ADMINISTRATEUR`, défaut `CLIENT` |
+| password_changed_at | `timestamptz`  | NOT NULL, défaut `now()` (jetons émis avant : rejetés)                    |
+| created_at          | `timestamptz`  | NOT NULL, défaut `now()`                                                  |
 
 ### rooms
 
@@ -86,6 +87,8 @@ Index : (`room_id`, `date`).
 
 Index : (`room_id`, `start_at`) pour la vérification des chevauchements, (`user_id`).
 
+Contrainte d'exclusion `EXC_reservations_no_overlap` (extension `btree_gist`) : deux réservations `PENDING` ou `CONFIRMED` d'une même salle ne peuvent pas se chevaucher, même en cas de requêtes simultanées (`EXCLUDE USING gist (room_id WITH =, tstzrange(start_at, end_at) WITH &&)`).
+
 ### payments
 
 | Colonne                 | Type            | Contraintes                                                               |
@@ -113,4 +116,4 @@ Comparé au contrat `packages/core/openapi.yml` :
 - **payments** : ajout de `currency` (requis), `payment_method` (envoyé par `POST /payments`), `payment_url` et `created_at`.
 - **Suppressions** : `ON DELETE RESTRICT` sur les réservations. `DELETE /rooms/{roomId}` doit renvoyer `409` si la salle a des réservations, au lieu de les effacer en cascade.
 
-Hors base : `GET /admin/statistics` est calculé par requêtes d'agrégat, et le `refreshToken` n'est pas stocké (JWT sans état).
+Hors base : `GET /admin/statistics` est calculé par requêtes d'agrégat, et le `refreshToken` n'est pas stocké (JWT sans état) ; les jetons émis avant un changement de mot de passe sont rejetés grâce à `users.password_changed_at`.

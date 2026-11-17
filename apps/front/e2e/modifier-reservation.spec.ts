@@ -48,6 +48,9 @@ const slot = (page: Page, time: string) =>
     .getByRole('button', { name: new RegExp(`^${time}`) });
 
 test.beforeEach(async ({ page }) => {
+  // Les dates du jeu de données sont fixes : sans horloge figée, la réservation du 12 octobre
+  // serait passée, donc non modifiable
+  await page.clock.setFixedTime(new Date('2026-10-07T10:00:00+02:00'));
   await signInAsClient(page);
 });
 

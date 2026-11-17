@@ -15,6 +15,7 @@ import {
   session,
   updateSessionUser,
 } from './session.svelte';
+import { clearOutbox } from '../offline/outbox.svelte';
 
 /**
  * Connecte l'utilisateur et enregistre la session. Un `401` ici signifie « identifiants
@@ -37,10 +38,14 @@ export async function register(body: RegisterRequest): Promise<Result<AuthRespon
   return login({ email: body.email, password: body.password });
 }
 
-/** Déconnecte : supprime le jeton de `core` et la session enregistrée. */
+/**
+ * Déconnecte : supprime le jeton de `core`, la session enregistrée et les demandes de réservation
+ * en attente d'envoi (déconnexion volontaire : appareil peut-être partagé).
+ */
 export function logout(): void {
   api.logout();
   clearSession();
+  clearOutbox();
 }
 
 /** Profil de l'utilisateur connecté ; met à jour la session en cas de succès. */

@@ -1,14 +1,14 @@
-# Réservation de salles
+# Quorum : réservation de salles
 
-Application de réservation de salles, dans le framework de votre choix. Le code métier vient du dépôt `core` partagé.
+Application de réservation de salles : catalogue public, espace client (réservations), espace gestionnaire (salles, disponibilités, demandes) et administration (tableau de bord, utilisateurs, toutes les réservations). API REST, plus une API GraphQL pour l'administration et l'écran Demandes (`POST /api/graphql`). Le front est une PWA installable, consultable hors ligne, où une demande de réservation faite hors ligne est envoyée au retour de la connexion (`docs/cadrage.md` § 2.10). Le contrat et le client viennent du dépôt `core` partagé.
 
 ## Structure
 
 - `apps/front/` : le front (Astro + Svelte)
 - `apps/backend/` : l'API (NestJS, TypeORM, PostgreSQL)
-- `packages/core/` : copie du dépôt `core`, gérée par `pnpm core:sync` (contrat `openapi.yml` et client HTTP)
+- `packages/core/` : copie du dépôt `core`, gérée par `pnpm core:sync` (contrats `openapi.yml` et `admin.graphql`, clients REST et GraphQL typés) ; une modification locale doit être reportée sur ce dépôt
 - `mock/` : mock de l'API servi par Prism, avec un jeu de données (`mock/data/`), utilisé par les tests de bout en bout
-- `docs/` : cadrage, architecture, base de données, journal d'usage de l'IA (`ai-journal.md`, livrable évalué)
+- `docs/` : cadrage, plan, architecture, cas d'usage, base de données, pistes d'évolution, journal d'usage de l'IA (`ai-journal.md`, livrable évalué)
 
 ## Développement
 
@@ -36,17 +36,20 @@ cp .env.example .env   # à remplir : JWT_SECRET, JWT_REFRESH_SECRET, PEPPER_SEC
 docker compose up -d --build
 ```
 
-Front sur http://localhost:4321, API sur http://localhost:8080/api. Les migrations s'appliquent au démarrage du back. La base n'est pas exposée ; elle démarre vide. Pour charger le jeu de démo une fois, sur une base neuve (le seed vide toutes les tables), dans le conteneur du back : `SEED_PASSWORD=… node dist/database/seed.js --production`.
+Front sur http://localhost:4321, API sur http://localhost:8080/api. Derrière un proxy (Dokploy…), fixer aussi `PUBLIC_API_BASE_URL` (adresse de l'API vue par le navigateur, inscrite au build du front) et `FRONT_URL` (origine autorisée par le CORS). Les migrations s'appliquent au démarrage du back. La base n'est pas exposée ; elle démarre vide. Pour charger le jeu de démo une fois, sur une base neuve (le seed vide toutes les tables), dans le conteneur du back : `SEED_PASSWORD=… node dist/database/seed.js --production`.
 
 ## Commandes
 
 ```sh
 pnpm check         # tout ce que vérifie la CI : typecheck, lint, format:check, test
-pnpm typecheck     # tsc dans chaque paquet
+pnpm typecheck     # core : tsc ; front : astro check + svelte-check (le back est vérifié par nest build)
 pnpm lint
-pnpm test
+pnpm test          # Vitest : back, core, front (projets dans vitest.config.ts)
 pnpm format
+pnpm --filter @room-booking/front test:e2e   # Playwright contre le mock Prism (arrêter pnpm dev avant)
 ```
+
+PWA : le service worker n'existe qu'au build. Pour le tester : `pnpm --filter @room-booking/front build`, puis `node dist/server/entry.mjs` dans `apps/front`.
 
 ## Le mock Prism
 

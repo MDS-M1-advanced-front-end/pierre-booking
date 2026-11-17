@@ -4,6 +4,8 @@ import {
   OUTBOX_KEY,
   clearOutbox,
   dismissNotice,
+  isQueued,
+  keepOutboxOf,
   outbox,
   queueReservation,
   settlePending,
@@ -75,6 +77,25 @@ describe('file des demandes hors ligne', () => {
     settlePending(mine.id);
     expect(outbox.items).toEqual([other]);
     expect(outbox.notices).toEqual([]);
+  });
+
+  it('keepOutboxOf retire les demandes et messages des autres comptes', () => {
+    const mine = queueReservation('u-1', 'Salle Atlas', body);
+    const other = queueReservation('u-2', 'Salle Borée', body);
+    settlePending(other.id, { kind: 'sent' });
+    queueReservation('u-2', 'Salle Cirrus', body);
+
+    keepOutboxOf('u-1');
+
+    expect(outbox.items).toEqual([mine]);
+    expect(outbox.notices).toEqual([]);
+  });
+
+  it('isQueued relit le stockage', () => {
+    const pending = queueReservation('u-1', 'Salle Atlas', body);
+    expect(isQueued(pending.id)).toBe(true);
+    localStorage.removeItem(OUTBOX_KEY);
+    expect(isQueued(pending.id)).toBe(false);
   });
 
   it('clearOutbox vide la file et le stockage', () => {

@@ -23,7 +23,7 @@ Routes issues de [`packages/core/openapi.yml`](../packages/core/openapi.yml)
     - `POST /payments`
     - `GET /payments/{paymentId}`
   - `<<include>>` Envoyer confirmation (de réservation) → Service de notification (externe)
-    - pas de route : effet de bord de `POST /reservations/{reservationId}/confirm`
+    - pas de route : effet de bord prévu de `POST /reservations/{reservationId}/confirm`, non implémenté (voir `pistes.md`, point 5)
 - Consulter ses réservations
   - `GET /reservations`
   - `GET /reservations/{reservationId}`
@@ -34,7 +34,7 @@ Routes issues de [`packages/core/openapi.yml`](../packages/core/openapi.yml)
   - `DELETE /reservations/{reservationId}` (passage au statut `CANCELLED`)
   - `<<include>>` Modifier une réservation
   - `<<include>>` Envoyer notification (annulation) → Service de notification (externe)
-    - pas de route : effet de bord de `DELETE /reservations/{reservationId}`
+    - pas de route : effet de bord prévu de `DELETE /reservations/{reservationId}`, non implémenté (voir `pistes.md`, point 5)
 
 ## owner / room manager
 
@@ -80,6 +80,7 @@ Routes issues de [`packages/core/openapi.yml`](../packages/core/openapi.yml)
 
 ## Routes hors diagramme
 
+- `POST /auth/refresh` : renouveler le jeton d'accès avec le jeton de rafraîchissement
 - `GET /auth/me` : profil de l'utilisateur connecté
 - `PATCH /auth/me` : modifier son profil (prénom, nom, e-mail ; pas le rôle)
 - `PATCH /auth/password` : modifier son mot de passe

@@ -6,7 +6,7 @@ import { listLocations, listRoomsOfOwner } from './rooms.queries';
 vi.mock('../client', () => ({ searchRooms: vi.fn() }));
 vi.mock('../auth/session.svelte', () => ({
   ensureFreshSession: vi.fn(),
-  refreshSession: vi.fn().mockResolvedValue(false),
+  refreshSession: vi.fn().mockResolvedValue('rejected'),
   expireSession: vi.fn(),
 }));
 

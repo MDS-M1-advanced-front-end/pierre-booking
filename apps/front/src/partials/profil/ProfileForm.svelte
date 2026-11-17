@@ -1,8 +1,8 @@
 <!--
   Formulaire « Modifier mes informations » de l'écran 05 (cadrage.md § 4 « 05 »).
 
-  Envoie `updateUser(user.id, { firstName, lastName, email })` : jamais `role` (anomalie 7,
-  `updateUser` le retire aussi du corps). Succès : `Alert` « Vos informations ont été
+  Envoie `updateProfile({ firstName, lastName, email })` (`PATCH /auth/me`) : jamais `role`
+  (anomalie 7, `updateProfile` le retire aussi du corps). Succès : `Alert` « Vos informations ont été
   enregistrées. » et session mise à jour (`updateSessionUser`).
 
   Props :
@@ -18,7 +18,7 @@
   import Input from '../../components/Input.svelte';
   import { updateSessionUser } from '../../data/auth/session.svelte';
   import { errorMessage } from '../../data/errors';
-  import { updateUser } from '../../data/users/users.queries';
+  import { updateProfile } from '../../data/users/users.queries';
   import { fieldValidationMessage, type ValidationOptions } from '../../utils/validationMessage';
 
   interface Props {
@@ -85,7 +85,7 @@
     }
 
     submitting = true;
-    const result = await updateUser(user.id, {
+    const result = await updateProfile({
       firstName: values.firstName.trim(),
       lastName: values.lastName.trim(),
       email: values.email.trim(),

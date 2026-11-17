@@ -9,7 +9,7 @@ Ordre de réalisation du site décrit dans [`cadrage.md`](./cadrage.md), en resp
 - **Un commit gitmoji par étape** (numérotée ci-dessous), en français, sans mention de Claude. Exemples : `:heavy_plus_sign:` dépendance, `:wrench:` configuration, `:truck:` déplacement, `:sparkles:` fonctionnalité, `:lipstick:` style, `:white_check_mark:` tests, `:recycle:` refactor, `:memo:` documentation.
 - **À chaque étape** : `pnpm typecheck` **et** `pnpm build` dans `apps/front`. `astro check` ne détecte pas un import CSS cassé, mais le build si.
 - **À chaque fin de lot** : `pnpm check` à la racine, tests de bout en bout du lot, vérification visuelle contre la maquette (375 px et 1280 px), entrée dans `docs/ai-journal.md`.
-- `packages/core` n'est jamais modifié. Ce qui manque à `core` est noté dans la section « À proposer à `core` ».
+- `packages/core` n'est jamais modifié. Ce qui manque à `core` est noté dans la section « À proposer à `core` ». _Assoupli ensuite_ (lots suivants, AGENTS.md) : une modification locale de `packages/core` est permise si elle est reportée sur le dépôt `core`.
 - Versions vérifiées le 2026-10-07 : `@astrojs/svelte` 9.0.1 (Astro ^7, Svelte ^5.43, TypeScript ^5.3 ou ^6), `@astrojs/node` 11.1.7 (Astro ^7.2.1), `svelte` 5.57.2, `prettier-plugin-astro` 1.1.0, `prettier-plugin-svelte` 4.1.1, `vitest` 5 (`core` utilise 5.0.2), `@playwright/test` 1.63.0. Attention au `minimumReleaseAge` de `pnpm-workspace.yaml` : une version trop récente devra être exclue explicitement, comme pour `astro`.
 
 ---

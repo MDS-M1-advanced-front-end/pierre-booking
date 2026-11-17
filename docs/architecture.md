@@ -9,7 +9,7 @@ Toute nouvelle convention ou exception se décide ici **avant** d'écrire le cod
 1. **Une page compose, elle ne construit pas.** Une page (`src/pages/`) assemble des sections (`src/partials/`) ; elle contient le moins de balisage et de logique possible.
 2. **Une section va chercher ses propres données.** Chaque partial appelle les fonctions de `src/data/` dont elle a besoin. La page ne lui passe que le contexte (paramètres de route, utilisateur…).
 3. **Un composant est réutilisable et ne connaît pas l'API.** Il reçoit tout par ses `Props`, typées avec les types de `@room-booking/core`.
-4. **Le code métier vit dans `core`.** Types, client HTTP, règles métier et schémas Zod ne sont jamais réécrits dans le front. `packages/core` ne se modifie pas ici : il est écrasé par `pnpm core:sync`.
+4. **Le code métier vit dans `core`.** Types, client HTTP, règles métier et schémas Zod ne sont jamais réécrits dans le front. `packages/core` ne se modifie ici que si la même modification est reportée sur le dépôt `core` : sinon `pnpm core:sync` l'écrase.
 5. **Pas de valeur de style en dur.** Couleurs, espacements, rayons, ombres et tailles de texte passent par les tokens Quorum (voir [Style](#style)).
 
 ## Arborescence
@@ -53,7 +53,7 @@ apps/front/
 
 ### `layouts/`
 
-- `Layout.astro` : `<html lang="fr">`, `<Head>` (titre de l'onglet suffixé par « · Quorum »), conteneur principal, puis en-tête et pied de page communs aux 11 écrans.
+- `Layout.astro` : `<html lang="fr">`, `<Head>` (titre de l'onglet suffixé par « · Quorum »), conteneur principal, puis en-tête et pied de page communs à toutes les pages.
 - Un seul layout tant que tous les écrans partagent la même structure.
 
 ### `partials/<page>/`
@@ -74,12 +74,11 @@ apps/front/
 
 ### `data/<domaine>/`
 
-Un dossier par domaine de l'API : `rooms`, `reservations`, `auth`, `users`. Fichiers nommés `<domaine>.<rôle>.ts` :
+Un dossier par domaine de l'API : `rooms`, `reservations`, `auth`, `users`, `admin` (requêtes GraphQL de l'administration). Fichiers nommés `<domaine>.<rôle>.ts`. À côté : `offline/` (réseau, service worker, file hors ligne), `client.ts` (seul fichier qui importe les fonctions de `core`) et `errors.ts` (messages d'erreur, `withSession`).
 
 | Fichier                | Rôle                                                                                                                                                               |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `<domaine>.queries.ts` | Fonctions `async` appelées par les partials. Elles enveloppent les fonctions de `core` (`searchRooms`, `getRoom`…) et décident quoi faire d'un `Result` en erreur. |
-| `<domaine>.mock.ts`    | Données fictives typées avec les types de `core`, utilisées par `queries` tant que l'API n'est pas branchée. Commentaire en tête : donnée temporaire.              |
 
 État partagé du navigateur : session (`data/auth/session.svelte.ts`), réseau et file des demandes de réservation faites hors ligne (`data/offline/`, cadrage.md § 2.10).
 
@@ -125,8 +124,8 @@ On reprend les règles du README de la maquette (WCAG 2.2 AA) : focus visible, c
 - **Format** : Prettier du dépôt (`singleQuote`, `printWidth: 100`, points-virgules). Attention : le portfolio est sans points-virgules, ce projet en met.
 - **Langue** : code (noms de variables, fonctions) en anglais ; textes affichés, commentaires et commits en français.
 - **Commits** : gitmoji, en français, un commit par étape logique (`:sparkles:`, `:lipstick:`, `:heavy_plus_sign:`, `:memo:`…). Pas de mention de Claude.
-- **Tests** : un test unitaire Vitest à côté du fichier testé (`formatPrice.test.ts` à côté de `formatPrice.ts`), lancé par le `vitest.config.ts` de la racine, qui regroupe tous les paquets en **projets nommés** : `core`, `front:utils`, `front:data`, `front:components` (`pnpm test`, ou `pnpm test --project front:utils`). Un dossier de `src/` qui reçoit des tests = un projet `front:<dossier>`. Tests de bout en bout Playwright dans `apps/front/e2e/` (`pnpm test:e2e`), profils et session de test dans `e2e/helpers.ts`, audit d'accessibilité axe-core dans `e2e/a11y.spec.ts`.
-- **Vérification** avant commit : `pnpm typecheck` (`astro check`) **et** `pnpm build` dans `apps/front`. `astro check` ne voit pas un import CSS cassé.
+- **Tests** : un test unitaire Vitest à côté du fichier testé (`formatPrice.test.ts` à côté de `formatPrice.ts`), lancé par le `vitest.config.ts` de la racine, qui regroupe tous les paquets en **projets nommés** : `backend`, `core`, `front:utils`, `front:data`, `front:components` (composants et partials) (`pnpm test`, ou `pnpm test --project front:utils`). Un nouveau dossier de `src/` qui reçoit des tests est ajouté à l'un de ces projets, ou en reçoit un. Tests de bout en bout Playwright dans `apps/front/e2e/` (`pnpm test:e2e`), profils et session de test dans `e2e/helpers.ts`, audit d'accessibilité axe-core dans `e2e/a11y.spec.ts`.
+- **Vérification** avant commit : `pnpm typecheck` (`astro check` puis `svelte-check`) **et** `pnpm build` dans `apps/front`. `astro check` ne voit pas un import CSS cassé.
 - **Journal IA** : chaque usage de l'IA est tracé dans `docs/ai-journal.md`.
 
 ## Points ouverts

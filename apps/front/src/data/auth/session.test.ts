@@ -11,8 +11,8 @@ const { setAccessToken, getAccessToken, refresh } = vi.hoisted(() => {
 vi.mock('../client', () => ({ setAccessToken, getAccessToken, refresh }));
 const clearPrivateCaches = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 vi.mock('../offline/serviceWorker', () => ({ clearPrivateCaches }));
-const clearOutbox = vi.hoisted(() => vi.fn());
-vi.mock('../offline/outbox.svelte', () => ({ clearOutbox }));
+const keepOutboxOf = vi.hoisted(() => vi.fn());
+vi.mock('../offline/outbox.svelte', () => ({ keepOutboxOf }));
 
 const {
   SESSION_KEY,
@@ -206,7 +206,7 @@ describe('refreshSession', () => {
     saveSession({ ...auth, refreshToken: 'long-1' });
     refresh.mockResolvedValue({ ok: true, data: renewed });
 
-    await expect(refreshSession()).resolves.toBe(true);
+    await expect(refreshSession()).resolves.toBe('renewed');
 
     expect(refresh).toHaveBeenCalledWith({ refreshToken: 'long-1' });
     expect(readStored()).toMatchObject({ accessToken: 'jeton-2', refreshToken: 'long-2' });
@@ -219,24 +219,32 @@ describe('refreshSession', () => {
 
     const results = await Promise.all([refreshSession(), refreshSession(), refreshSession()]);
 
-    expect(results).toEqual([true, true, true]);
+    expect(results).toEqual(['renewed', 'renewed', 'renewed']);
     expect(refresh).toHaveBeenCalledOnce();
   });
 
-  it('renvoie faux sans jeton de rafraîchissement, sans appeler l’API', async () => {
+  it('refusé sans jeton de rafraîchissement, sans appeler l’API', async () => {
     saveSession(auth);
-    await expect(refreshSession()).resolves.toBe(false);
+    await expect(refreshSession()).resolves.toBe('rejected');
     expect(refresh).not.toHaveBeenCalled();
   });
 
-  it('renvoie faux si le jeton est refusé, sans effacer la session', async () => {
+  it('refusé si l’API refuse le jeton, sans effacer la session', async () => {
     saveSession({ ...auth, refreshToken: 'long-1' });
     refresh.mockResolvedValue({
       ok: false,
       error: { status: 401, code: 'UNAUTHORIZED', message: 'x' },
     });
 
-    await expect(refreshSession()).resolves.toBe(false);
+    await expect(refreshSession()).resolves.toBe('rejected');
+    expect(readStored()).toMatchObject({ accessToken: 'jeton-1' });
+  });
+
+  it.each([0, 429, 503])('indisponible sur une erreur %i (réessayable)', async (status) => {
+    saveSession({ ...auth, refreshToken: 'long-1' });
+    refresh.mockResolvedValue({ ok: false, error: { status, code: 'X', message: 'x' } });
+
+    await expect(refreshSession()).resolves.toBe('unavailable');
     expect(readStored()).toMatchObject({ accessToken: 'jeton-1' });
   });
 });
@@ -295,11 +303,9 @@ describe('cache hors ligne des réponses de l’API', () => {
 });
 
 describe('clearSession', () => {
-  it('vide le cache hors ligne des réponses de l’API et les demandes en attente d’envoi', () => {
-    clearOutbox.mockClear();
+  it('vide le cache hors ligne des réponses de l’API', () => {
     clearSession();
     expect(clearPrivateCaches).toHaveBeenCalledOnce();
-    expect(clearOutbox).toHaveBeenCalledOnce();
   });
 
   it('vide le stockage, le jeton et l’utilisateur', () => {
@@ -334,5 +340,13 @@ describe('hasRole', () => {
     saveSession(auth);
     expect(hasRole('CLIENT')).toBe(true);
     expect(hasRole('GESTIONNAIRE', 'ADMINISTRATEUR')).toBe(false);
+  });
+});
+
+describe('demandes hors ligne', () => {
+  it('à la connexion, ne garde que celles du compte connecté', () => {
+    keepOutboxOf.mockClear();
+    saveSession(auth);
+    expect(keepOutboxOf).toHaveBeenCalledWith(lea.id);
   });
 });

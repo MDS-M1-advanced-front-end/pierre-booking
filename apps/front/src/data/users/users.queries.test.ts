@@ -1,13 +1,13 @@
-import type { UserUpdateRequest } from '@room-booking/core';
+import type { ProfileUpdateRequest } from '@room-booking/core';
 import { describe, expect, it, vi } from 'vitest';
 import * as api from '../client';
 import { expireSession } from '../auth/session.svelte';
-import { updateUser } from './users.queries';
+import { updateProfile } from './users.queries';
 
-vi.mock('../client', () => ({ updateUser: vi.fn() }));
+vi.mock('../client', () => ({ updateMe: vi.fn() }));
 vi.mock('../auth/session.svelte', () => ({
   ensureFreshSession: vi.fn(),
-  refreshSession: vi.fn().mockResolvedValue(false),
+  refreshSession: vi.fn().mockResolvedValue('rejected'),
   expireSession: vi.fn(),
 }));
 
@@ -20,22 +20,23 @@ const user = {
   createdAt: '2026-02-11T09:00:00Z',
 };
 
-describe('updateUser', () => {
-  it("n'envoie jamais role (anomalie 7)", async () => {
-    vi.mocked(api.updateUser).mockResolvedValue({ ok: true, data: user });
-    const body: UserUpdateRequest = { firstName: 'Léa', role: 'ADMINISTRATEUR' };
-    await updateUser('u1', body);
-    expect(api.updateUser).toHaveBeenCalledWith('u1', { firstName: 'Léa' });
-    const sent = vi.mocked(api.updateUser).mock.calls[0]?.[1];
+describe('updateProfile', () => {
+  it("passe par PATCH /auth/me et n'envoie jamais role (anomalie 7)", async () => {
+    vi.mocked(api.updateMe).mockResolvedValue({ ok: true, data: user });
+    // `role` glissé à l'exécution (le type ne l'accepte pas)
+    const body = { firstName: 'Léa', role: 'ADMINISTRATEUR' } as ProfileUpdateRequest;
+    await updateProfile(body);
+    expect(api.updateMe).toHaveBeenCalledWith({ firstName: 'Léa' });
+    const sent = vi.mocked(api.updateMe).mock.calls[0]?.[0];
     expect(sent).not.toHaveProperty('role');
   });
 
   it('vide la session et renvoie vers la connexion sur un 401', async () => {
-    vi.mocked(api.updateUser).mockResolvedValue({
+    vi.mocked(api.updateMe).mockResolvedValue({
       ok: false,
       error: { status: 401, code: 'UNAUTHORIZED', message: 'x' },
     });
-    await updateUser('u1', { lastName: 'Martin' });
+    await updateProfile({ lastName: 'Martin' });
     expect(expireSession).toHaveBeenCalledOnce();
   });
 });
