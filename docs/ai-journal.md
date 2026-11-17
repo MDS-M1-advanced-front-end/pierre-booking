@@ -26,6 +26,21 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-11-17 — Production : la connexion appelle encore localhost (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
+- **Objectif** : comprendre pourquoi, sur le site déployé, la connexion appelle `localhost` alors que `PUBLIC_API_BASE_URL=https://booking.pierre-gaillard.dev/api` est renseignée dans Dokploy.
+- **Demande** : « dans la page login, les requêtes login se lancent sur localhost en prod, alors que j'ai bien renseigné PUBLIC_API_BASE_URL=https://booking.pierre-gaillard.dev/api ». Puis : « registerType: 'autoUpdate' il faut le mettre », et « commit et pr ».
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (diagnostic, sans modification du code) :
+  - build local avec une autre adresse : elle est bien inscrite dans le code du navigateur, la chaîne de configuration fonctionne ;
+  - fichiers JavaScript servis par le site : ils contiennent déjà `https://booking.pierre-gaillard.dev/api`, plus aucune trace de `localhost`. La variable est donc prise en compte ; le navigateur exécute une ancienne version, gardée par le service worker de la PWA : la nouvelle version attend que l'utilisateur clique « Recharger » dans le bandeau (choix `registerType: 'prompt'`), ou que tous les onglets du site soient fermés ;
+  - second problème trouvé au passage : `https://booking.pierre-gaillard.dev/api/rooms` arrive au back sous la forme `/api/api/rooms` (réponse 404 de NestJS). Le domaine `/api` du back dans Dokploy ajoute le préfixe une seconde fois (chemin interne à `/api`).
+  - **mise à jour automatique** (`4ba4bfe` front, `777b581` docs) : `registerType: 'autoUpdate'` dans `astro.config.mjs` ne suffit pas seul, car l'enregistrement est fait par la page (`injectRegister: false`) avec un service worker écrit à la main. Donc : `skipWaiting()` à l'installation et `clients.claim()` à l'activation dans `sw.ts` ; dans `serviceWorker.ts`, rechargement de la page quand une nouvelle version prend la main (événement `controllerchange`), pas à la première installation ; bandeau « Recharger » retiré d'`AppStatus`. `workbox-window` n'est plus utilisé : dépendance retirée. `cadrage.md` § 2.10 mis à jour. Les navigateurs qui ont encore l'ancienne version (« prompt ») passent à la nouvelle sans clic, puisque c'est la nouvelle qui appelle `skipWaiting()` ; la page déjà ouverte ne se recharge pas d'elle-même (c'est l'ancien code qui tourne), la page suivante est la bonne.
+- **Erreurs de l'IA relevées** : effet de bord de la PWA non signalé lors de sa mise en place : après un déploiement, un visiteur garde l'ancienne version tant qu'il n'a pas cliqué « Recharger », y compris pour une correction de configuration comme celle-ci. Pour la mise à jour automatique, première version avec les événements de `workbox-window` : la page ne se rechargeait pas au test dans le navigateur. Remplacée par l'API du navigateur (`controllerchange`) ; deuxième essai encore raté, parce que la page de test en était à sa première visite (le rechargement n'était prévu que pour une page déjà contrôlée au chargement) ; corrigé en considérant la première prise en main comme l'installation et les suivantes comme des mises à jour.
+- **Vérification** : build local avec une adresse de test ; lecture des 45 fichiers JavaScript précachés du site déployé ; requête sur `/api/rooms` en production (message d'erreur du back). Mise à jour automatique : `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test` (417) ; front buildé et Chromium : première visite contrôlée sans rechargement, puis `sw.js` modifié sur le serveur (restauré ensuite) : la page se recharge seule, aucun bandeau, aucune erreur JavaScript. Non testé : le passage depuis l'ancienne version « prompt » réellement installée.
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-11-17 — Réservation hors ligne : file d'attente envoyée au retour du réseau (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
