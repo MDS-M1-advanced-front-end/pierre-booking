@@ -26,6 +26,29 @@ Framework / méta-framework : Astro (sans framework de composants)
 - **Vérification** : … (`pnpm typecheck`, tests, test manuel, documentation consultée…)
 - **Ce que j'en retiens** : …
 
+### 2026-11-17 — Documentation remise à jour et audit de qualité de tout le code (séance 4)
+
+- **Outil** : Claude Code (Claude Opus 5.5) dans le terminal, avec 7 sous-agents en lecture seule (1 pour la doc, 6 pour l'audit, découpé par zone : back users/rooms, back reservations, front data, front components/pages, front partials, core/e2e/infra) et le skill `pre-review` (grille, script de conventions).
+- **Objectif** : vérifier que toute la doc (README compris) correspond au code, puis auditer la qualité de l'ensemble du code comme une pré-review.
+- **Demande** : « je veux que tu check si toute la doc est bien à jour (readme compris), puis que tu lances une audit de qualité similaire à /pre-review sur l'ensemble du code ». Puis, sur la proposition de l'IA de commencer par les bloquants, ses deux erreurs de la file hors ligne et les e2e cassés : « ok bah corriges ça », et « yes » pour committer et pousser.
+- **Résultat** : _à compléter_
+- **Ce qui a été fait** (`702211a` docs, `2de722d` README de core, reporté dans le dépôt `core` en `df25173`) :
+  - **doc** : README racine (présentation de Quorum, GraphQL, PWA, `PUBLIC_API_BASE_URL` et `FRONT_URL` en production, commandes e2e et PWA, `pnpm typecheck` décrit correctement) ; `apps/backend/README.md` et `apps/front/README.md` réécrits (c'étaient encore les README des gabarits NestJS et Astro) ; `architecture.md` (core modifiable si reporté, dossiers de `data/`, projets Vitest, fichiers `*.mock.ts` disparus) ; `cadrage.md` (session, projets Vitest, compose, accès réels des écrans dont l'administrateur, page `/hors-ligne`, navigation administrateur, redirection, écran Demandes en GraphQL, composants, anomalies 4 et 12 résolues) ; `plan.md`, `use-cases.md` (`/auth/refresh`, notifications non implémentées), `Database.md` (chemins, `password_changed_at`, contrainte d'exclusion) ; `AGENTS.md` (seed avec `SEED_PASSWORD`) ; README de `core`, reporté dans le dépôt `core` ;
+  - **corrections** (`327607a` profil, `56114e0` seed, `24376c7` session et file, `009f54b` e2e) :
+    - profil : `updateProfile` passe par `updateMe` (`PATCH /auth/me`) au lieu de `PATCH /users/{id}` (réservé aux administrateurs) ; test unitaire et e2e (`auth.spec.ts`) alignés, `cadrage.md` mis à jour ;
+    - seed : refusé en production sans `SEED_PASSWORD` (ou avec le mot de passe de développement) ;
+    - session : `refreshSession` rend `renewed`, `rejected` ou `unavailable` ; seul un refus déconnecte. Réseau, 5xx ou 429 au renouvellement : l'appel échoue comme une erreur réseau (statut 0), la session et la file restent ;
+    - file hors ligne : gardée si la session expire (vidée seulement par la déconnexion volontaire, `logout`), demandes d'un autre compte retirées à chaque connexion (`keepOutboxOf`), demande retirée pendant un envoi non envoyée (`isQueued`, relu dans le stockage) ; tests ajoutés, dont un qui échouait avec l'ancien code ;
+    - e2e : horloge figée dans `salle.spec.ts` et `modifier-reservation.spec.ts` (dates du jeu de données devenues passées) ; dans `salle.spec.ts`, le test du lien « Se connecter pour réserver » attend l'îlot hydraté (le lien rendu par le serveur porte la date du serveur, pas celle de l'horloge figée).
+  - **vérification des corrections** : `pnpm test` (425), lint, format, typecheck du front, `tsc` du back ; garde du seed essayée sur le build (refus sans `--production`, puis sans `SEED_PASSWORD`, puis avec le mot de passe de développement) ; e2e `salle`, `modifier-reservation` et `auth` : 25 sur 25. Playwright reste ensuite bloqué à l'arrêt des serveurs (ni résumé ni sortie) : problème d'environnement, pas des tests. L'IA a de nouveau tué son propre shell avec `pkill -f` (motif présent dans sa propre ligne de commande), puis a utilisé `pgrep -f "[p]rism…"`.
+  - **audit** : checks du projet (typecheck, lint, format, 417 tests : verts ; avertissements de lint dans deux specs du back), script de conventions sur tout le dépôt (2 `console.log` dans des scripts en ligne de commande, écartés), puis les constats des sous-agents, dont les plus graves ont été revérifiés dans le code avant le rapport.
+- **Erreurs de l'IA relevées** : l'audit a trouvé deux défauts dans le code écrit par l'IA la veille et le jour même :
+  - file hors ligne : un `401` vide la file (`withSession` → `expireSession` → `clearOutbox`), alors que le commentaire, le cadrage et un test affirment l'inverse ; le test le « prouvait » parce qu'il remplaçait `withSession` par un mock ;
+  - une demande retirée pendant un envoi en cours part quand même (copie de la file prise au départ de la boucle).
+    Il a aussi relevé un défaut plus ancien de l'IA : la modification du profil passe par `PATCH /users/{id}`, réservé aux administrateurs sur le vrai back (403 pour un client) ; les e2e ne le voyaient pas, parce que le mock n'applique pas les rôles.
+- **Vérification** : rapports des sous-agents relus ; constats bloquants et principaux revérifiés à la main (controller `users` et `@Roles`, dates figées des e2e, `findOpenSlots`, `withSession`, cas d'usage d'annulation, de modification et de paiement, `isISO8601`) ; `pnpm format:check` après les modifications de doc.
+- **Ce que j'en retiens** : _à compléter_
+
 ### 2026-11-17 — Production : la connexion appelle encore localhost (séance 4)
 
 - **Outil** : Claude Code (Claude Opus 5.5) dans le terminal.
