@@ -31,6 +31,11 @@ async function signInAsClient(page: Page) {
   }, client);
 }
 
+// La fiche remplace une date passée par aujourd'hui : on fige l'horloge avant `DATE`
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-11-10T10:00:00+01:00'));
+});
+
 const slotGrid = (page: Page) =>
   page.getByRole('group', { name: 'Créneaux du lundi 16 novembre 2026' });
 
@@ -64,6 +69,8 @@ test('un visiteur est invité à se connecter, avec retour sur la fiche et la da
   page,
 }) => {
   await page.goto(ROOM_URL);
+  // Le lien rendu par le serveur porte la date du serveur : on attend l'îlot hydraté (horloge figée)
+  await expect(slotGrid(page)).toBeVisible();
   const login = page.getByRole('link', { name: 'Se connecter pour réserver' });
   await expect(login).toBeVisible();
   const href = await login.getAttribute('href');
